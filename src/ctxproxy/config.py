@@ -25,6 +25,24 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 Mode = Literal["passthrough", "shadow", "active"]
 CaptureMode = Literal["off", "changed_blocks", "full"]
 UpstreamKind = Literal["anthropic", "openai", "gemini", "ollama"]
+UsageStyle = Literal[
+    "anthropic",
+    "openai",
+    "deepseek",
+    "openrouter",
+    "gemini",
+    "gemini-openai",
+    "ollama",
+    "ollama-openai",
+]
+CachePolicy = Literal[
+    "explicit-anthropic",
+    "implicit-openai",
+    "automatic-deepseek",
+    "gemini-implicit",
+    "none",
+]
+CostSource = Literal["pricing", "provider", "none"]
 ShellKind = Literal["bash", "zsh", "fish", "powershell"]
 
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
@@ -70,6 +88,11 @@ class ModeSettings(_Section):
 class UpstreamEntry(_Section):
     url: str
     kind: UpstreamKind
+    usage: UsageStyle | None = None
+    cache_policy: CachePolicy | None = None
+    cost_source: CostSource | None = None
+    cache_hints: bool | None = None
+    inject_stream_usage: bool | None = None
 
     @field_validator("url")
     @classmethod
@@ -470,9 +493,13 @@ def _set_dotted(raw: dict[str, Any], dotted: str, value: object) -> None:
 
 
 __all__ = [
+    "CachePolicy",
     "Config",
+    "CostSource",
     "Mode",
     "ShellKind",
+    "UpstreamKind",
+    "UsageStyle",
     "compute_config_hash",
     "data_dir",
     "default_config_path",

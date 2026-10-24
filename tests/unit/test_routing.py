@@ -81,6 +81,8 @@ def test_named_upstream_anthropic_kind() -> None:
 def test_named_upstream_preserves_query() -> None:
     route = classify("POST", "/u/deepseek/chat/completions", "beta=true&x=1", {}, _config())
     assert route.upstream_url() == ("https://api.deepseek.com/chat/completions?beta=true&x=1")
+    assert route.profile.usage == "deepseek"
+    assert route.profile.cache_policy == "automatic-deepseek"
 
 
 def test_named_upstream_unknown_raises() -> None:

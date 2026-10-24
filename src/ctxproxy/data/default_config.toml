@@ -20,7 +20,13 @@ openai = "https://api.openai.com"
 gemini = "https://generativelanguage.googleapis.com"
 ollama = "http://127.0.0.1:11434"
 # openrouter = { url = "https://openrouter.ai/api", kind = "openai" }
-# deepseek = { url = "https://api.deepseek.com", kind = "openai" }
+# deepseek = { url = "https://api.deepseek.com", kind = "openai",
+#              usage = "deepseek", cache_policy = "automatic-deepseek" }
+# deepseek-anthropic = { url = "https://api.deepseek.com/anthropic",
+#                        kind = "anthropic", cache_hints = false }
+# gemini-openai = { url = "https://generativelanguage.googleapis.com/v1beta/openai",
+#                   kind = "openai", usage = "gemini-openai" }
+# ollama-openai = { url = "http://127.0.0.1:11434/v1", kind = "openai" }
 
 [http]
 connect_timeout_s = 10
