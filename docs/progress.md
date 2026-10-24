@@ -2,24 +2,24 @@
 
 **Last updated:** 2026-10-24
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `feat/p0-1-toolchain`
+**Branch:** `main`
 **Overall:** 1 / 10 tasks complete
 
 ## Resume here
 
-- **Last completed:** P0-1 — Toolchain + skeleton (awaiting merge).
-- **Last merge:** —
+- **Last completed:** P0-1 — Toolchain + skeleton (`c7c34c7`).
+- **Last merge:** `afdae28` (P0-1)
 - **Next task:** P0-2 — Config (`feat/p0-2-config`)
 - **Blocked:** P1-3 — usage parsers (awaiting provider captures, see
   `docs/plan.md` §6)
-- **Active branch:** `feat/p0-1-toolchain` — merge to `main` before starting P0-2
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
 
 | ID | Task | Status | Branch | Commits | Merge | Gates | Notes |
 |---|---|---|---|---|---|---|---|
-| P0-1 | Toolchain + skeleton | done | `feat/p0-1-toolchain` | recorded at merge | — | ruff, format, mypy, pytest (4) | `uv build` and `ctxproxy --version` verified |
+| P0-1 | Toolchain + skeleton | done | `feat/p0-1-toolchain` | `c7c34c7` | `afdae28` | ruff, format, mypy, pytest (4) | `uv build` and `ctxproxy --version` verified |
 | P0-2 | Config | todo | — | — | — | — | — |
 | P0-3 | Models, logging, ULID | todo | — | — | — | — | — |
 | P0-4 | Test infrastructure | todo | — | — | — | — | — |
@@ -38,7 +38,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | Date | Task | ruff | mypy | pytest | coverage | Commit |
 |---|---|---|---|---|---|---|
 | 2026-10-24 | bootstrap | n/a (docs only) | n/a | n/a | n/a | `5b3f61b` |
-| 2026-10-24 | P0-1 | pass | pass (50 files) | 4 passed | reported, not enforced | recorded at merge |
+| 2026-10-24 | P0-1 | pass | pass (50 files) | 4 passed | reported, not enforced | `c7c34c7` |
 
 ## Changelog
 
