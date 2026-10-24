@@ -7,12 +7,36 @@
 
 ## Resume here
 
-- **Last completed:** P1-6 — CLI (`689bbb8`).
+- **Last completed:** P1 complete, including the live DeepSeek-through-OpenCode
+  smoke test.
 - **Last merge:** `b8769c1` (P1-6)
-- **Next task:** final verification and the DeepSeek-through-OpenCode smoke test.
+- **Next task:** P2-1 adapter structure access / P2-2 token estimation (Phase 2).
 - **Blocked:** none
 - **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
+
+## Smoke test (2026-10-25)
+
+- **Client:** OpenCode 2.0.31, model `deepseek/deepseek-flash`,
+  `opencode run --standalone`.
+- **Route:** OpenCode -> `http://127.0.0.1:8787/u/deepseek` ->
+  `https://api.deepseek.com`.
+- **Config:** mode `shadow`, `capture_payloads = "off"`, temporary
+  `opencode.json` override removed afterwards.
+- **Result:** 3 requests, all `usage_source=provider` and
+  `price_source=pricing`; OpenCode made side requests as well as the main turn.
+- **Largest request:** 2.38 MB body, `fresh_input=331`,
+  `cache_read=603264` (99.2% cache hit over the session), `output=267`,
+  `reasoning=106`, `cost=$0.004039`, `ttfb=1175 ms`, `total=2797 ms`.
+- **Session totals:** 3 requests, `$0.005393`, 4,630 fresh input,
+  605,312 cache read, 310 output.
+- **CLI verified:** `ctxproxy status`, `ctxproxy stats`, `ctxproxy export
+  --format json`.
+- **Notes:** DeepSeek peak rates were used; off-peak is half. `session_id` is
+  `unknown` because OpenCode did not send `x-ctxproxy-session`; P2 derives
+  sessions from content. No prompt content was stored (`capture_payloads=off`).
+  The credential store was never read, and the temporary OpenCode config was
+  removed.
 
 ## Status board
 
@@ -51,6 +75,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P1-4 | pass | pass (52 files) | 130 passed | reported, not enforced | `0719d9a` |
 | 2026-10-25 | P1-5 | pass | pass (52 files) | 139 passed | reported, not enforced | `0e3496f` |
 | 2026-10-25 | P1-6 | pass | pass (52 files) | 149 passed | reported, not enforced | `689bbb8` |
+| 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
 
@@ -124,6 +149,10 @@ Rows are in execution order; see `docs/plan.md` §4.
   (JSON/CSV, `--since`), and `purge`; `docs/client-setup.md` with recipes for
   Claude Code, OpenCode, DeepSeek, OpenRouter, Codex, Aider, Gemini-compat and
   Ollama-compat.
+- 2026-10-25 — Live smoke test: OpenCode 2.0.31 -> ctxproxy `/u/deepseek` ->
+  DeepSeek `deepseek-flash`. 3 requests, provider usage, 99.2% cache hit,
+  `$0.005393` total, CLI status/stats/export verified. Temporary OpenCode config
+  removed; no prompts stored.
 
 ## Handoff notes
 

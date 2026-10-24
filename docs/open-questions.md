@@ -17,15 +17,15 @@ the code takes the conservative path and this file records what needs confirmati
 4. **DeepSeek Anthropic surface.** Does `https://api.deepseek.com/anthropic` emit
    `message_start`/`message_delta` usage with cache fields like Anthropic, and does
    it stream `event: error` the same way? Its docs say `cache_control` is ignored.
-5. **OpenCode `--standalone` credentials.** Does a private server read the stored
-   DeepSeek credential, or only the background service? If not, the smoke test
-   needs the background service or an exported credential.
+5. **OpenCode `--standalone` credentials. — RESOLVED 2026-10-25.** The private
+   server read the stored DeepSeek credential and the run succeeded without
+   exporting or printing any secret.
 
 ## Client configuration
 
-6. **OpenCode base path.** Which path does the built-in DeepSeek provider append to
-   `options.baseURL` (`/chat/completions` or `/v1/chat/completions`)? The proxy
-   should be tested with both.
+6. **OpenCode base path. — RESOLVED 2026-10-25.** With
+   `baseURL = http://127.0.0.1:8787/u/deepseek`, OpenCode appended
+   `/chat/completions` (no `/v1`), and the proxy forwarded it correctly.
 7. **Codex CLI base URL.** Does the installed Codex CLI honor a custom base URL
    when signed in with ChatGPT, or does it always use OpenAI's backend?
 8. **Cursor.** Confirm it remains unproxyable (traffic goes through Cursor's
@@ -33,12 +33,19 @@ the code takes the conservative path and this file records what needs confirmati
 
 ## Pricing
 
-9. Which DeepSeek model IDs are current for your account (`deepseek-flash`,
-   `deepseek-v4-pro`, `deepseek-chat`, `deepseek-reasoner`)? Pricing entries are
-   keyed by exact model id.
+9. ~~Which DeepSeek model IDs are current for your account (`deepseek-flash`,
+   `deepseek-v4-pro`, `deepseek-chat`, `deepseek-reasoner`)?~~ **Partially
+   resolved:** `deepseek-flash` is confirmed and priced. `deepseek-v4-pro` is
+   priced from the docs but not exercised live.
 10. Do you want bundle/priority/long-context tiers priced in v1, or is the base
     per-million-token rate sufficient (SPEC §14.2 says unsupported)?
 
 ## Product
 
 11. Should `v0.1.0-alpha` be tagged after P1, or wait until the dashboard (P2/P5)?
+12. **DeepSeek peak vs off-peak pricing.** The table uses peak rates as the
+    conservative default (off-peak is half). Should the proxy choose by UTC time,
+    or keep peak as the honest upper bound?
+13. **OpenCode side requests.** One `opencode run` produced three requests
+    (title/side calls plus the main turn). Session derivation (P2-1) should group
+    them; confirm whether that matches your expectation of one "session".

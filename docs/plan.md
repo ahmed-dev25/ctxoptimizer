@@ -1,6 +1,6 @@
 # ctxproxy — Milestone Plan (P0 + P1)
 
-**Status:** active · **Created:** 2026-10-24 · **Owner:** ahmed
+**Status:** P1 complete (2026-10-25); P2 next · **Created:** 2026-10-24 · **Owner:** ahmed
 **Scope source:** `SPEC.md` §22 (authoritative). This document turns the P0/P1
 roadmap items into an execution sequence and records the deviations agreed for
 this build. Live status, commits and branch state live in `docs/progress.md`.
