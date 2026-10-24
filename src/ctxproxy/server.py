@@ -9,6 +9,7 @@ from __future__ import annotations
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
 from starlette.applications import Starlette
@@ -19,6 +20,7 @@ from starlette.routing import Route as StarletteRoute
 from ctxproxy import __version__
 from ctxproxy.config import Config
 from ctxproxy.routing import Route, UnknownUpstream, classify, is_absolute_target
+from ctxproxy.telemetry.store import Store, default_db_path
 
 Forwarder = Callable[[Request, Route, Config], Awaitable[Response]]
 
@@ -31,16 +33,20 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
     @asynccontextmanager
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
         app.state.client = _make_client(config)
+        app.state.store = _make_store(config)
         try:
             yield
         finally:
             await app.state.client.aclose()
+            if app.state.store is not None:
+                app.state.store.close()
 
     async def health(request: Request) -> Response:
         state = request.app.state
         counters = state.counters
         last = state.last_request or {}
         usage = last.get("usage")
+        store = getattr(state, "store", None)
         return JSONResponse(
             {
                 "status": "ok",
@@ -52,7 +58,12 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
                 "completed": counters["completed"],
                 "client_disconnect": counters["client_disconnect"],
                 "upstream_errors": counters["upstream_errors"],
-                "dropped_telemetry": counters["dropped_telemetry"],
+                "dropped_telemetry": (
+                    store.stats()["dropped_events"]
+                    if store is not None
+                    else counters["dropped_telemetry"]
+                ),
+                "stored_requests": (store.count_requests() if store is not None else 0),
                 "last_model": last.get("model"),
                 "last_cost_usd": last.get("cost_usd"),
                 "last_priced": last.get("priced", False),
@@ -121,6 +132,18 @@ def _make_client(config: Config) -> httpx.AsyncClient:
         timeout=timeout,
         limits=httpx.Limits(max_connections=http.max_connections),
     )
+
+
+def _make_store(config: Config) -> Store | None:
+    try:
+        path = Path(config.telemetry.db_path) if config.telemetry.db_path else default_db_path()
+        return Store(
+            path,
+            queue_max=config.telemetry.writer_queue_max,
+            retention_days=config.telemetry.retention_days,
+        )
+    except Exception:
+        return None
 
 
 __all__ = ["Forwarder", "create_app"]

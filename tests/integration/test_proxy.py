@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import socket
+import sqlite3
 import threading
 import time
 from collections.abc import Iterator
@@ -48,13 +49,14 @@ def running_proxy(config: Config) -> Iterator[str]:
 
 
 @pytest.fixture
-def proxy(fake_upstream) -> Iterator[str]:
+def proxy(fake_upstream, tmp_path: Path) -> Iterator[str]:
     config = Config.model_validate(
         {
             "upstreams": {
                 "anthropic": fake_upstream.base_url,
                 "openai": fake_upstream.base_url,
-            }
+            },
+            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
         }
     )
     with running_proxy(config) as url:
@@ -148,8 +150,13 @@ def test_health_reports_counters(proxy) -> None:
     assert body["upstream_errors"] == 0
 
 
-def test_deepseek_usage_and_cost_are_recorded(fake_upstream) -> None:
-    config = Config.model_validate({"upstreams": {"deepseek": fake_upstream.base_url}})
+def test_deepseek_usage_and_cost_are_recorded(fake_upstream, tmp_path: Path) -> None:
+    config = Config.model_validate(
+        {
+            "upstreams": {"deepseek": fake_upstream.base_url},
+            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
+        }
+    )
     payload = (FIXTURES / "deepseek" / "chat_stream_usage.sse").read_bytes()
     fake_upstream.replay(payload, chunk_size=20)
     with running_proxy(config) as url:
@@ -167,13 +174,43 @@ def test_deepseek_usage_and_cost_are_recorded(fake_upstream) -> None:
     assert body["last_cost_usd"] == pytest.approx(expected)
 
 
-def test_connect_failure_returns_provider_shaped_502() -> None:
+def test_proxy_persists_request_to_sqlite(fake_upstream, tmp_path: Path) -> None:
+    db_path = tmp_path / "ctxproxy.db"
+    config = Config.model_validate(
+        {
+            "upstreams": {"openai": fake_upstream.base_url},
+            "telemetry": {"db_path": str(db_path)},
+        }
+    )
+    fake_upstream.json({"ok": True})
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(
+                f"{url}/v1/chat/completions",
+                content=b'{"model":"gpt-6.1-sol"}',
+            )
+            assert response.status_code == 200
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline:
+                if client.get(f"{url}/_ctxproxy/health").json()["stored_requests"] >= 1:
+                    break
+                time.sleep(0.02)
+    with sqlite3.connect(db_path) as conn:
+        row = conn.execute("SELECT model, priced, cost_actual_usd FROM requests").fetchone()
+    assert row is not None
+    assert row[0] == "gpt-6.1-sol"
+    assert row[1] == 1
+    assert row[2] is not None
+
+
+def test_connect_failure_returns_provider_shaped_502(tmp_path: Path) -> None:
     config = Config.model_validate(
         {
             "upstreams": {
                 "anthropic": "http://127.0.0.1:1",
                 "openai": "http://127.0.0.1:1",
-            }
+            },
+            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
         }
     )
     with running_proxy(config) as url:

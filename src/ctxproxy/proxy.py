@@ -10,6 +10,7 @@ from __future__ import annotations
 import time
 from collections.abc import AsyncIterator, Mapping
 from pathlib import Path
+from typing import Any
 
 import httpx
 import orjson
@@ -115,6 +116,23 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                 "priced": priced.priced,
                 "price_source": priced.source,
             }
+            store = getattr(request.app.state, "store", None)
+            if store is not None:
+                store.record_request(
+                    _store_record(
+                        request_id=request_id,
+                        route=route,
+                        config=config,
+                        model=model,
+                        content=content,
+                        status_code=upstream.status_code,
+                        outcome=outcome,
+                        ttfb_ms=ttfb_ms,
+                        total_ms=total_ms,
+                        usage=usage,
+                        priced=priced,
+                    )
+                )
 
     return StreamingResponse(
         body(),
@@ -184,6 +202,70 @@ def _table_for(config: Config) -> PricingTable:
 
 def _price(usage: Usage, route: Route, config: Config, model: str | None) -> PriceResult:
     return price_usage(usage, _table_for(config), route.profile.pricing_provider, model)
+
+
+def _is_stream(content: bytes | AsyncIterator[bytes]) -> int | None:
+    if not isinstance(content, bytes):
+        return None
+    try:
+        payload = orjson.loads(content)
+    except (orjson.JSONDecodeError, TypeError):
+        return None
+    if isinstance(payload, dict):
+        return 1 if payload.get("stream") is True else 0
+    return None
+
+
+def _store_record(
+    *,
+    request_id: str,
+    route: Route,
+    config: Config,
+    model: str | None,
+    content: bytes | AsyncIterator[bytes],
+    status_code: int,
+    outcome: str,
+    ttfb_ms: float,
+    total_ms: float,
+    usage: Usage,
+    priced: PriceResult,
+) -> dict[str, Any]:
+    size = len(content) if isinstance(content, bytes) else None
+    return {
+        "request_id": request_id,
+        "ts": time.time(),
+        "session_id": route.session_id or "unknown",
+        "project": route.project,
+        "client": route.client_name,
+        "provider": route.provider.value,
+        "endpoint": route.endpoint.value,
+        "upstream": route.upstream_name,
+        "model": model,
+        "stream": _is_stream(content),
+        "mode": route.mode.value,
+        "mutated": 0,
+        "fallback_used": 0,
+        "config_hash": config.config_hash,
+        "status_code": status_code,
+        "outcome": outcome,
+        "ttfb_ms": round(ttfb_ms, 3),
+        "total_ms": round(total_ms, 3),
+        "orig_bytes": size,
+        "final_bytes": size,
+        "usage_source": usage.source,
+        "fresh_input": usage.fresh_input,
+        "cache_read": usage.cache_read,
+        "cache_write_5m": usage.cache_write_5m,
+        "cache_write_1h": usage.cache_write_1h,
+        "cache_write_30m": usage.cache_write_30m,
+        "cache_write_12h": usage.cache_write_12h,
+        "output_tokens": usage.output,
+        "reasoning_tokens": usage.reasoning,
+        "provider_cost_usd": usage.provider_cost_usd,
+        "priced": 1 if priced.priced else 0,
+        "price_source": priced.source,
+        "cost_actual_usd": priced.cost_usd,
+    }
 
 
 def error_response(provider: Provider, status: int, message: str) -> JSONResponse:
