@@ -2,18 +2,18 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec implemented
-**Branch:** `feat/p5-p7-complete`
-**Overall:** P5 complete; P6 complete; P7 code/docs complete; remaining items are live captures and release-time signing/manual checks
+**Branch:** `main`
+**Overall:** P5/P6/P7 implemented; remaining items are live captures, release signing/notarization and manual fresh-machine checks
 
 ## Resume here
 
 - **Last completed:** P5 dashboard/security/admin APIs, P6-4 break-even
-  estimator/UI, P7 service/licensing/packaging/docs (awaiting merge).
-- **Last merge:** `969d86b` (P6)
-- **Next task:** merge this branch, then run the live-capture and fresh-machine
-  release checklist in `docs/test-report.md` / `docs/open-questions.md`.
+  estimator/UI, P7 service/licensing/packaging/docs (`e63ba16`, merge `67b4ff3`).
+- **Last merge:** `67b4ff3` (P5/P6-4/P7)
+- **Next task:** run the live-capture and release checklist in
+  `docs/test-report.md` / `docs/open-questions.md`; no code task is pending.
 - **Blocked:** none
-- **Active branch:** `feat/p5-p7-complete` — merge to `main` before release.
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -74,13 +74,13 @@
 | P4-1 | Anthropic cache hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | 4-breakpoint stair-step |
 | P4-2 | OpenAI hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | api.openai.com only |
 | P4-3 | Marker quality metric | done | `feat/p5-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (214) | markers + coverage in health/last request |
-| P5 | Full dashboard | done | `feat/p5-p7-complete` | recorded at merge | — | ruff, format, mypy, pytest (252) | Overview/Live SSE/Session/Request+diff/Waste controls/Transforms toggles/Pricing editor/Settings/Doctor; admin token+Host+CSRF |
+| P5 | Full dashboard | done | `feat/p5-p7-complete` | `e63ba16` | `67b4ff3` | ruff, format, mypy, pytest (252) | Overview/Live SSE/Session/Request+diff/Waste controls/Transforms toggles/Pricing editor/Settings/Doctor; admin token+Host+CSRF |
 | P6-1 | Native Gemini adapter | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | telemetry + segments + string-leaf tool results |
 | P6-2 | Native Ollama adapter | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | `/api/chat` NDJSON + `/api/generate` |
 | P6-3 | Named OpenAI-compatible upstreams | done | `main` | earlier | — | pass | ADR 0006 profiles; no change needed |
 | P6-4 | `stale_result_elision` | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | opt-in transform + break-even estimator API/UI |
 | P6-5 | W7/W8 | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | W7 opt-in heuristic, W8 default on |
-| P7 | Packaging/service/licensing | done | `feat/p5-p7-complete` | recorded at merge | — | ruff, format, mypy, pytest (252) | wheel + PyInstaller CI, service install/uninstall, Ed25519 verify (enforcement off), docs/changelog/licenses |
+| P7 | Packaging/service/licensing | done | `feat/p5-p7-complete` | `e63ba16` | `67b4ff3` | ruff, format, mypy, pytest (252) | wheel + PyInstaller CI, service install/uninstall, Ed25519 verify (enforcement off), docs/changelog/licenses |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -110,7 +110,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P3-7/8/9 | pass | pass (55 files) | 210 passed | reported, not enforced | `97f7d5f` |
 | 2026-10-25 | P4-3/P5 | pass | pass (56 files) | 214 passed | reported, not enforced | recorded at merge |
 | 2026-10-25 | P6 | pass | pass (58 files) | 232 passed | reported, not enforced | `6c265cf` |
-| 2026-10-25 | P5/P6-4/P7 | pass | pass (63 files) | 252 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P5/P6-4/P7 | pass | pass (63 files) | 252 passed | reported, not enforced | `e63ba16` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog

@@ -3,7 +3,7 @@
 Command: `uv run pytest -q`
 
 ```text
-252 passed, 1 warning in 17.60s
+252 passed, 1 warning in 17.52s
 ```
 
 Warnings: Starlette `TestClient` deprecation for `httpx` (upstream package;
