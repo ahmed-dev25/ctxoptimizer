@@ -2,16 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `feat/p1-2-proxy-core`
+**Branch:** `main`
 **Overall:** 7 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P1-2 — Proxy core (awaiting merge).
-- **Last merge:** `ae06f94` (P1-7)
+- **Last completed:** P1-2 — Proxy core (`4889ee7`).
+- **Last merge:** `10e90f8` (P1-2)
 - **Next task:** P1-3 — Usage parsers (`feat/p1-3-usage-parsers`)
 - **Blocked:** none
-- **Active branch:** `feat/p1-2-proxy-core` — merge to `main` before P1-3
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -24,7 +24,7 @@
 | P0-4 | Test infrastructure | done | `feat/p0-4-test-infra` | `b24a59c` | `b509c9f` | ruff, format, mypy, pytest (45) | recording uvicorn fake upstream, SSE replay, golden runner |
 | P1-1 | Routing + ingress | done | `feat/p1-1-routing` | `e045d48` | `7afda00` | ruff, format, mypy, pytest (75) | §8 table, `/p/`, `/u/`, health, mode headers |
 | P1-7 | Named upstreams + profiles | done | `feat/p1-7-upstreams` | `4b2b148` | `ae06f94` | ruff, format, mypy, pytest (83) | built-in + override profiles, per-upstream cache policy |
-| P1-2 | Proxy core | done | `feat/p1-2-proxy-core` | recorded at merge | — | ruff, format, mypy, pytest (94) | streaming tee, disconnect, 502/504, header hygiene |
+| P1-2 | Proxy core | done | `feat/p1-2-proxy-core` | `4889ee7` | `10e90f8` | ruff, format, mypy, pytest (94) | streaming tee, disconnect, 502/504, header hygiene |
 | P1-3 | Usage parsers | todo | — | — | — | — | unblocked; doc-derived fixtures allowed (ADR 0005) |
 | P1-8 | Gateway usage quirks | todo | — | — | — | — | DeepSeek/OpenRouter/Gemini/Ollama |
 | P1-4 | Pricing | todo | — | — | — | — | provider-reported cost supported |
@@ -45,7 +45,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-24 | P0-4 | pass | pass (50 files) | 45 passed | reported, not enforced | `b24a59c` |
 | 2026-10-24 | P1-1 | pass | pass (50 files) | 75 passed | reported, not enforced | `e045d48` |
 | 2026-10-24 | P1-7 | pass | pass (51 files) | 83 passed | reported, not enforced | `4b2b148` |
-| 2026-10-25 | P1-2 | pass | pass (51 files) | 94 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P1-2 | pass | pass (51 files) | 94 passed | reported, not enforced | `4889ee7` |
 
 ## Changelog
 
