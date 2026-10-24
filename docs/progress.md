@@ -2,16 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `feat/p1-6-cli`
+**Branch:** `main`
 **Overall:** 12 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P1-6 — CLI (awaiting merge).
-- **Last merge:** `3ae9fea` (P1-5)
+- **Last completed:** P1-6 — CLI (`689bbb8`).
+- **Last merge:** `b8769c1` (P1-6)
 - **Next task:** final verification and the DeepSeek-through-OpenCode smoke test.
 - **Blocked:** none
-- **Active branch:** `feat/p1-6-cli` — merge to `main`
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -29,7 +29,7 @@
 | P1-8 | Gateway usage quirks | done | `feat/p1-8-gateway-quirks` | `05d2fb9` | `6f20a24` | ruff, format, mypy, pytest (119) | DeepSeek cache fields, OpenRouter cost/comments, Gemini/Ollama compat |
 | P1-4 | Pricing | done | `feat/p1-4-pricing` | `0719d9a` | `be61b57` | ruff, format, mypy, pytest (130) | verified rates, provider cost, specificity, TTL buckets |
 | P1-5 | Store | done | `feat/p1-5-store` | `0e3496f` | `3ae9fea` | ruff, format, mypy, pytest (139) | writer thread, WAL, overflow, prune, migration |
-| P1-6 | CLI | done | `feat/p1-6-cli` | recorded at merge | — | ruff, format, mypy, pytest (149) | run/status/env/doctor/stats/export/purge |
+| P1-6 | CLI | done | `feat/p1-6-cli` | `689bbb8` | `b8769c1` | ruff, format, mypy, pytest (149) | run/status/env/doctor/stats/export/purge |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -50,7 +50,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P1-8 | pass | pass (52 files) | 119 passed | reported, not enforced | `05d2fb9` |
 | 2026-10-25 | P1-4 | pass | pass (52 files) | 130 passed | reported, not enforced | `0719d9a` |
 | 2026-10-25 | P1-5 | pass | pass (52 files) | 139 passed | reported, not enforced | `0e3496f` |
-| 2026-10-25 | P1-6 | pass | pass (52 files) | 149 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P1-6 | pass | pass (52 files) | 149 passed | reported, not enforced | `689bbb8` |
 
 ## Changelog
 
