@@ -2,17 +2,17 @@
 
 **Last updated:** 2026-10-24
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `feat/p0-4-test-infra`
+**Branch:** `main`
 **Overall:** 4 / 10 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P0-4 — Test infrastructure (awaiting merge).
-- **Last merge:** `eea33ec` (P0-3)
+- **Last completed:** P0-4 — Test infrastructure (`b24a59c`).
+- **Last merge:** `b509c9f` (P0-4)
 - **Next task:** P1-1 — Routing + ingress (`feat/p1-1-routing`)
 - **Blocked:** P1-3 — usage parsers (awaiting provider captures, see
   `docs/plan.md` §6)
-- **Active branch:** `feat/p0-4-test-infra` — merge to `main` before P1-1
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -22,7 +22,7 @@
 | P0-1 | Toolchain + skeleton | done | `feat/p0-1-toolchain` | `c7c34c7` | `afdae28` | ruff, format, mypy, pytest (4) | `uv build` and `ctxproxy --version` verified |
 | P0-2 | Config | done | `feat/p0-2-config` | `116adab` | `c37f4f7` | ruff, format, mypy, pytest (22) | default template round-trips to model defaults; wheel ships it |
 | P0-3 | Models, logging, ULID | done | `feat/p0-3-models-logging` | `7428195` | `eea33ec` | ruff, format, mypy, pytest (38) | SEC-2 sanitizer + monotonic stdlib ULID |
-| P0-4 | Test infrastructure | done | `feat/p0-4-test-infra` | recorded at merge | — | ruff, format, mypy, pytest (45) | recording uvicorn fake upstream, SSE replay, golden runner |
+| P0-4 | Test infrastructure | done | `feat/p0-4-test-infra` | `b24a59c` | `b509c9f` | ruff, format, mypy, pytest (45) | recording uvicorn fake upstream, SSE replay, golden runner |
 | P1-1 | Routing + ingress | todo | — | — | — | — | — |
 | P1-2 | Proxy core | todo | — | — | — | — | — |
 | P1-4 | Pricing | todo | — | — | — | — | — |
@@ -41,7 +41,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-24 | P0-1 | pass | pass (50 files) | 4 passed | reported, not enforced | `c7c34c7` |
 | 2026-10-24 | P0-2 | pass | pass (50 files) | 22 passed | reported, not enforced | `116adab` |
 | 2026-10-24 | P0-3 | pass | pass (50 files) | 38 passed | reported, not enforced | `7428195` |
-| 2026-10-24 | P0-4 | pass | pass (50 files) | 45 passed | reported, not enforced | recorded at merge |
+| 2026-10-24 | P0-4 | pass | pass (50 files) | 45 passed | reported, not enforced | `b24a59c` |
 
 ## Changelog
 
