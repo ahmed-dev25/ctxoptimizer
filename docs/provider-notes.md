@@ -443,3 +443,91 @@ OpenAI:
 
 Standards:
 - https://html.spec.whatwg.org/multipage/server-sent-events.html
+
+---
+
+## 10. Gateways, aggregators and clients (added 2026-10-24)
+
+This section records the provider-support decision in ADR 0006: the proxy speaks
+protocols, not vendor SDKs. One OpenAI-compatible adapter plus a named upstream
+covers every gateway below; only native Gemini/Ollama fidelity needs new adapters
+(P6).
+
+### 10.1 DeepSeek
+
+- OpenAI-compatible: `https://api.deepseek.com` (and `/v1`).
+- **Anthropic-compatible:** `https://api.deepseek.com/anthropic`; Claude Code can
+  use it via `ANTHROPIC_BASE_URL`.
+- Responses API: documented separately at `/guides/responses_api`.
+- Anthropic compatibility **ignores** `cache_control`, `anthropic-version`,
+  `anthropic-beta` (except Files API), `service_tier`, `container` and
+  `mcp_servers`. `claude-opus*` model names map to `deepseek-v4-pro`; other
+  `claude*` names map to `deepseek-flash`.
+- Cache is automatic, disk-backed, prefix-unit based, with no TTL markers.
+  Usage exposes `prompt_cache_hit_tokens` and `prompt_cache_miss_tokens`
+  instead of `cached_tokens`.
+- Profile: `usage = "deepseek"`, `cache_policy = "automatic-deepseek"`,
+  `cache_hints = false` on the Anthropic surface.
+
+### 10.2 OpenRouter
+
+- OpenAI-compatible at `https://openrouter.ai/api/v1`; also exposes
+  `/api/v1/responses` and `/api/v1/messages`.
+- Usage is **always** included in the final chunk. `usage: {include: true}` and
+  `stream_options.include_usage` are deprecated and have no effect.
+- Usage carries `cost` and `cost_details.upstream_inference_cost`, plus
+  `cached_tokens` and `cache_write_tokens`.
+- The usage chunk is **not** OpenAI's shape: it contains one content-free choice
+  with a repeated `finish_reason` rather than `choices: []`.
+- Sends SSE comments (`: OPENROUTER PROCESSING`) and mid-stream errors as HTTP 200
+  `data:` events with a top-level `error`.
+- `X-Generation-Id` response header.
+- Profile: `usage = "openrouter"`, `cost_source = "provider"`.
+
+### 10.3 OpenCode (client)
+
+- Version 2.0.31; config directory `~/.config/opencode`; providers are configured
+  in `opencode.json` and backed by the AI SDK / Models.dev.
+- Custom provider: `npm = "@ai-sdk/openai-compatible"` for
+  `/v1/chat/completions`, or `@ai-sdk/openai` for `/v1/responses`;
+  `options.baseURL` overrides the endpoint.
+- `opencode run -m provider/model "message"` runs headlessly; `--standalone`
+  starts a private server.
+- With ChatGPT OAuth and **no** custom base URL, OpenAI traffic may use zstd or
+  WebSocket; with a custom base URL it uses plain JSON (per the v2 docs).
+- Implication: point `baseURL` at `http://127.0.0.1:8787/u/<name>`; no adapter is
+  needed. OpenCode is the first client recipe.
+
+### 10.4 Gemini OpenAI compatibility
+
+- Base `https://generativelanguage.googleapis.com/v1beta/openai/`; OpenAI Chat,
+  streaming and function calling are supported.
+- The docs show `stream_options.include_usage`; the compatibility layer is beta
+  and has known gaps (reported inflated token counts, partial `stream_options`
+  support).
+- Profile: `usage = "gemini-openai"`, `cache_policy = "gemini-implicit"`.
+- Native Gemini adapter remains P6 for full fidelity.
+
+### 10.5 Ollama OpenAI compatibility
+
+- `/v1` is OpenAI-compatible; the native `/api/chat` and `/api/generate` endpoints
+  return NDJSON.
+- Cost is zero; token and latency telemetry still matter.
+- Profile: `usage = "ollama-openai"`, `cost_source = "none"`.
+- Native Ollama adapter remains P6.
+
+### 10.6 Cross-provider boundary
+
+Provider support only. The proxy does not choose a provider, translate between
+protocols, or fall back across providers. The client's base URL selects the
+upstream; the proxy forwards.
+
+Sources (accessed 2026-10-24):
+- https://api-docs.deepseek.com/guides/anthropic_api/
+- https://api-docs.deepseek.com/guides/kv_cache
+- https://api-docs.deepseek.com/guides/responses_api
+- https://openrouter.ai/docs/api_reference/streaming
+- https://openrouter.ai/docs/cookbook/administration/usage-accounting
+- https://opencode.ai/docs/providers/
+- https://ai.google.dev/gemini-api/docs/openai
+- https://docs.ollama.com/api/openai-compatibility (OpenAI-compatible `/v1`)

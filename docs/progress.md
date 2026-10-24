@@ -3,7 +3,7 @@
 **Last updated:** 2026-10-24
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
 **Branch:** `main`
-**Overall:** 4 / 10 tasks complete (Phase 0 complete)
+**Overall:** 4 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
@@ -24,11 +24,13 @@
 | P0-3 | Models, logging, ULID | done | `feat/p0-3-models-logging` | `7428195` | `eea33ec` | ruff, format, mypy, pytest (38) | SEC-2 sanitizer + monotonic stdlib ULID |
 | P0-4 | Test infrastructure | done | `feat/p0-4-test-infra` | `b24a59c` | `b509c9f` | ruff, format, mypy, pytest (45) | recording uvicorn fake upstream, SSE replay, golden runner |
 | P1-1 | Routing + ingress | todo | — | — | — | — | — |
+| P1-7 | Named upstreams + profiles | todo | — | — | — | — | — |
 | P1-2 | Proxy core | todo | — | — | — | — | — |
-| P1-4 | Pricing | todo | — | — | — | — | — |
+| P1-3 | Usage parsers | todo | — | — | — | — | unblocked; doc-derived fixtures allowed (ADR 0005) |
+| P1-8 | Gateway usage quirks | todo | — | — | — | — | DeepSeek/OpenRouter/Gemini/Ollama |
+| P1-4 | Pricing | todo | — | — | — | — | provider-reported cost supported |
 | P1-5 | Store | todo | — | — | — | — | — |
 | P1-6 | CLI | todo | — | — | — | — | — |
-| P1-3 | Usage parsers | todo | — | — | — | — | unblocked; doc-derived fixtures allowed (ADR 0005) |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -73,6 +75,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   `cache_write_tokens`; Anthropic now exposes
   `output_tokens_details.thinking_tokens`; OpenAI GPT-5.6+ has 30m/12h
   cache-write buckets and rates. P1-3 unblocked under ADR 0005.
+- 2026-10-24 — Provider scope: added P1-7 (named upstreams + profiles) and P1-8
+  (gateway usage quirks) after research into DeepSeek, OpenRouter, OpenCode,
+  Gemini-compat and Ollama-compat. Protocol-first support (ADR 0006); no
+  cross-provider routing or translation. Open questions recorded in
+  `docs/open-questions.md`.
 
 ## Handoff notes
 
