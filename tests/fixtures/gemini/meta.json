@@ -1,0 +1,9 @@
+{
+  "source": "documented",
+  "provider": "gemini-openai",
+  "accessed": "2026-10-24",
+  "sources": [
+    "https://ai.google.dev/gemini-api/docs/openai"
+  ],
+  "notes": "OpenAI-compatible Gemini chat. stream_options support is beta; usage may be absent. Doc-derived shape, not a live capture."
+}
