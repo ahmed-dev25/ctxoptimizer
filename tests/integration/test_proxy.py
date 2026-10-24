@@ -8,6 +8,7 @@ import threading
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 
 import httpx
 import pytest
@@ -17,6 +18,8 @@ from ctxproxy.config import Config
 from ctxproxy.models import Provider
 from ctxproxy.proxy import error_response
 from ctxproxy.server import create_app
+
+FIXTURES = Path(__file__).parents[1] / "fixtures"
 
 
 @contextmanager
@@ -143,6 +146,25 @@ def test_health_reports_counters(proxy) -> None:
     assert body["requests"] >= 1
     assert body["completed"] >= 1
     assert body["upstream_errors"] == 0
+
+
+def test_deepseek_usage_and_cost_are_recorded(fake_upstream) -> None:
+    config = Config.model_validate({"upstreams": {"deepseek": fake_upstream.base_url}})
+    payload = (FIXTURES / "deepseek" / "chat_stream_usage.sse").read_bytes()
+    fake_upstream.replay(payload, chunk_size=20)
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(
+                f"{url}/u/deepseek/chat/completions",
+                content=b'{"model":"deepseek-flash","stream":true}',
+            )
+            assert response.status_code == 200
+            body = client.get(f"{url}/_ctxproxy/health").json()
+    assert body["last_model"] == "deepseek-flash"
+    assert body["last_usage_source"] == "provider"
+    assert body["last_priced"] is True
+    expected = (40 * 0.3 + 60 * 0.006 + 10 * 1.2) / 1_000_000
+    assert body["last_cost_usd"] == pytest.approx(expected)
 
 
 def test_connect_failure_returns_provider_shaped_502() -> None:

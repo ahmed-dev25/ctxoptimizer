@@ -35,6 +35,7 @@ class UpstreamProfile:
     cost_source: CostSource
     cache_hints: bool
     inject_stream_usage: bool
+    pricing_provider: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,24 +47,42 @@ class ResolvedUpstream:
 
 BUILTIN_PROFILES: dict[str, UpstreamProfile] = {
     "anthropic": UpstreamProfile(
-        "anthropic", "anthropic", "explicit-anthropic", "pricing", True, False
+        "anthropic",
+        "anthropic",
+        "explicit-anthropic",
+        "pricing",
+        True,
+        False,
+        "anthropic",
     ),
-    "openai": UpstreamProfile("openai", "openai", "implicit-openai", "pricing", True, False),
-    "gemini": UpstreamProfile("gemini", "gemini", "gemini-implicit", "pricing", False, False),
-    "ollama": UpstreamProfile("ollama", "ollama", "none", "none", False, False),
+    "openai": UpstreamProfile(
+        "openai", "openai", "implicit-openai", "pricing", True, False, "openai"
+    ),
+    "gemini": UpstreamProfile(
+        "gemini", "gemini", "gemini-implicit", "pricing", False, False, "gemini"
+    ),
+    "ollama": UpstreamProfile("ollama", "ollama", "none", "none", False, False, "ollama"),
     "deepseek": UpstreamProfile(
-        "openai", "deepseek", "automatic-deepseek", "pricing", False, False
+        "openai", "deepseek", "automatic-deepseek", "pricing", False, False, "deepseek"
     ),
     "deepseek-anthropic": UpstreamProfile(
-        "anthropic", "anthropic", "automatic-deepseek", "pricing", False, False
+        "anthropic",
+        "anthropic",
+        "automatic-deepseek",
+        "pricing",
+        False,
+        False,
+        "deepseek",
     ),
     "openrouter": UpstreamProfile(
-        "openai", "openrouter", "implicit-openai", "provider", False, False
+        "openai", "openrouter", "implicit-openai", "provider", False, False, "openrouter"
     ),
     "gemini-openai": UpstreamProfile(
-        "openai", "gemini-openai", "gemini-implicit", "pricing", False, False
+        "openai", "gemini-openai", "gemini-implicit", "pricing", False, False, "gemini"
     ),
-    "ollama-openai": UpstreamProfile("openai", "ollama-openai", "none", "none", False, False),
+    "ollama-openai": UpstreamProfile(
+        "openai", "ollama-openai", "none", "none", False, False, "ollama"
+    ),
 }
 
 
@@ -73,7 +92,7 @@ def resolve_upstream(name: str, config: Config) -> ResolvedUpstream:
     if entry is None:
         raise UnknownUpstream(f"unknown upstream: {name}")
     if isinstance(entry, str):
-        profile = BUILTIN_PROFILES.get(name) or _default_profile(None, entry)
+        profile = BUILTIN_PROFILES.get(name) or _default_profile(None, entry, name)
         return ResolvedUpstream(name=name, url=entry, profile=profile)
     profile = _profile_for_entry(name, entry)
     return ResolvedUpstream(name=name, url=entry.url, profile=profile)
@@ -81,7 +100,7 @@ def resolve_upstream(name: str, config: Config) -> ResolvedUpstream:
 
 def _profile_for_entry(name: str, entry: UpstreamEntry) -> UpstreamProfile:
     builtin = BUILTIN_PROFILES.get(name)
-    base = builtin or _default_profile(entry.kind, entry.url)
+    base = builtin or _default_profile(entry.kind, entry.url, name)
     return UpstreamProfile(
         kind=entry.kind,
         usage=entry.usage or base.usage,
@@ -93,10 +112,11 @@ def _profile_for_entry(name: str, entry: UpstreamEntry) -> UpstreamProfile:
             if entry.inject_stream_usage is None
             else entry.inject_stream_usage
         ),
+        pricing_provider=entry.pricing_provider or base.pricing_provider,
     )
 
 
-def _default_profile(kind: UpstreamKind | None, url: str) -> UpstreamProfile:
+def _default_profile(kind: UpstreamKind | None, url: str, name: str) -> UpstreamProfile:
     host = (urlsplit(url).hostname or "").lower()
     if kind == "anthropic":
         return UpstreamProfile(
@@ -106,11 +126,12 @@ def _default_profile(kind: UpstreamKind | None, url: str) -> UpstreamProfile:
             "pricing",
             host == "api.anthropic.com",
             False,
+            name,
         )
     if kind == "gemini":
-        return UpstreamProfile(kind, "gemini", "gemini-implicit", "pricing", False, False)
+        return UpstreamProfile(kind, "gemini", "gemini-implicit", "pricing", False, False, name)
     if kind == "ollama":
-        return UpstreamProfile(kind, "ollama", "none", "none", False, False)
+        return UpstreamProfile(kind, "ollama", "none", "none", False, False, name)
     return UpstreamProfile(
         kind,
         "openai",
@@ -118,6 +139,7 @@ def _default_profile(kind: UpstreamKind | None, url: str) -> UpstreamProfile:
         "pricing",
         host == "api.openai.com",
         False,
+        name,
     )
 
 

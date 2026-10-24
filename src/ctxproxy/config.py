@@ -93,6 +93,7 @@ class UpstreamEntry(_Section):
     cost_source: CostSource | None = None
     cache_hints: bool | None = None
     inject_stream_usage: bool | None = None
+    pricing_provider: str | None = None
 
     @field_validator("url")
     @classmethod
