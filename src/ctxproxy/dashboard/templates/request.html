@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxproxy — {{ title }}</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
+    nav a { color: #60a5fa; text-decoration: none; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    pre { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
+          padding: 16px; overflow: auto; font-size: .82rem; color: #a5d6ff; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/_ctxproxy/">Overview</a>
+    <a href="/_ctxproxy/live">Live</a>
+    <a href="/_ctxproxy/sessions">Sessions</a>
+    <a href="/_ctxproxy/requests">Requests</a>
+    <a href="/_ctxproxy/waste">Waste</a>
+    <a href="/_ctxproxy/transforms">Transforms</a>
+    <a href="/_ctxproxy/pricing">Pricing</a>
+    <a href="/_ctxproxy/settings">Settings</a>
+  </nav>
+  <h1>{{ title }}</h1>
+  {% if found %}
+  <p class="muted">Metadata only; prompts are not shown.</p>
+  <pre>{{ row | tojson(indent=2) }}</pre>
+  {% else %}
+  <p class="muted">Request not found.</p>
+  {% endif %}
+</body>
+</html>

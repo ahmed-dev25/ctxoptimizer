@@ -2,16 +2,17 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec (P1 complete; P2 in progress)
-**Branch:** `main`
-**Overall:** P3 complete (1–9); P2/P4 done; P5–P7 remain
+**Branch:** `feat/p5-dashboard`
+**Overall:** P3/P4 complete; P5 partial (read-only dashboard); P6–P7 remain
 
 ## Resume here
 
-- **Last completed:** P3-7/8/9 (`97f7d5f`, merge `8890137`).
+- **Last completed:** P4-3 marker quality + P5 dashboard pages/read APIs
+  (awaiting merge).
 - **Last merge:** `8890137` (P3-7/8/9)
-- **Next task:** P4-3 marker quality + P5 dashboard pages (`feat/p5-dashboard`)
+- **Next task:** P6 native Gemini/Ollama adapters + usage, W7/W8 (`feat/p6-native`)
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p5-dashboard` — merge to `main` before P6
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -71,9 +72,9 @@
 | P3-9 | MCP expand | done | `feat/p3-7-8-9` | `97f7d5f` | `8890137` | ruff, format, mypy, pytest (210) | stdio JSON-RPC + blob retrieval |
 | P4-1 | Anthropic cache hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | 4-breakpoint stair-step |
 | P4-2 | OpenAI hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | api.openai.com only |
-| P4-3 | Marker quality metric | todo | — | — | — | — | — |
-| P5 | Full dashboard | partial | — | — | — | — | v0 exists; Live/Request/Diff/Pricing/Settings pending |
-| P6 | Gemini/Ollama native, W7/W8 | todo | — | — | — | — | OpenAI-compat surfaces work |
+| P4-3 | Marker quality metric | done | `feat/p5-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (214) | markers + coverage in health/last request |
+| P5 | Full dashboard | partial | `feat/p5-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (214) | Live/Sessions/Requests/Transforms/Pricing/Settings + read APIs; diff viewer, admin token/CSRF, doctor pending |
+| P6 | Gemini/Ollama native, W7/W8 | todo | - | - | - | - | OpenAI-compat surfaces work |
 | P7 | Packaging/service/licensing | partial | — | — | — | — | wheel builds; service/licensing pending |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
@@ -102,6 +103,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P2 analysis | pass | pass (53 files) | 189 passed | reported, not enforced | `0959c09` |
 | 2026-10-25 | P2-6/P4 | pass | pass (54 files) | 201 passed | reported, not enforced | `399c962` |
 | 2026-10-25 | P3-7/8/9 | pass | pass (55 files) | 210 passed | reported, not enforced | `97f7d5f` |
+| 2026-10-25 | P4-3/P5 | pass | pass (56 files) | 214 passed | reported, not enforced | recorded at merge |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -203,6 +205,10 @@ Rows are in execution order; see `docs/plan.md` §4.
   drift, byte-true batch-anchored `cache_serve` with a bounded session map, and
   the stdio MCP `ctxproxy_expand` server with blob retrieval and head/tail
   truncation.
+- 2026-10-25 — P4-3/P5: marker-quality metric (markers + coverage to the last
+  client cache marker) exposed in health/last request; read-only dashboard
+  pages for Live, Sessions, Requests (list + detail), Transforms, Pricing and
+  Settings plus matching JSON APIs. Admin token/CSRF/diff viewer/doctor remain.
 
 ## Handoff notes
 

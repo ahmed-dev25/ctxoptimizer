@@ -21,12 +21,34 @@ from ctxproxy import __version__
 from ctxproxy.analysis.state import AnalysisState
 from ctxproxy.config import Config, data_dir
 from ctxproxy.dashboard.api import (
+    guard_status,
     recent_requests,
     recommendations_api,
+    request_detail,
+    session_detail,
     summary,
     waste,
 )
-from ctxproxy.dashboard.views import overview, waste_view
+from ctxproxy.dashboard.api import (
+    pricing as pricing_api,
+)
+from ctxproxy.dashboard.api import (
+    sessions as sessions_api,
+)
+from ctxproxy.dashboard.api import (
+    transforms as transforms_api,
+)
+from ctxproxy.dashboard.views import (
+    live_view,
+    overview,
+    pricing_view,
+    request_view,
+    requests_view,
+    sessions_view,
+    settings_view,
+    transforms_view,
+    waste_view,
+)
 from ctxproxy.guard import Guard
 from ctxproxy.routing import Route, UnknownUpstream, classify, is_absolute_target
 from ctxproxy.telemetry.blobs import BlobStore
@@ -84,6 +106,7 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
                 "last_fallback": last.get("fallback_used", False),
                 "last_transforms": last.get("transform_ids", []),
                 "last_drift": last.get("drift"),
+                "last_marker_coverage": (last.get("marker_quality") or {}).get("coverage"),
                 "findings": (
                     len(state.analysis.findings())
                     if getattr(state, "analysis", None) is not None
@@ -123,7 +146,20 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
             StarletteRoute("/_ctxproxy/api/requests", recent_requests, methods=["GET"]),
             StarletteRoute("/_ctxproxy/api/waste", waste, methods=["GET"]),
             StarletteRoute("/_ctxproxy/api/recommend", recommendations_api, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/sessions", sessions_api, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/sessions/{session_id}", session_detail, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/requests/{request_id}", request_detail, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/transforms", transforms_api, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/pricing", pricing_api, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/guard", guard_status, methods=["GET"]),
             StarletteRoute("/_ctxproxy/waste", waste_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/live", live_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/sessions", sessions_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/requests", requests_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/requests/{request_id}", request_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/transforms", transforms_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/pricing", pricing_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/settings", settings_view, methods=["GET"]),
             StarletteRoute("/{path:path}", handler, methods=_METHODS),
         ],
         lifespan=lifespan,
