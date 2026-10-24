@@ -2,16 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `main`
-**Overall:** 7 / 12 tasks complete (Phase 0 complete)
+**Branch:** `feat/p1-3-usage-parsers`
+**Overall:** 8 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P1-2 — Proxy core (`4889ee7`).
+- **Last completed:** P1-3 — Usage parsers (awaiting merge).
 - **Last merge:** `10e90f8` (P1-2)
-- **Next task:** P1-3 — Usage parsers (`feat/p1-3-usage-parsers`)
+- **Next task:** P1-8 — Gateway usage quirks (`feat/p1-8-gateway-quirks`)
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p1-3-usage-parsers` — merge to `main` before P1-8
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -25,7 +25,7 @@
 | P1-1 | Routing + ingress | done | `feat/p1-1-routing` | `e045d48` | `7afda00` | ruff, format, mypy, pytest (75) | §8 table, `/p/`, `/u/`, health, mode headers |
 | P1-7 | Named upstreams + profiles | done | `feat/p1-7-upstreams` | `4b2b148` | `ae06f94` | ruff, format, mypy, pytest (83) | built-in + override profiles, per-upstream cache policy |
 | P1-2 | Proxy core | done | `feat/p1-2-proxy-core` | `4889ee7` | `10e90f8` | ruff, format, mypy, pytest (94) | streaming tee, disconnect, 502/504, header hygiene |
-| P1-3 | Usage parsers | todo | — | — | — | — | unblocked; doc-derived fixtures allowed (ADR 0005) |
+| P1-3 | Usage parsers | done | `feat/p1-3-usage-parsers` | recorded at merge | — | ruff, format, mypy, pytest (112) | SSE decoder, Anthropic/OpenAI chat/Responses, doc fixtures, fuzz |
 | P1-8 | Gateway usage quirks | todo | — | — | — | — | DeepSeek/OpenRouter/Gemini/Ollama |
 | P1-4 | Pricing | todo | — | — | — | — | provider-reported cost supported |
 | P1-5 | Store | todo | — | — | — | — | — |
@@ -46,6 +46,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-24 | P1-1 | pass | pass (50 files) | 75 passed | reported, not enforced | `e045d48` |
 | 2026-10-24 | P1-7 | pass | pass (51 files) | 83 passed | reported, not enforced | `4b2b148` |
 | 2026-10-25 | P1-2 | pass | pass (51 files) | 94 passed | reported, not enforced | `4889ee7` |
+| 2026-10-25 | P1-3 | pass | pass (52 files) | 112 passed | reported, not enforced | recorded at merge |
 
 ## Changelog
 
@@ -96,6 +97,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   `aiter_raw`, side-channel null usage parser, client-disconnect closure,
   provider-shaped 502/504, verbatim upstream status/headers/body, request ids and
   runtime counters.
+- 2026-10-25 — P1-3: byte-buffered WHATWG SSE decoder (CR/LF/CRLF, comments,
+  multi-line data, BOM, split UTF-8, bounded frames) and streaming parsers for
+  Anthropic (cumulative delta semantics, TTL breakdown, thinking tokens), OpenAI
+  Chat and OpenAI Responses; non-stream body parsers; doc-derived fixtures for
+  Anthropic/OpenAI/DeepSeek/OpenRouter; hypothesis totality tests.
 
 ## Handoff notes
 

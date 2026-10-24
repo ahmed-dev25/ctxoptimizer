@@ -103,8 +103,11 @@ class Usage:
     cache_read: int | None = None
     cache_write_5m: int | None = None
     cache_write_1h: int | None = None
+    cache_write_30m: int | None = None
+    cache_write_12h: int | None = None
     output: int | None = None
     reasoning: int | None = None
+    provider_cost_usd: float | None = None
     source: Literal["provider", "estimated", "none"] = "none"
     raw: dict[str, object] | None = None
     assistant_text_hashes: list[bytes] | None = None

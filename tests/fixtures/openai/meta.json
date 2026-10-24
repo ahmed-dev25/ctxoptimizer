@@ -1,0 +1,12 @@
+{
+  "source": "documented",
+  "provider": "openai",
+  "accessed": "2026-10-24",
+  "sources": [
+    "https://developers.openai.com/api/reference/resources/chat/subresources/completions/streaming-events/",
+    "https://developers.openai.com/api/reference/resources/responses/streaming-events/",
+    "https://raw.githubusercontent.com/openai/openai-python/main/src/openai/types/completion_usage.py",
+    "https://raw.githubusercontent.com/openai/openai-python/main/src/openai/types/responses/response_usage.py"
+  ],
+  "notes": "Chat usage appears only in the final chunk with include_usage; Responses usage is on response.completed. prompt_tokens includes cached and cache-write tokens."
+}

@@ -68,7 +68,7 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
         return error_response(route.provider, 502, "ctxproxy: upstream unreachable")
 
     ttfb_ms = (time.perf_counter() - started) * 1000
-    parser = new_usage_parser(route.provider, route.profile)
+    parser = new_usage_parser(route.provider, route.endpoint, route.profile)
 
     async def body() -> AsyncIterator[bytes]:
         outcome = "client_disconnect"
