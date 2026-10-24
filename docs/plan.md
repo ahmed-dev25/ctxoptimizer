@@ -12,7 +12,7 @@ this build. Live status, commits and branch state live in `docs/progress.md`.
 | Phase | Deliverable |
 |---|---|
 | P0 | Repo scaffolding, validated configuration, core models/logging, test infrastructure |
-| P1 | Transparent proxy, ground-truth telemetry, pricing, SQLite store, basic CLI |
+| P1 | Transparent proxy including named upstreams for Anthropic/OpenAI-compatible providers, ground-truth telemetry, pricing, SQLite store, basic CLI |
 
 **Milestone end state:** a local proxy running in `passthrough` mode that records
 provider-reported usage and cost for providers with captured traffic, and honestly
@@ -38,6 +38,7 @@ stale-result elision. No request body is ever mutated in this milestone; INV-2
 | 6 | Provider docs are researched in P1 and dated in `docs/provider-notes.md` | — |
 | 7 | CI is committed now but stays dormant until a remote exists | 0001 |
 | 8 | Documented-shape fixtures are allowed when sourced and dated | 0005 |
+| 9 | Protocol-first provider support; named upstreams + per-upstream profiles | 0006 |
 
 ## 3. Environment
 
@@ -62,11 +63,13 @@ Tasks are strictly sequential: one branch, one gate run, one merge at a time.
 | 3 | P0-3 Models, logging, ULID | P0-1 | `feat/p0-3-models-logging` |
 | 4 | P0-4 Test infrastructure | P0-1 | `feat/p0-4-test-infra` |
 | 5 | P1-1 Routing + ingress | P0-2, P0-3 | `feat/p1-1-routing` |
-| 6 | P1-2 Proxy core | P1-1 | `feat/p1-2-proxy-core` |
-| 7 | P1-4 Pricing | P0-2 | `feat/p1-4-pricing` |
-| 8 | P1-5 Store | P0-2, P0-3 | `feat/p1-5-store` |
-| 9 | P1-6 CLI | P1-2, P1-5 | `feat/p1-6-cli` |
-| 10 | P1-3 Usage parsers | documented shapes, P0-4 | `feat/p1-3-usage-parsers` |
+| 6 | P1-7 Named upstreams + profiles | P1-1 | `feat/p1-7-upstreams` |
+| 7 | P1-2 Proxy core | P1-1, P1-7 | `feat/p1-2-proxy-core` |
+| 8 | P1-3 Usage parsers | documented shapes, P0-4 | `feat/p1-3-usage-parsers` |
+| 9 | P1-8 Gateway usage quirks | P1-3 | `feat/p1-8-gateway-quirks` |
+| 10 | P1-4 Pricing | P0-2, P1-8 | `feat/p1-4-pricing` |
+| 11 | P1-5 Store | P0-2, P0-3 | `feat/p1-5-store` |
+| 12 | P1-6 CLI | P1-2, P1-5 | `feat/p1-6-cli` |
 
 P1-3 is deliberately last: parser code is written against real provider bytes
 (SPEC §0.4). Until captures exist, `proxy.py` uses a null parser that records
@@ -169,6 +172,30 @@ shape; `doctor` reports the expected checks.
 **DoD:** all gates; a manual end-to-end session through a real client records
 usage if captures exist, otherwise `usage_source="none"`.
 
+### P1-7 — Named upstreams + provider profiles
+**Deliverable:** `[upstreams.<name>]` entries with `url`, `kind`, and a profile:
+`usage` (`anthropic` | `openai` | `deepseek` | `openrouter` | `gemini-openai` | `ollama-openai`),
+`cache_policy` (`explicit-anthropic` | `implicit-openai` | `automatic-deepseek` |
+`gemini-implicit` | `none`), `cost_source` (`pricing` | `provider` | `none`),
+`cache_hints` (bool), `inject_stream_usage` (bool).
+`/u/<name>/**` routing strips the prefix and appends the remainder to the upstream URL.
+Built-in profiles for anthropic, openai, deepseek, deepseek-anthropic, openrouter,
+gemini and ollama.
+**Tests:** named upstream resolution, unknown name -> 404, prefix stripping, query
+preservation, profile defaults, and no provider-specific injection on third-party hosts.
+**DoD:** all gates; `ctxproxy doctor` can resolve every configured upstream.
+
+### P1-8 — Gateway usage quirks
+**Deliverable:** usage extraction for DeepSeek (`prompt_cache_hit_tokens` /
+`prompt_cache_miss_tokens`), OpenRouter (always-on final usage chunk, `cost`,
+`cost_details.upstream_inference_cost`, content-free choice in the usage chunk,
+`: OPENROUTER PROCESSING` comments), Gemini OpenAI-compat (final usage and
+`stream_options` tolerance) and Ollama OpenAI-compat. Provider-reported cost surfaces
+as `Usage.provider_cost_usd` and is preferred when `cost_source="provider"`.
+**Tests:** doc-derived fixtures for DeepSeek and OpenRouter; usage accepted on any
+chunk; comments ignored; provider cost recorded; `[DONE]` optional.
+**DoD:** all gates; the DeepSeek-through-OpenCode smoke test records usage.
+
 ### P1-3 — Usage parsers
 **Deliverable:** `telemetry/usage.py` with an incremental SSE splitter (CRLF,
 split mid-event, split mid-UTF-8, comment lines, `data: [DONE]`), Anthropic
@@ -196,6 +223,10 @@ tests/fixtures/openai/chat_stream_no_usage.sse
 tests/fixtures/openai/chat.json
 tests/fixtures/openai/responses_stream.sse
 tests/fixtures/openai/responses.json
+tests/fixtures/deepseek/chat_stream_usage.sse
+tests/fixtures/deepseek/chat.json
+tests/fixtures/openrouter/chat_stream_usage.sse
+tests/fixtures/openrouter/chat.json
 ```
 
 Rules:
@@ -242,6 +273,7 @@ the implemented modules and >= 90% on `telemetry/usage.py` once P1-3 lands.
 |---|---|---|
 | P1-2 streaming tee / disconnect semantics | Silent corruption or hangs | Byte-equality tests at 1/7/4096 bytes written before the code |
 | Documentation drift in provider shapes | Parser mismatch | Dated `docs/provider-notes.md`, doc-derived fixtures, captures supersede when available |
+| "OpenAI-compatible" is a spectrum | Wrong usage/cost on some gateways | Per-upstream profile + provider-reported cost; unknown shapes fall back to `source="none"` |
 | Windows CRLF vs SSE fixtures | Tests exercise the wrong bytes | `tests/fixtures/** -text` + `core.autocrlf=false` |
 | Stub modules drag coverage down | False red gates | Enforce coverage only on implemented modules |
 | CI dormant (no remote) | Regressions not caught automatically | Local gates mandatory before every merge |
