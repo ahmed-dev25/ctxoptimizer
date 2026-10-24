@@ -26,6 +26,7 @@ class PipelineResult:
     changed: bool
     shadow: bool
     changed_blocks: list[tuple[str, str]]
+    original_texts: list[tuple[str | None, str | None, str]]
 
 
 def run_pipeline(
@@ -37,6 +38,11 @@ def run_pipeline(
 ) -> PipelineResult:
     """Run transforms in order, reverting failures and non-saving changes."""
     original_segments = adapter.segments(payload)
+    original_texts: list[tuple[str | None, str | None, str]] = [
+        (ref.tool_use_id, ref.tool_name, text)
+        for ref in adapter.iter_tool_results(payload)
+        if (text := ref.get_text()) is not None
+    ]
     orig_tokens = _token_total(original_segments)
     reports: list[TransformReport] = []
     changed_blocks: list[tuple[str, str]] = []
@@ -95,6 +101,7 @@ def run_pipeline(
         changed=any(report.changed and report.discarded_reason is None for report in reports),
         shadow=ctx.mode is Mode.SHADOW,
         changed_blocks=changed_blocks,
+        original_texts=original_texts,
     )
 
 

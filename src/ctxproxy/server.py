@@ -18,7 +18,15 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Route as StarletteRoute
 
 from ctxproxy import __version__
+from ctxproxy.analysis.state import AnalysisState
 from ctxproxy.config import Config, data_dir
+from ctxproxy.dashboard.api import (
+    recent_requests,
+    recommendations_api,
+    summary,
+    waste,
+)
+from ctxproxy.dashboard.views import overview, waste_view
 from ctxproxy.routing import Route, UnknownUpstream, classify, is_absolute_target
 from ctxproxy.telemetry.blobs import BlobStore
 from ctxproxy.telemetry.store import Store, default_db_path
@@ -73,6 +81,12 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
                 "last_mutated": last.get("mutated", False),
                 "last_fallback": last.get("fallback_used", False),
                 "last_transforms": last.get("transform_ids", []),
+                "last_drift": last.get("drift"),
+                "findings": (
+                    len(state.analysis.findings())
+                    if getattr(state, "analysis", None) is not None
+                    else 0
+                ),
                 "blob_count": (
                     state.blobs.count() if getattr(state, "blobs", None) is not None else 0
                 ),
@@ -101,12 +115,20 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
     app = Starlette(
         routes=[
             StarletteRoute("/_ctxproxy/health", health, methods=["GET"]),
+            StarletteRoute("/_ctxproxy", overview, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/", overview, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/summary", summary, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/requests", recent_requests, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/waste", waste, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/recommend", recommendations_api, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/waste", waste_view, methods=["GET"]),
             StarletteRoute("/{path:path}", handler, methods=_METHODS),
         ],
         lifespan=lifespan,
     )
     app.state.config = config
     app.state.started = time.monotonic()
+    app.state.analysis = AnalysisState()
     app.state.counters = {
         "requests": 0,
         "completed": 0,

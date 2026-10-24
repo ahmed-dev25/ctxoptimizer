@@ -172,6 +172,7 @@ def test_build_transforms_order() -> None:
         "whitespace_trim",
         "smart_truncate",
         "duplicate_backref",
+        "anthropic_cache",
     ]
 
 

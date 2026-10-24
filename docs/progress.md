@@ -2,16 +2,17 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec (P1 complete; P2 in progress)
-**Branch:** `main`
-**Overall:** P0 + P1 complete; P2 analysis core and P3 core done
+**Branch:** `feat/p2-6-dashboard`
+**Overall:** P2 complete; P3 core and P4 hints done; P3-7/8/9, P5–P7 remain
 
 ## Resume here
 
-- **Last completed:** P2-4/5/7/8 analysis core (`0959c09`, merge `f7fac41`).
+- **Last completed:** P2-6 dashboard/waste page + P4-1/P4-2 cache hints
+  (awaiting merge).
 - **Last merge:** `f7fac41` (P2 analysis)
-- **Next task:** P2-6 dashboard v0 (`feat/p2-6-dashboard`)
+- **Next task:** P3-7 auto-quarantine guard / P3-8 cache_serve / P3-9 MCP expand
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p2-6-dashboard` — merge to `main` before P3-7
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -58,7 +59,7 @@
 | P2-3 | Pipeline framework | done | `feat/p2-3-pipeline` | `b1de5ec` | `f829b6a` | ruff, format, mypy, pytest (161) | journal, no-regress, budget, shadow flag |
 | P2-4 | Drift detector | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | 7 causes + tracker |
 | P2-5 | Baseline simulator | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | explicit + implicit cache simulation |
-| P2-6 | Dashboard v0 | todo | — | — | — | — | — |
+| P2-6 | Dashboard v0 | done | `feat/p2-6-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (201) | overview + waste page + admin API |
 | P2-7 | Waste W1–W2 | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | redundant re-read + identical output |
 | P2-8 | Waste W3–W6 | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | fanout, runaway, recurring/params drift |
 | P3-1 | ANSI/progress/whitespace | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | pure functions + eligibility |
@@ -66,6 +67,15 @@
 | P3-3 | Smart truncate | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | head/tail/signal windows/markers |
 | P3-4 | Duplicate backref | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | later-copy stubs only |
 | P3-5 | Active mode + retry + blobs | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | active wiring, 400 retry, changed-block blobs |
+| P3-7 | Auto-quarantine guard | todo | — | — | — | — | — |
+| P3-8 | `cache_serve` | todo | — | — | — | — | — |
+| P3-9 | MCP expand | todo | — | — | — | — | — |
+| P4-1 | Anthropic cache hints | done | `feat/p2-6-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (201) | 4-breakpoint stair-step |
+| P4-2 | OpenAI hints | done | `feat/p2-6-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (201) | api.openai.com only |
+| P4-3 | Marker quality metric | todo | — | — | — | — | — |
+| P5 | Full dashboard | partial | — | — | — | — | v0 exists; Live/Request/Diff/Pricing/Settings pending |
+| P6 | Gemini/Ollama native, W7/W8 | todo | — | — | — | — | OpenAI-compat surfaces work |
+| P7 | Packaging/service/licensing | partial | — | — | — | — | wheel builds; service/licensing pending |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -91,6 +101,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P2-3 | pass | pass (52 files) | 161 passed | reported, not enforced | `b1de5ec` |
 | 2026-10-25 | P3 core | pass | pass (53 files) | 180 passed | reported, not enforced | `67f538c` |
 | 2026-10-25 | P2 analysis | pass | pass (53 files) | 189 passed | reported, not enforced | `0959c09` |
+| 2026-10-25 | P2-6/P4 | pass | pass (54 files) | 201 passed | reported, not enforced | recorded at merge |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -184,6 +195,10 @@ Rows are in execution order; see `docs/plan.md` §4.
   per-session tracker; explicit/implicit cache baseline simulator; W1 redundant
   re-reads, W2 identical outputs, W3 unbatched fan-out, W4 runaway sessions,
   W5 recurring drift and W6 params drift (all advisory, `est.` tokens).
+- 2026-10-25 — P2-6/P4: server-rendered Overview + Waste Opportunities pages,
+  summary/requests/waste/recommend admin APIs, in-memory per-session drift and
+  waste wiring (W1/W2/W4/W5), recommendation ranking, Anthropic cache_control
+  stair-step and OpenAI prompt_cache_key hints.
 
 ## Handoff notes
 

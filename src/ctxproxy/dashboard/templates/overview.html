@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxproxy</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    h1 { margin: 0 0 4px; font-size: 1.6rem; }
+    h2 { margin: 28px 0 10px; font-size: 1.1rem; color: #93c5fd; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+             gap: 12px; margin-top: 18px; }
+    .card { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
+            padding: 14px 16px; }
+    .label { color: #9aa7b4; font-size: .78rem; text-transform: uppercase;
+             letter-spacing: .5px; }
+    .value { font-size: 1.4rem; margin-top: 4px; font-family: Consolas, monospace; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .75rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    code { color: #a5d6ff; }
+    a { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <h1>ctxproxy</h1>
+  <p class="muted">v{{ version }} · mode {{ mode }} · local only</p>
+
+  <div class="cards">
+    <div class="card"><div class="label">Requests</div><div class="value">{{ summary["requests"] }}</div></div>
+    <div class="card"><div class="label">Actual cost</div><div class="value">${{ "%.6f"|format(summary["cost_usd"]) }}</div></div>
+    <div class="card"><div class="label">Fresh input</div><div class="value">{{ summary["fresh_input"] }}</div></div>
+    <div class="card"><div class="label">Cache read</div><div class="value">{{ summary["cache_read"] }}</div></div>
+    <div class="card"><div class="label">Output</div><div class="value">{{ summary["output_tokens"] }}</div></div>
+  </div>
+
+  <h2>Recent requests</h2>
+  <table>
+    <thead>
+      <tr><th>Time</th><th>Client</th><th>Provider</th><th>Model</th>
+          <th>Fresh</th><th>Cache read</th><th>Output</th><th>Cost</th><th>Outcome</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row["ts"]|round(0) }}</td>
+        <td>{{ row["client"] or "—" }}</td>
+        <td>{{ row["provider"] }}</td>
+        <td>{{ row["model"] or "—" }}</td>
+        <td>{{ row["fresh_input"] if row["fresh_input"] is not none else "—" }}</td>
+        <td>{{ row["cache_read"] if row["cache_read"] is not none else "—" }}</td>
+        <td>{{ row["output_tokens"] if row["output_tokens"] is not none else "—" }}</td>
+        <td>${{ "%.6f"|format(row["cost_actual_usd"] or 0) }}</td>
+        <td>{{ row["outcome"] or "—" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="muted">No requests recorded yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="muted" style="margin-top:18px;">
+    Metadata only; prompts are not shown. API: <a href="/_ctxproxy/api/summary">summary</a> ·
+    <a href="/_ctxproxy/api/requests">requests</a>.
+  </p>
+</body>
+</html>

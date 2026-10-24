@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from ctxproxy.config import Config
 from ctxproxy.transforms import ansi, dedupe_lines, progress, truncate, whitespace
+from ctxproxy.transforms.anthropic_cache import AnthropicCache
 from ctxproxy.transforms.backref import DuplicateBackref
 from ctxproxy.transforms.base import TextTransform, Transform
 from ctxproxy.transforms.eligibility import is_compactable, is_never_touch
+from ctxproxy.transforms.openai_hints import OpenAIHints
 
 
 def build_transforms(config: Config) -> list[Transform]:
@@ -55,6 +57,10 @@ def build_transforms(config: Config) -> list[Transform]:
         )
     if transforms.duplicate_backref.enabled:
         result.append(DuplicateBackref())
+    if transforms.anthropic_cache.enabled:
+        result.append(AnthropicCache())
+    if transforms.openai_hints.enabled:
+        result.append(OpenAIHints())
     return result
 
 
