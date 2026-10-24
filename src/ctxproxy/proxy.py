@@ -1,9 +1,4 @@
-"""Forwarding core: headers, streaming, tee and error shaping (SPEC section 9).
-
-The request body is forwarded unchanged in P1. The response is never buffered:
-upstream bytes go to the client as they arrive, while a side-channel usage parser
-sees a copy and can never raise into the forwarding path (INV-3).
-"""
+"""Forwarding core: headers, streaming, transforms and error shaping (SPEC 9)."""
 
 from __future__ import annotations
 
@@ -17,9 +12,13 @@ import orjson
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
+from ctxproxy.analysis.session import derive_session_id, project_from_payload
 from ctxproxy.config import Config
 from ctxproxy.ids import new_ulid
-from ctxproxy.models import Provider, Usage
+from ctxproxy.licensing import is_active_mode_allowed
+from ctxproxy.models import Endpoint, Mode, Provider, RequestContext, Usage
+from ctxproxy.pipeline import PipelineResult, run_pipeline
+from ctxproxy.providers import adapter_for
 from ctxproxy.routing import Route
 from ctxproxy.telemetry.pricing import (
     PriceResult,
@@ -28,6 +27,7 @@ from ctxproxy.telemetry.pricing import (
     price_usage,
 )
 from ctxproxy.telemetry.usage import new_usage_parser
+from ctxproxy.transforms import build_transforms
 
 HOP_BY_HOP = frozenset(
     {
@@ -50,34 +50,79 @@ _TABLES: dict[str, PricingTable] = {}
 
 
 async def forward(request: Request, route: Route, config: Config) -> Response:
-    """Forward one request upstream and stream the response back."""
+    """Forward one request upstream, optionally applying deterministic transforms."""
     started = time.perf_counter()
     counters = request.app.state.counters
     counters["requests"] += 1
     request_id = new_ulid()
     request.state.request_id = request_id
 
-    content = await _request_content(request, config)
-    model = _extract_model(content)
+    raw = await _request_content(request, config)
+    content: bytes | AsyncIterator[bytes] = raw
+    mutated = False
+    pipeline_result: PipelineResult | None = None
+    ctx: RequestContext | None = None
+    if (
+        isinstance(raw, bytes)
+        and route.endpoint is not Endpoint.PASSTHROUGH
+        and route.mode is not Mode.PASSTHROUGH
+    ):
+        content, mutated, pipeline_result, ctx = _apply_transforms(
+            request, route, config, request_id, raw
+        )
+
+    model = (ctx.model if ctx else None) or _extract_model(raw)
+    session_id = ctx.session_id if ctx else route.session_id
+    project = ctx.project if ctx else route.project
+    effective_mode = ctx.mode if ctx else route.mode
+    _capture_blobs(request, config, raw, pipeline_result)
+
     headers = _clean_request_headers(
         request.headers, force_identity=config.http.force_identity_encoding
     )
     client: httpx.AsyncClient = request.app.state.client
 
     try:
-        upstream_request = client.build_request(
-            request.method,
-            route.upstream_url(),
-            headers=headers,
-            content=content,
+        upstream = await client.send(
+            client.build_request(
+                request.method,
+                route.upstream_url(),
+                headers=headers,
+                content=content,
+            ),
+            stream=True,
         )
-        upstream = await client.send(upstream_request, stream=True)
     except httpx.TimeoutException:
         counters["upstream_errors"] += 1
         return error_response(route.provider, 504, "ctxproxy: upstream timeout")
     except httpx.HTTPError:
         counters["upstream_errors"] += 1
         return error_response(route.provider, 502, "ctxproxy: upstream unreachable")
+
+    fallback_used = False
+    if (
+        mutated
+        and isinstance(raw, bytes)
+        and upstream.status_code in config.pipeline.retry_original_on_status
+    ):
+        await upstream.aclose()
+        fallback_used = True
+        try:
+            upstream = await client.send(
+                client.build_request(
+                    request.method,
+                    route.upstream_url(),
+                    headers=headers,
+                    content=raw,
+                ),
+                stream=True,
+            )
+        except httpx.TimeoutException:
+            counters["upstream_errors"] += 1
+            return error_response(route.provider, 504, "ctxproxy: upstream timeout")
+        except httpx.HTTPError:
+            counters["upstream_errors"] += 1
+            return error_response(route.provider, 502, "ctxproxy: upstream unreachable")
 
     ttfb_ms = (time.perf_counter() - started) * 1000
     parser = new_usage_parser(route.provider, route.endpoint, route.profile)
@@ -109,12 +154,23 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                 "model": model,
                 "status_code": upstream.status_code,
                 "outcome": outcome,
+                "mutated": mutated,
+                "fallback_used": fallback_used,
                 "ttfb_ms": round(ttfb_ms, 3),
                 "total_ms": round(total_ms, 3),
                 "usage": usage,
                 "cost_usd": priced.cost_usd,
                 "priced": priced.priced,
                 "price_source": priced.source,
+                "transform_ids": (
+                    [
+                        report.transform_id
+                        for report in pipeline_result.reports
+                        if report.changed and report.discarded_reason is None
+                    ]
+                    if pipeline_result
+                    else []
+                ),
             }
             store = getattr(request.app.state, "store", None)
             if store is not None:
@@ -124,7 +180,13 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                         route=route,
                         config=config,
                         model=model,
+                        raw=raw,
                         content=content,
+                        session_id=session_id,
+                        project=project,
+                        mode=effective_mode,
+                        mutated=mutated,
+                        fallback_used=fallback_used,
                         status_code=upstream.status_code,
                         outcome=outcome,
                         ttfb_ms=ttfb_ms,
@@ -141,12 +203,81 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
     )
 
 
+def _apply_transforms(
+    request: Request,
+    route: Route,
+    config: Config,
+    request_id: str,
+    raw: bytes,
+) -> tuple[bytes, bool, PipelineResult | None, RequestContext | None]:
+    if request.headers.get("content-encoding"):
+        return raw, False, None, None
+    try:
+        payload = orjson.loads(raw)
+    except (orjson.JSONDecodeError, TypeError):
+        return raw, False, None, None
+    if not isinstance(payload, dict):
+        return raw, False, None, None
+    adapter = adapter_for(route.provider, route.endpoint)
+    if not adapter.is_transformable(payload):
+        return raw, False, None, None
+    mode = route.mode
+    if mode is Mode.ACTIVE and not is_active_mode_allowed():
+        mode = Mode.SHADOW
+    model = adapter.model_of(payload) or _extract_model(raw)
+    ctx = RequestContext(
+        request_id=request_id,
+        provider=route.provider,
+        endpoint=route.endpoint,
+        upstream_name=route.upstream_name,
+        model=model,
+        stream=adapter.is_stream(payload),
+        mode=mode,
+        session_id=(
+            route.session_id or derive_session_id(route.provider, request.headers, payload, adapter)
+        ),
+        project=route.project or project_from_payload(payload, adapter),
+        client_name=route.client_name,
+        config=config,
+        config_hash=config.config_hash,
+        started_monotonic=time.monotonic(),
+    )
+    try:
+        result = run_pipeline(ctx, payload, adapter, build_transforms(config), config)
+        if mode is Mode.ACTIVE and result.changed:
+            return orjson.dumps(payload), True, result, ctx
+        return raw, False, result, ctx
+    except Exception:
+        return raw, False, None, ctx
+
+
 async def _request_content(request: Request, config: Config) -> bytes | AsyncIterator[bytes]:
     raw_length = request.headers.get("content-length")
     if raw_length and raw_length.isdigit():
         if int(raw_length) > config.server.max_body_bytes:
             return request.stream()
     return await request.body()
+
+
+def _capture_blobs(
+    request: Request,
+    config: Config,
+    raw: bytes | AsyncIterator[bytes],
+    result: PipelineResult | None,
+) -> None:
+    capture = config.telemetry.capture_payloads
+    if capture == "off" or not isinstance(raw, bytes):
+        return
+    blobs = getattr(request.app.state, "blobs", None)
+    if blobs is None:
+        return
+    if capture == "full":
+        blobs.put(raw)
+    elif result is not None:
+        for before, _after in result.changed_blocks:
+            data = before.encode("utf-8")
+            if len(data) >= 2048:
+                blobs.put(data)
 
 
 def _clean_request_headers(headers: Mapping[str, str], *, force_identity: bool) -> dict[str, str]:
@@ -188,6 +319,18 @@ def _extract_model(content: bytes | AsyncIterator[bytes]) -> str | None:
     return model if isinstance(model, str) else None
 
 
+def _is_stream(content: bytes | AsyncIterator[bytes]) -> int | None:
+    if not isinstance(content, bytes):
+        return None
+    try:
+        payload = orjson.loads(content)
+    except (orjson.JSONDecodeError, TypeError):
+        return None
+    if isinstance(payload, dict):
+        return 1 if payload.get("stream") is True else 0
+    return None
+
+
 def _table_for(config: Config) -> PricingTable:
     key = config.pricing.file
     table = _TABLES.get(key)
@@ -204,25 +347,19 @@ def _price(usage: Usage, route: Route, config: Config, model: str | None) -> Pri
     return price_usage(usage, _table_for(config), route.profile.pricing_provider, model)
 
 
-def _is_stream(content: bytes | AsyncIterator[bytes]) -> int | None:
-    if not isinstance(content, bytes):
-        return None
-    try:
-        payload = orjson.loads(content)
-    except (orjson.JSONDecodeError, TypeError):
-        return None
-    if isinstance(payload, dict):
-        return 1 if payload.get("stream") is True else 0
-    return None
-
-
 def _store_record(
     *,
     request_id: str,
     route: Route,
     config: Config,
     model: str | None,
+    raw: bytes | AsyncIterator[bytes],
     content: bytes | AsyncIterator[bytes],
+    session_id: str,
+    project: str | None,
+    mode: Mode,
+    mutated: bool,
+    fallback_used: bool,
     status_code: int,
     outcome: str,
     ttfb_ms: float,
@@ -230,28 +367,29 @@ def _store_record(
     usage: Usage,
     priced: PriceResult,
 ) -> dict[str, Any]:
-    size = len(content) if isinstance(content, bytes) else None
+    raw_size = len(raw) if isinstance(raw, bytes) else None
+    final_size = len(content) if isinstance(content, bytes) else raw_size
     return {
         "request_id": request_id,
         "ts": time.time(),
-        "session_id": route.session_id or "unknown",
-        "project": route.project,
+        "session_id": session_id or "unknown",
+        "project": project,
         "client": route.client_name,
         "provider": route.provider.value,
         "endpoint": route.endpoint.value,
         "upstream": route.upstream_name,
         "model": model,
-        "stream": _is_stream(content),
-        "mode": route.mode.value,
-        "mutated": 0,
-        "fallback_used": 0,
+        "stream": _is_stream(raw),
+        "mode": mode.value,
+        "mutated": 1 if mutated else 0,
+        "fallback_used": 1 if fallback_used else 0,
         "config_hash": config.config_hash,
         "status_code": status_code,
         "outcome": outcome,
         "ttfb_ms": round(ttfb_ms, 3),
         "total_ms": round(total_ms, 3),
-        "orig_bytes": size,
-        "final_bytes": size,
+        "orig_bytes": raw_size,
+        "final_bytes": final_size,
         "usage_source": usage.source,
         "fresh_input": usage.fresh_input,
         "cache_read": usage.cache_read,

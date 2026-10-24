@@ -2,16 +2,17 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec (P1 complete; P2 in progress)
-**Branch:** `main`
-**Overall:** P0 + P1 complete; 3 P2 tasks done
+**Branch:** `feat/p3-core-transforms`
+**Overall:** P0 + P1 complete; P2-1/2/3 and P3 core done
 
 ## Resume here
 
-- **Last completed:** P2-3 pipeline framework (`b1de5ec`).
+- **Last completed:** P3-1/2/3/4 transforms + P3-5 active mode and blob capture
+  (awaiting merge).
 - **Last merge:** `f829b6a` (P2-3)
-- **Next task:** P3-1/P3-2 transforms (`feat/p3-core-transforms`)
+- **Next task:** P2-4 drift detector (`feat/p2-4-drift`)
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p3-core-transforms` — merge to `main` before P2-4
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -61,6 +62,11 @@
 | P2-6 | Dashboard v0 | todo | — | — | — | — | — |
 | P2-7 | Waste W1–W2 | todo | — | — | — | — | — |
 | P2-8 | Waste W3–W6 | todo | — | — | — | — | — |
+| P3-1 | ANSI/progress/whitespace | done | `feat/p3-core-transforms` | recorded at merge | — | ruff, format, mypy, pytest (180) | pure functions + eligibility |
+| P3-2 | Line dedupe | done | `feat/p3-core-transforms` | recorded at merge | — | ruff, format, mypy, pytest (180) | exact + near-duplicate runs |
+| P3-3 | Smart truncate | done | `feat/p3-core-transforms` | recorded at merge | — | ruff, format, mypy, pytest (180) | head/tail/signal windows/markers |
+| P3-4 | Duplicate backref | done | `feat/p3-core-transforms` | recorded at merge | — | ruff, format, mypy, pytest (180) | later-copy stubs only |
+| P3-5 | Active mode + retry + blobs | done | `feat/p3-core-transforms` | recorded at merge | — | ruff, format, mypy, pytest (180) | active wiring, 400 retry, changed-block blobs |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -84,6 +90,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P1-6 | pass | pass (52 files) | 149 passed | reported, not enforced | `689bbb8` |
 | 2026-10-25 | P2-1/2 | pass | pass (52 files) | 156 passed | reported, not enforced | recorded at merge |
 | 2026-10-25 | P2-3 | pass | pass (52 files) | 161 passed | reported, not enforced | `b1de5ec` |
+| 2026-10-25 | P3 core | pass | pass (53 files) | 180 passed | reported, not enforced | recorded at merge |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -169,6 +176,10 @@ Rows are in execution order; see `docs/plan.md` §4.
 - 2026-10-25 — P2-3: transform protocol, pure-text driver, ordered pipeline with
   per-transform journal/restore, exception isolation, time budget, no-regress
   guard and shadow flag.
+- 2026-10-25 — P3 core: ANSI/progress/whitespace/line-dedupe/smart-truncate/
+  duplicate-backref pure transforms, tool eligibility, transform registry,
+  active-mode wiring, 400/422 retry-with-original, changed-block blob capture,
+  and integration tests for shadow vs active behavior.
 
 ## Handoff notes
 
