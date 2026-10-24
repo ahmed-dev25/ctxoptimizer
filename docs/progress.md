@@ -2,16 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `main`
-**Overall:** 8 / 12 tasks complete (Phase 0 complete)
+**Branch:** `feat/p1-8-gateway-quirks`
+**Overall:** 9 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P1-3 — Usage parsers (`92721a5`).
+- **Last completed:** P1-8 — Gateway usage quirks (awaiting merge).
 - **Last merge:** `3a78ef5` (P1-3)
-- **Next task:** P1-8 — Gateway usage quirks (`feat/p1-8-gateway-quirks`)
+- **Next task:** P1-4 — Pricing (`feat/p1-4-pricing`)
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p1-8-gateway-quirks` — merge to `main` before P1-4
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -26,7 +26,7 @@
 | P1-7 | Named upstreams + profiles | done | `feat/p1-7-upstreams` | `4b2b148` | `ae06f94` | ruff, format, mypy, pytest (83) | built-in + override profiles, per-upstream cache policy |
 | P1-2 | Proxy core | done | `feat/p1-2-proxy-core` | `4889ee7` | `10e90f8` | ruff, format, mypy, pytest (94) | streaming tee, disconnect, 502/504, header hygiene |
 | P1-3 | Usage parsers | done | `feat/p1-3-usage-parsers` | `92721a5` | `3a78ef5` | ruff, format, mypy, pytest (112) | SSE decoder, Anthropic/OpenAI chat/Responses, doc fixtures, fuzz |
-| P1-8 | Gateway usage quirks | todo | — | — | — | — | DeepSeek/OpenRouter/Gemini/Ollama |
+| P1-8 | Gateway usage quirks | done | `feat/p1-8-gateway-quirks` | recorded at merge | — | ruff, format, mypy, pytest (119) | DeepSeek cache fields, OpenRouter cost/comments, Gemini/Ollama compat |
 | P1-4 | Pricing | todo | — | — | — | — | provider-reported cost supported |
 | P1-5 | Store | todo | — | — | — | — | — |
 | P1-6 | CLI | todo | — | — | — | — | — |
@@ -47,6 +47,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-24 | P1-7 | pass | pass (51 files) | 83 passed | reported, not enforced | `4b2b148` |
 | 2026-10-25 | P1-2 | pass | pass (51 files) | 94 passed | reported, not enforced | `4889ee7` |
 | 2026-10-25 | P1-3 | pass | pass (52 files) | 112 passed | reported, not enforced | `92721a5` |
+| 2026-10-25 | P1-8 | pass | pass (52 files) | 119 passed | reported, not enforced | recorded at merge |
 
 ## Changelog
 
@@ -102,6 +103,10 @@ Rows are in execution order; see `docs/plan.md` §4.
   Anthropic (cumulative delta semantics, TTL breakdown, thinking tokens), OpenAI
   Chat and OpenAI Responses; non-stream body parsers; doc-derived fixtures for
   Anthropic/OpenAI/DeepSeek/OpenRouter; hypothesis totality tests.
+- 2026-10-25 — P1-8: gateway quirks — DeepSeek cache hit/miss fields, OpenRouter
+  always-on usage plus provider-reported cost and content-free usage chunk,
+  Gemini OpenAI-compat usage, Ollama OpenAI-compat estimates, optional `[DONE]`,
+  and mid-stream error tolerance.
 
 ## Handoff notes
 

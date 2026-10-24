@@ -1,0 +1,6 @@
+data: {"id":"g1","object":"chat.completion.chunk","created":1,"model":"gemini-3.8-flash","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}
+
+data: {"id":"g1","object":"chat.completion.chunk","created":1,"model":"gemini-3.8-flash","choices":[],"usage":{"prompt_tokens":50,"completion_tokens":5,"total_tokens":55,"prompt_tokens_details":{"cached_tokens":10}}}
+
+data: [DONE]
+

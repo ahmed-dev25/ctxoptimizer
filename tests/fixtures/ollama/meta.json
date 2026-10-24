@@ -1,0 +1,9 @@
+{
+  "source": "documented",
+  "provider": "ollama-openai",
+  "accessed": "2026-10-24",
+  "sources": [
+    "https://docs.ollama.com/api/openai-compatibility"
+  ],
+  "notes": "OpenAI-compatible Ollama chat. Usage may be absent in the OpenAI-compatible surface; native /api/chat exposes prompt_eval_count/eval_count (P6)."
+}

@@ -1,0 +1,6 @@
+data: {"id":"o1","object":"chat.completion.chunk","created":1,"model":"llama3","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}
+
+data: {"id":"o1","object":"chat.completion.chunk","created":1,"model":"llama3","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+data: [DONE]
+
