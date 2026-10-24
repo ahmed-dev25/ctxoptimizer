@@ -2,16 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `feat/p1-5-store`
+**Branch:** `main`
 **Overall:** 11 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P1-5 — Store (awaiting merge).
-- **Last merge:** `be61b57` (P1-4)
+- **Last completed:** P1-5 — Store (`0e3496f`).
+- **Last merge:** `3ae9fea` (P1-5)
 - **Next task:** P1-6 — CLI (`feat/p1-6-cli`)
 - **Blocked:** none
-- **Active branch:** `feat/p1-5-store` — merge to `main` before P1-6
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -28,7 +28,7 @@
 | P1-3 | Usage parsers | done | `feat/p1-3-usage-parsers` | `92721a5` | `3a78ef5` | ruff, format, mypy, pytest (112) | SSE decoder, Anthropic/OpenAI chat/Responses, doc fixtures, fuzz |
 | P1-8 | Gateway usage quirks | done | `feat/p1-8-gateway-quirks` | `05d2fb9` | `6f20a24` | ruff, format, mypy, pytest (119) | DeepSeek cache fields, OpenRouter cost/comments, Gemini/Ollama compat |
 | P1-4 | Pricing | done | `feat/p1-4-pricing` | `0719d9a` | `be61b57` | ruff, format, mypy, pytest (130) | verified rates, provider cost, specificity, TTL buckets |
-| P1-5 | Store | done | `feat/p1-5-store` | recorded at merge | — | ruff, format, mypy, pytest (139) | writer thread, WAL, overflow, prune, migration |
+| P1-5 | Store | done | `feat/p1-5-store` | `0e3496f` | `3ae9fea` | ruff, format, mypy, pytest (139) | writer thread, WAL, overflow, prune, migration |
 | P1-6 | CLI | todo | — | — | — | — | — |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
@@ -49,7 +49,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P1-3 | pass | pass (52 files) | 112 passed | reported, not enforced | `92721a5` |
 | 2026-10-25 | P1-8 | pass | pass (52 files) | 119 passed | reported, not enforced | `05d2fb9` |
 | 2026-10-25 | P1-4 | pass | pass (52 files) | 130 passed | reported, not enforced | `0719d9a` |
-| 2026-10-25 | P1-5 | pass | pass (52 files) | 139 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P1-5 | pass | pass (52 files) | 139 passed | reported, not enforced | `0e3496f` |
 
 ## Changelog
 
