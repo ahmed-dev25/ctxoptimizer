@@ -18,16 +18,33 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Route as StarletteRoute
 
 from ctxproxy import __version__
+from ctxproxy.admin_security import AdminSecurityMiddleware, admin_credentials
 from ctxproxy.analysis.state import AnalysisState
 from ctxproxy.config import Config, data_dir
 from ctxproxy.dashboard.api import (
+    admin_config,
+    apply_recommendation,
+    drift,
+    export,
+    guard_action,
     guard_status,
+    live,
+    purge,
+    put_pricing,
     recent_requests,
     recommendations_api,
+    reload,
     request_detail,
+    request_diff,
     session_detail,
+    set_mode,
+    stale_estimate,
     summary,
+    timeseries,
+    transform_stats,
+    update_config,
     waste,
+    waste_status,
 )
 from ctxproxy.dashboard.api import (
     pricing as pricing_api,
@@ -39,17 +56,20 @@ from ctxproxy.dashboard.api import (
     transforms as transforms_api,
 )
 from ctxproxy.dashboard.views import (
+    doctor_view,
     live_view,
     overview,
     pricing_view,
     request_view,
     requests_view,
+    session_view,
     sessions_view,
     settings_view,
     transforms_view,
     waste_view,
 )
 from ctxproxy.guard import Guard
+from ctxproxy.licensing import default_license_path, set_license_path
 from ctxproxy.routing import Route, UnknownUpstream, classify, is_absolute_target
 from ctxproxy.telemetry.blobs import BlobStore
 from ctxproxy.telemetry.store import Store, default_db_path
@@ -60,7 +80,12 @@ Forwarder = Callable[[Request, Route, Config], Awaitable[Response]]
 _METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
 
 
-def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
+def create_app(
+    config: Config,
+    forwarder: Forwarder | None = None,
+    *,
+    config_path: Path | None = None,
+) -> Starlette:
     """Build the ASGI app. ``forwarder`` overrides the real proxy core in tests."""
 
     @asynccontextmanager
@@ -68,6 +93,8 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
         app.state.client = _make_client(config)
         app.state.store = _make_store(config)
         app.state.blobs = _make_blobs(config)
+        if app.state.store is not None:
+            app.state.guard.bind_store(app.state.store)
         try:
             yield
         finally:
@@ -77,6 +104,7 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
 
     async def health(request: Request) -> Response:
         state = request.app.state
+        current = state.config
         counters = state.counters
         last = state.last_request or {}
         usage = last.get("usage")
@@ -85,9 +113,10 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
             {
                 "status": "ok",
                 "version": __version__,
-                "mode": config.mode.default,
+                "mode": current.mode.default,
                 "uptime_s": round(time.monotonic() - state.started, 3),
-                "upstreams": sorted(config.upstreams),
+                "upstreams": sorted(current.upstreams),
+                "capture_payloads": current.telemetry.capture_payloads,
                 "requests": counters["requests"],
                 "completed": counters["completed"],
                 "client_disconnect": counters["client_disconnect"],
@@ -128,18 +157,20 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
         path = request.url.path
         if path.startswith("/_ctxproxy"):
             return JSONResponse({"error": "not found"}, status_code=404)
+        current = request.app.state.config
         try:
-            route = classify(request.method, path, request.url.query, request.headers, config)
+            route = classify(request.method, path, request.url.query, request.headers, current)
         except UnknownUpstream as exc:
             return JSONResponse({"error": str(exc)}, status_code=404)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         active = forwarder or _default_forwarder
-        return await active(request, route, config)
+        return await active(request, route, current)
 
     app = Starlette(
         routes=[
             StarletteRoute("/_ctxproxy/health", health, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/health", health, methods=["GET"]),
             StarletteRoute("/_ctxproxy", overview, methods=["GET"]),
             StarletteRoute("/_ctxproxy/", overview, methods=["GET"]),
             StarletteRoute("/_ctxproxy/api/summary", summary, methods=["GET"]),
@@ -151,21 +182,68 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
             StarletteRoute("/_ctxproxy/api/requests/{request_id}", request_detail, methods=["GET"]),
             StarletteRoute("/_ctxproxy/api/transforms", transforms_api, methods=["GET"]),
             StarletteRoute("/_ctxproxy/api/pricing", pricing_api, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/pricing", put_pricing, methods=["PUT"]),
             StarletteRoute("/_ctxproxy/api/guard", guard_status, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/guard", guard_action, methods=["POST"]),
+            StarletteRoute("/_ctxproxy/api/config", admin_config, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/config", update_config, methods=["POST"]),
+            StarletteRoute("/_ctxproxy/api/reload", reload, methods=["POST"]),
+            StarletteRoute("/_ctxproxy/api/mode", set_mode, methods=["POST"]),
+            StarletteRoute("/_ctxproxy/api/purge", purge, methods=["POST"]),
+            StarletteRoute("/_ctxproxy/api/export", export, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/timeseries", timeseries, methods=["GET"]),
+            StarletteRoute(
+                "/_ctxproxy/api/stale-elision/estimate",
+                stale_estimate,
+                methods=["GET"],
+            ),
+            StarletteRoute("/_ctxproxy/api/drift", drift, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/transforms/stats", transform_stats, methods=["GET"]),
+            StarletteRoute(
+                "/_ctxproxy/api/requests/{request_id}/diff",
+                request_diff,
+                methods=["GET"],
+            ),
+            StarletteRoute("/_ctxproxy/api/live", live, methods=["GET"]),
+            StarletteRoute(
+                "/_ctxproxy/api/waste/{finding_id}/status",
+                waste_status,
+                methods=["POST"],
+            ),
+            StarletteRoute(
+                "/_ctxproxy/api/recommend/{recommendation_id}/apply",
+                apply_recommendation,
+                methods=["POST"],
+            ),
             StarletteRoute("/_ctxproxy/waste", waste_view, methods=["GET"]),
             StarletteRoute("/_ctxproxy/live", live_view, methods=["GET"]),
             StarletteRoute("/_ctxproxy/sessions", sessions_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/sessions/{session_id}", session_view, methods=["GET"]),
             StarletteRoute("/_ctxproxy/requests", requests_view, methods=["GET"]),
             StarletteRoute("/_ctxproxy/requests/{request_id}", request_view, methods=["GET"]),
             StarletteRoute("/_ctxproxy/transforms", transforms_view, methods=["GET"]),
             StarletteRoute("/_ctxproxy/pricing", pricing_view, methods=["GET"]),
             StarletteRoute("/_ctxproxy/settings", settings_view, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/doctor", doctor_view, methods=["GET"]),
             StarletteRoute("/{path:path}", handler, methods=_METHODS),
         ],
         lifespan=lifespan,
     )
     app.state.config = config
+    app.state.config_path = config_path
+    set_license_path(config.license.path or default_license_path())
     app.state.started = time.monotonic()
+    admin_token, csrf_token = admin_credentials()
+    if config.server.admin_token:
+        admin_token = config.server.admin_token
+    app.state.admin_token = admin_token
+    app.state.csrf_token = csrf_token
+    app.add_middleware(
+        AdminSecurityMiddleware,
+        config=config,
+        admin_token=admin_token,
+        csrf_token=csrf_token,
+    )
     app.state.analysis = AnalysisState()
     app.state.guard = Guard(config)
     app.state.cache_serve = CacheServeState(

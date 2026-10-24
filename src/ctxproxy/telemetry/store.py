@@ -7,6 +7,7 @@ never blocking the proxy (SPEC section 4.3).
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import queue
@@ -229,22 +230,241 @@ class Store:
             ).fetchone()
         return dict(row) if row is not None else None
 
-    def summary(self) -> dict[str, Any]:
+    def fetch_transform_reports(self, request_id: str) -> list[dict[str, Any]]:
         with sqlite3.connect(self.path) as conn:
-            row = conn.execute(
-                "SELECT COUNT(*) AS requests, "
-                "COALESCE(SUM(cost_actual_usd), 0.0) AS cost_usd, "
-                "COALESCE(SUM(fresh_input), 0) AS fresh_input, "
-                "COALESCE(SUM(cache_read), 0) AS cache_read, "
-                "COALESCE(SUM(output_tokens), 0) AS output_tokens "
-                "FROM requests"
-            ).fetchone()
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM transform_reports WHERE request_id = ? ORDER BY rowid",
+                (request_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def fetch_captures(self, request_id: str) -> list[dict[str, Any]]:
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM captures WHERE request_id = ? ORDER BY rowid",
+                (request_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def fetch_drift(self, limit: int = 200) -> list[dict[str, Any]]:
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM drift_events ORDER BY ts DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def fetch_guard_events(self, limit: int = 200) -> list[dict[str, Any]]:
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM guard_events ORDER BY ts DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def fetch_waste(self, status: str | None = None, limit: int = 500) -> list[dict[str, Any]]:
+        query = "SELECT * FROM waste_findings"
+        params: list[Any] = []
+        if status:
+            query += " WHERE status = ?"
+            params.append(status)
+        query += " ORDER BY est_cost_usd DESC, ts DESC LIMIT ?"
+        params.append(limit)
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(query, params).fetchall()
+        return [dict(row) for row in rows]
+
+    def set_waste_status(self, finding_id: str, status: str) -> bool:
+        if status not in {"new", "ack", "fixed", "skipped"}:
+            return False
+        with sqlite3.connect(self.path) as conn:
+            cursor = conn.execute(
+                "UPDATE waste_findings SET status = ? WHERE finding_id = ?",
+                (status, finding_id),
+            )
+            conn.commit()
+        return cursor.rowcount > 0
+
+    def record_guard_event(
+        self,
+        session_id: str | None,
+        transform_id: str,
+        reason: str,
+        evidence: dict[str, Any] | None = None,
+        *,
+        cleared_ts: float | None = None,
+    ) -> None:
+        """Record a quarantine/enable event (rare dashboard write)."""
+        try:
+            with sqlite3.connect(self.path) as conn:
+                conn.execute(
+                    "INSERT INTO guard_events("
+                    "ts, session_id, transform_id, reason, evidence_json, cleared_ts"
+                    ") VALUES(?, ?, ?, ?, ?, ?)",
+                    (
+                        time.time(),
+                        session_id,
+                        transform_id,
+                        reason,
+                        json.dumps(evidence or {}, default=str),
+                        cleared_ts,
+                    ),
+                )
+                conn.commit()
+        except sqlite3.Error as exc:
+            logger.warning("guard event write failed: %s", exc)
+
+    def timeseries(
+        self, metric: str, bucket: str = "hour", since_ts: float | None = None
+    ) -> list[dict[str, Any]]:
+        """Return a bucketed metric series for dashboard charts."""
+        columns = {
+            "requests": "COUNT(*)",
+            "cost": "COALESCE(SUM(cost_actual_usd), 0)",
+            "baseline": "COALESCE(SUM(cost_baseline_sim_usd), 0)",
+            "fresh": "COALESCE(SUM(fresh_input), 0)",
+            "cache_read": "COALESCE(SUM(cache_read), 0)",
+            "output": "COALESCE(SUM(output_tokens), 0)",
+            "tokens": "COALESCE(SUM(COALESCE(fresh_input, 0) + COALESCE(cache_read, 0) "
+            "+ COALESCE(output_tokens, 0)), 0)",
+        }
+        column = columns.get(metric, "COUNT(*)")
+        fmt = "%Y-%m-%dT%H:00:00" if bucket == "hour" else "%Y-%m-%d"
+        query = (
+            f"SELECT strftime('{fmt}', ts, 'unixepoch') AS bucket, {column} AS value "  # noqa: S608
+            "FROM requests"
+        )
+        params: list[Any] = []
+        if since_ts is not None:
+            query += " WHERE ts >= ?"
+            params.append(since_ts)
+        query += " GROUP BY bucket ORDER BY bucket"
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(query, params).fetchall()
+        return [dict(row) for row in rows]
+
+    def group_stats(
+        self, field: str, limit: int = 20, since_ts: float | None = None
+    ) -> list[dict[str, Any]]:
+        """Per-project/per-model rollups used by the overview page."""
+        column = "project" if field == "project" else "model"
+        query = (
+            f"SELECT {column} AS name, COUNT(*) AS requests, "  # noqa: S608
+            "COALESCE(SUM(cost_actual_usd), 0) AS cost_usd, "
+            "COALESCE(SUM(fresh_input), 0) AS fresh_input, "
+            "COALESCE(SUM(cache_read), 0) AS cache_read, "
+            "COALESCE(SUM(output_tokens), 0) AS output_tokens "
+            "FROM requests"
+        )
+        params: list[Any] = []
+        if since_ts is not None:
+            query += " WHERE ts >= ?"
+            params.append(since_ts)
+        query += " GROUP BY name ORDER BY cost_usd DESC LIMIT ?"
+        params.append(limit)
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(query, params).fetchall()
+        return [dict(row) for row in rows]
+
+    def transform_stats(self) -> list[dict[str, Any]]:
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT transform_id, COUNT(*) AS runs, "
+                "COALESCE(SUM(changed), 0) AS changed_runs, "
+                "COALESCE(SUM(est_tokens_saved), 0) AS tokens_saved, "
+                "COALESCE(AVG(duration_ms), 0) AS avg_ms, "
+                "COALESCE(SUM(CASE WHEN discarded_reason = 'error' THEN 1 ELSE 0 END), 0) "
+                "AS errors, "
+                "COALESCE(SUM(CASE WHEN discarded_reason = 'no_regress' THEN 1 ELSE 0 END), 0) "
+                "AS no_regress, "
+                "MAX(ts) AS last_ts "
+                "FROM transform_reports "
+                "JOIN requests USING(request_id) "
+                "GROUP BY transform_id ORDER BY transform_id"
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def export_rows(self, since_ts: float | None = None, limit: int = 1000) -> list[dict[str, Any]]:
+        query = "SELECT * FROM requests"
+        params: list[Any] = []
+        if since_ts is not None:
+            query += " WHERE ts >= ?"
+            params.append(since_ts)
+        query += " ORDER BY ts DESC LIMIT ?"
+        params.append(limit)
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(query, params).fetchall()
+        return [dict(row) for row in rows]
+
+    def waste_summary(self, since_ts: float | None = None) -> dict[str, Any]:
+        query = (
+            "SELECT COUNT(*), COALESCE(SUM(est_tokens_wasted), 0), "
+            "COALESCE(SUM(est_cost_usd), 0) FROM waste_findings "
+            "WHERE status IN ('new', 'ack')"
+        )
+        params: list[Any] = []
+        if since_ts is not None:
+            query += " AND first_seen_ts >= ?"
+            params.append(since_ts)
+        with sqlite3.connect(self.path) as conn:
+            row = conn.execute(query, params).fetchone()
+        return {
+            "findings": int(row[0]),
+            "tokens": int(row[1]),
+            "cost_usd": float(row[2]),
+        }
+
+    def unpriced(self, limit: int = 100) -> list[dict[str, Any]]:
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT model, provider, COUNT(*) AS requests FROM requests "
+                "WHERE priced = 0 AND model IS NOT NULL "
+                "GROUP BY model, provider ORDER BY requests DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def summary(self, since_ts: float | None = None, project: str | None = None) -> dict[str, Any]:
+        query = (
+            "SELECT COUNT(*) AS requests, "
+            "COALESCE(SUM(cost_actual_usd), 0.0) AS cost_usd, "
+            "COALESCE(SUM(cost_baseline_sim_usd), 0.0) AS baseline_usd, "
+            "COALESCE(SUM(fresh_input), 0) AS fresh_input, "
+            "COALESCE(SUM(cache_read), 0) AS cache_read, "
+            "COALESCE(SUM(output_tokens), 0) AS output_tokens, "
+            "COALESCE(SUM(CASE WHEN COALESCE(orig_est_tokens, 0) > "
+            "COALESCE(final_est_tokens, 0) THEN orig_est_tokens - final_est_tokens "
+            "ELSE 0 END), 0) AS tokens_removed "
+            "FROM requests"
+        )
+        clauses: list[str] = []
+        params: list[Any] = []
+        if since_ts is not None:
+            clauses.append("ts >= ?")
+            params.append(since_ts)
+        if project:
+            clauses.append("project = ?")
+            params.append(project)
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        with sqlite3.connect(self.path) as conn:
+            row = conn.execute(query, params).fetchone()
         return {
             "requests": int(row[0]),
             "cost_usd": float(row[1]),
-            "fresh_input": int(row[2]),
-            "cache_read": int(row[3]),
-            "output_tokens": int(row[4]),
+            "baseline_usd": float(row[2]),
+            "fresh_input": int(row[3]),
+            "cache_read": int(row[4]),
+            "output_tokens": int(row[5]),
+            "tokens_removed": int(row[6]),
         }
 
     def prune(self, retention_days: int | None = None) -> int:
@@ -351,7 +571,152 @@ class Store:
                 for record in batch
             ],
         )
+        for record in batch:
+            request_id = record.get("request_id")
+            if not request_id:
+                continue
+            _insert_reports(conn, request_id, record.get("_transform_reports") or [])
+            _insert_drift(conn, request_id, record)
+            _insert_findings(conn, record.get("_findings") or [])
+            _insert_captures(conn, request_id, record.get("_captures") or [])
         conn.commit()
+
+
+def _get(value: object, name: str, default: Any = None) -> Any:
+    if isinstance(value, dict):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
+def _insert_reports(conn: sqlite3.Connection, request_id: str, reports: list[Any]) -> None:
+    rows: list[tuple[Any, ...]] = []
+    for report in reports:
+        before = _get(report, "est_tokens_before", 0) or 0
+        after = _get(report, "est_tokens_after", 0) or 0
+        notes = _get(report, "notes", {}) or {}
+        try:
+            notes_json = json.dumps(notes, default=str)
+        except (TypeError, ValueError):
+            notes_json = "{}"
+        rows.append(
+            (
+                request_id,
+                _get(report, "transform_id", "unknown"),
+                1 if _get(report, "changed") else 0,
+                _get(report, "items_touched", 0),
+                _get(report, "bytes_before", 0),
+                _get(report, "bytes_after", 0),
+                max(int(before) - int(after), 0),
+                _get(report, "duration_ms", 0.0),
+                _get(report, "discarded_reason"),
+                _get(report, "error"),
+                notes_json,
+            )
+        )
+    if rows:
+        conn.executemany(
+            "INSERT OR REPLACE INTO transform_reports("
+            "request_id, transform_id, changed, items_touched, bytes_before, "
+            "bytes_after, est_tokens_saved, duration_ms, discarded_reason, error, "
+            "notes_json) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            rows,
+        )
+
+
+def _insert_drift(conn: sqlite3.Connection, request_id: str, record: dict[str, Any]) -> None:
+    drift = record.get("_drift")
+    if drift is None:
+        return
+    conn.execute(
+        "INSERT INTO drift_events("
+        "request_id, session_id, ts, stream, cause, at_segment, est_tokens_lost, "
+        "detail_json) VALUES(?, ?, ?, 'original', ?, ?, ?, ?)",
+        (
+            request_id,
+            record.get("session_id"),
+            record.get("ts") or time.time(),
+            _get(drift, "cause", "history_mutated"),
+            _get(drift, "at_segment"),
+            _get(drift, "est_tokens_lost", 0),
+            json.dumps(_get(drift, "detail", {}), default=str),
+        ),
+    )
+
+
+def _insert_findings(conn: sqlite3.Connection, findings: list[Any]) -> None:
+    rows: list[tuple[Any, ...]] = []
+    for finding in findings:
+        key_hash = _get(finding, "key_hash", b"")
+        if isinstance(key_hash, bytes):
+            key_hash = key_hash.hex()
+        session_id = _get(finding, "session_id")
+        detector = _get(finding, "detector", "unknown")
+        existing = conn.execute(
+            "SELECT finding_id, status FROM waste_findings "
+            "WHERE session_id IS ? AND detector = ? AND key_hash = ?",
+            (session_id, detector, str(key_hash)),
+        ).fetchone()
+        if existing is not None:
+            conn.execute(
+                "UPDATE waste_findings SET last_seen_ts = ?, occurrences = ?, "
+                "est_tokens_wasted = MAX(COALESCE(est_tokens_wasted, 0), ?), "
+                "est_cost_usd = COALESCE(?, est_cost_usd) "
+                "WHERE finding_id = ?",
+                (
+                    _get(finding, "last_seen_ts", time.time()),
+                    _get(finding, "occurrences", 1),
+                    _get(finding, "est_tokens_wasted") or 0,
+                    _get(finding, "est_cost_usd"),
+                    existing[0],
+                ),
+            )
+            continue
+        rows.append(
+            (
+                _get(finding, "finding_id"),
+                _get(finding, "ts", time.time()),
+                _get(finding, "first_seen_ts", time.time()),
+                _get(finding, "last_seen_ts", time.time()),
+                session_id,
+                _get(finding, "project"),
+                detector,
+                str(key_hash),
+                _get(finding, "request_id"),
+                _get(finding, "occurrences", 1),
+                _get(finding, "est_tokens_wasted"),
+                _get(finding, "est_cost_usd"),
+                _get(finding, "status", "new"),
+                json.dumps(_get(finding, "evidence", {}), default=str),
+            )
+        )
+    if rows:
+        conn.executemany(
+            "INSERT OR IGNORE INTO waste_findings("
+            "finding_id, ts, first_seen_ts, last_seen_ts, session_id, project, "
+            "detector, key_hash, request_id, occurrences, est_tokens_wasted, "
+            "est_cost_usd, status, evidence_json) "
+            "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            rows,
+        )
+
+
+def _insert_captures(conn: sqlite3.Connection, request_id: str, captures: list[Any]) -> None:
+    rows = [
+        (
+            request_id,
+            _get(capture, "transform_id"),
+            _get(capture, "location"),
+            _get(capture, "before_hash"),
+            _get(capture, "after_hash"),
+        )
+        for capture in captures
+    ]
+    if rows:
+        conn.executemany(
+            "INSERT INTO captures(request_id, transform_id, location, before_hash, "
+            "after_hash) VALUES(?, ?, ?, ?, ?)",
+            rows,
+        )
 
 
 def _request_row(record: dict[str, Any]) -> tuple[Any, ...]:

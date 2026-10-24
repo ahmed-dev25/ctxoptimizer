@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from hashlib import sha256
 
+from ctxproxy.analysis.baseline import CacheSim, simulate
 from ctxproxy.analysis.drift import DriftEvent, detect_drift
 from ctxproxy.analysis.markers import MarkerQuality, marker_quality
 from ctxproxy.analysis.segments import Segment
@@ -42,6 +43,7 @@ class AnalysisResult:
     drift: DriftEvent | None
     findings: list[WasteFinding]
     marker_quality: MarkerQuality
+    baseline: CacheSim
 
 
 class AnalysisState:
@@ -70,6 +72,7 @@ class AnalysisState:
         churn_enabled: bool = False,
         schema_bloat_enabled: bool = True,
         schema_min_requests: int = 10,
+        cache_policy: str = "none",
     ) -> AnalysisResult:
         state = self._sessions.get(session_id)
         if state is None:
@@ -90,6 +93,14 @@ class AnalysisState:
             current_config_hash=config_hash,
             previous_model=model,
             current_model=model,
+        )
+        baseline = simulate(
+            cache_policy,
+            state.segments,
+            state.last_ts,
+            segments,
+            ts,
+            ttl_s=ttl_s,
         )
         if drift is not None:
             state.drift_events.append(drift)
@@ -160,15 +171,44 @@ class AnalysisState:
         state.last_ts = ts
         state.turns += 1
         self._findings.extend(findings)
-        self._findings = self._findings[-self.max_findings :]
+        self._findings = self._dedupe(self._findings)[-self.max_findings :]
         return AnalysisResult(
             drift=drift,
             findings=findings,
             marker_quality=marker_quality(segments),
+            baseline=baseline,
         )
 
     def findings(self) -> list[WasteFinding]:
         return list(self._findings)
+
+    @staticmethod
+    def _dedupe(findings: list[WasteFinding]) -> list[WasteFinding]:
+        by_key: dict[tuple[str, bytes], WasteFinding] = {}
+        for finding in findings:
+            key = (finding.detector, finding.key_hash)
+            existing = by_key.get(key)
+            if existing is None or existing.status not in {"new", "ack"}:
+                by_key[key] = finding
+            else:
+                existing.occurrences += finding.occurrences
+                existing.last_seen_ts = max(existing.last_seen_ts, finding.last_seen_ts)
+                existing.est_tokens_wasted = max(
+                    existing.est_tokens_wasted or 0,
+                    finding.est_tokens_wasted or 0,
+                )
+                existing.evidence = finding.evidence
+        return list(by_key.values())
+
+    def set_status(self, finding_id: str, status: str) -> bool:
+        allowed = {"new", "ack", "fixed", "skipped"}
+        if status not in allowed:
+            return False
+        for finding in self._findings:
+            if finding.finding_id == finding_id:
+                finding.status = status  # type: ignore[assignment]
+                return True
+        return False
 
     def clear(self) -> None:
         self._sessions.clear()

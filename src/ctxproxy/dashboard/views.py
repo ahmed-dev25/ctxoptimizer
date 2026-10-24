@@ -1,7 +1,8 @@
-"""Server-rendered dashboard views (SPEC section 16.2, v0)."""
+"""Server-rendered dashboard views (SPEC section 16.2)."""
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -12,7 +13,14 @@ from starlette.templating import Jinja2Templates
 
 from ctxproxy import __version__
 from ctxproxy.analysis.recommend import recommendations
-from ctxproxy.telemetry.pricing import load_pricing
+from ctxproxy.config import data_dir
+from ctxproxy.dashboard.service import (
+    findings_from_rows,
+    parse_since,
+    pricing_payload,
+)
+from ctxproxy.doctor import run_checks
+from ctxproxy.licensing import license_status
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
@@ -20,18 +28,34 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 async def overview(request: Request) -> Response:
     state = request.app.state
     store = getattr(state, "store", None)
+    period = request.query_params.get("period", "7d")
+    since = parse_since(period) if period != "all" else None
     summary = (
-        store.summary()
+        store.summary(since)
         if store is not None
         else {
             "requests": 0,
             "cost_usd": 0.0,
+            "baseline_usd": 0.0,
             "fresh_input": 0,
             "cache_read": 0,
             "output_tokens": 0,
+            "tokens_removed": 0,
         }
     )
-    rows = store.fetch_recent(20) if store is not None else []
+    rows = store.export_rows(since, 20) if store is not None else []
+    projects = store.group_stats("project", 10, since) if store is not None else []
+    models = store.group_stats("model", 10, since) if store is not None else []
+    points = store.timeseries("cost", "day", since) if store is not None else []
+    waste = (
+        store.waste_summary(since)
+        if store is not None
+        else {
+            "findings": 0,
+            "tokens": 0,
+            "cost_usd": 0.0,
+        }
+    )
     return templates.TemplateResponse(
         request,
         "overview.html",
@@ -40,14 +64,27 @@ async def overview(request: Request) -> Response:
             "mode": state.config.mode.default,
             "summary": summary,
             "rows": rows,
+            "projects": projects,
+            "models": models,
+            "points": points,
+            "period": period,
+            "privacy": state.config.telemetry.capture_payloads != "off",
+            "capture": state.config.telemetry.capture_payloads,
+            "waste": waste,
         },
     )
 
 
 async def waste_view(request: Request) -> Response:
     state = request.app.state
+    store = getattr(state, "store", None)
     analysis = getattr(state, "analysis", None)
     findings = analysis.findings() if analysis is not None else []
+    rows = store.fetch_waste() if store is not None else []
+    if not rows:
+        rows = [_finding_dict(finding) for finding in findings]
+    if not findings and rows:
+        findings = findings_from_rows(rows)
     items = recommendations(
         findings,
         cache_serve_enabled=state.config.transforms.cache_serve.enabled,
@@ -60,8 +97,9 @@ async def waste_view(request: Request) -> Response:
         {
             "version": __version__,
             "mode": state.config.mode.default,
-            "findings": findings,
+            "findings": rows,
             "recommendations": items,
+            "csrf": state.csrf_token,
         },
     )
 
@@ -82,6 +120,29 @@ async def sessions_view(request: Request) -> Response:
             ("last_ts", "Last seen"),
         ],
         rows,
+    )
+
+
+async def session_view(request: Request) -> Response:
+    store = getattr(request.app.state, "store", None)
+    session_id = request.path_params["session_id"]
+    rows = (
+        list(reversed(store.fetch_session_requests(session_id, 500))) if store is not None else []
+    )
+    drift = store.fetch_drift(500) if store is not None else []
+    by_request = {item["request_id"]: item for item in drift}
+    for row in rows:
+        row["drift"] = (by_request.get(row["request_id"]) or {}).get("cause")
+    return templates.TemplateResponse(
+        request,
+        "session.html",
+        {
+            "version": __version__,
+            "mode": request.app.state.config.mode.default,
+            "title": f"Session {session_id}",
+            "session_id": session_id,
+            "rows": rows,
+        },
     )
 
 
@@ -112,7 +173,32 @@ async def request_view(request: Request) -> Response:
     store = getattr(request.app.state, "store", None)
     request_id = request.path_params["request_id"]
     row = store.fetch_request(request_id) if store is not None else None
+    reports = store.fetch_transform_reports(request_id) if store is not None else []
+    diff = _diff_blocks(request, request_id)
     status_code = 200 if row is not None else 404
+    usage = {}
+    timing = {}
+    if row is not None:
+        usage = {
+            key.removeprefix("cache_write_"): row[key]
+            for key in row
+            if key.startswith("cache_write_")
+        }
+        usage.update(
+            {
+                "source": row.get("usage_source"),
+                "fresh_input": row.get("fresh_input"),
+                "cache_read": row.get("cache_read"),
+                "output": row.get("output_tokens"),
+                "reasoning": row.get("reasoning_tokens"),
+                "provider_cost_usd": row.get("provider_cost_usd"),
+            }
+        )
+        timing = {
+            "ttfb_ms": row.get("ttfb_ms"),
+            "total_ms": row.get("total_ms"),
+            "proxy_overhead_ms": row.get("proxy_overhead_ms"),
+        }
     return templates.TemplateResponse(
         request,
         "request.html",
@@ -122,54 +208,84 @@ async def request_view(request: Request) -> Response:
             "title": f"Request {request_id}",
             "row": row or {},
             "found": row is not None,
+            "reports": reports,
+            "diff": diff,
+            "usage": usage,
+            "timing": timing,
         },
         status_code=status_code,
     )
 
 
+def _diff_blocks(request: Request, request_id: str) -> list[dict[str, Any]]:
+    store = getattr(request.app.state, "store", None)
+    blobs = getattr(request.app.state, "blobs", None)
+    if store is None or blobs is None:
+        return []
+    blocks: list[dict[str, Any]] = []
+    for capture in store.fetch_captures(request_id):
+        before = blobs.get(capture.get("before_hash") or "")
+        after = blobs.get(capture.get("after_hash") or "")
+        blocks.append(
+            {
+                "location": capture.get("location"),
+                "before": before.decode("utf-8", "replace") if before else "",
+                "after": after.decode("utf-8", "replace") if after else "",
+            }
+        )
+    return blocks
+
+
 async def transforms_view(request: Request) -> Response:
     state = request.app.state
+    store = getattr(state, "store", None)
     guard = getattr(state, "guard", None)
-    quarantined = {item["transform_id"] for item in (guard.status() if guard is not None else [])}
+    stats = {item["transform_id"]: item for item in (store.transform_stats() if store else [])}
+    quarantined = {item["transform_id"] for item in (guard.status() if guard else [])}
     rows = [
         {
             "transform": name,
             "enabled": value.get("enabled", False),
             "quarantined": name in quarantined,
+            "runs": stats.get(name, {}).get("runs", 0),
+            "tokens_saved": stats.get(name, {}).get("tokens_saved", 0),
+            "avg_ms": round(float(stats.get(name, {}).get("avg_ms") or 0.0), 3),
+            "errors": stats.get(name, {}).get("errors", 0),
+            "no_regress": stats.get(name, {}).get("no_regress", 0),
         }
         for name, value in state.config.transforms.model_dump().items()
         if isinstance(value, dict)
     ]
-    return _table(
+    return templates.TemplateResponse(
         request,
-        "Transforms",
-        "Deterministic transforms and session quarantine state.",
-        [
-            ("transform", "Transform"),
-            ("enabled", "Enabled"),
-            ("quarantined", "Quarantined"),
-        ],
-        rows,
+        "transforms.html",
+        {
+            "version": __version__,
+            "mode": state.config.mode.default,
+            "rows": rows,
+            "guard_events": store.fetch_guard_events() if store else [],
+            "csrf": state.csrf_token,
+        },
     )
 
 
 async def pricing_view(request: Request) -> Response:
     config = request.app.state.config
-    table = load_pricing(Path(config.pricing.file) if config.pricing.file else None)
-    rows = [asdict(model) for model in table.models]
-    return _table(
+    payload = pricing_payload(config)
+    store = getattr(request.app.state, "store", None)
+    unpriced = store.unpriced() if store is not None else []
+    return templates.TemplateResponse(
         request,
-        f"Pricing ({table.version})",
-        "Bundled/overridden rates per million tokens. Unknown models stay unpriced.",
-        [
-            ("provider", "Provider"),
-            ("match", "Model glob"),
-            ("input", "Input"),
-            ("output", "Output"),
-            ("cache_read", "Cache read"),
-            ("verified", "Verified"),
-        ],
-        rows,
+        "pricing.html",
+        {
+            "version": __version__,
+            "mode": config.mode.default,
+            "title": f"Pricing ({payload['version']})",
+            "models": payload["models"],
+            "payload_json": json.dumps({"models": payload["models"]}, indent=2),
+            "unpriced": unpriced,
+            "csrf": request.app.state.csrf_token,
+        },
     )
 
 
@@ -182,7 +298,7 @@ async def settings_view(request: Request) -> Response:
         "mode": config.mode.default,
         "capture_payloads": config.telemetry.capture_payloads,
         "retention_days": config.telemetry.retention_days,
-        "db_path": config.telemetry.db_path or "(default)",
+        "db_path": config.telemetry.db_path or str(data_dir() / "ctxproxy.db"),
         "pricing_file": config.pricing.file or "(bundled)",
         "upstreams": {
             name: (entry if isinstance(entry, str) else entry.url)
@@ -198,6 +314,9 @@ async def settings_view(request: Request) -> Response:
             "mode": config.mode.default,
             "title": "Settings",
             "data": data,
+            "license": license_status(),
+            "privacy": config.telemetry.capture_payloads != "off",
+            "csrf": request.app.state.csrf_token,
         },
     )
 
@@ -219,6 +338,27 @@ async def live_view(request: Request) -> Response:
     )
 
 
+async def doctor_view(request: Request) -> Response:
+    state = request.app.state
+    checks = run_checks(state.config, offline=True)
+    return templates.TemplateResponse(
+        request,
+        "doctor.html",
+        {
+            "version": __version__,
+            "mode": state.config.mode.default,
+            "title": "Doctor",
+            "checks": checks,
+        },
+    )
+
+
+def _finding_dict(finding: Any) -> dict[str, Any]:
+    data = asdict(finding)
+    data["key_hash"] = finding.key_hash.hex()
+    return data
+
+
 def _table(
     request: Request,
     title: str,
@@ -236,16 +376,19 @@ def _table(
             "subtitle": subtitle,
             "columns": columns,
             "rows": rows,
+            "csrf": request.app.state.csrf_token,
         },
     )
 
 
 __all__ = [
+    "doctor_view",
     "live_view",
     "overview",
     "pricing_view",
     "request_view",
     "requests_view",
+    "session_view",
     "sessions_view",
     "settings_view",
     "transforms_view",
