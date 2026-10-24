@@ -1,14 +1,76 @@
 [project]
 name = "ctxproxy"
 version = "0.1.0"
-description = "Add your description here"
+description = "Local, deterministic cost optimizer for AI coding agents"
 readme = "README.md"
-requires-python = ">=3.14"
-dependencies = []
+requires-python = ">=3.11"
+authors = [{ name = "ahmed" }]
+dependencies = [
+    "httpx[http2]>=0.27",
+    "jinja2>=3.1",
+    "orjson>=3.10",
+    "platformdirs>=4.2",
+    "pydantic>=2.7",
+    "starlette>=0.37",
+    "typer>=0.12",
+    "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+tokens = ["tiktoken>=0.7"]
+license = ["pynacl>=1.5"]
+re2 = ["google-re2>=1.1"]
+dev = [
+    "coverage>=7",
+    "hypothesis>=6.100",
+    "mypy>=1.10",
+    "pip-audit",
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "pytest-benchmark>=4",
+    "pytest-cov>=5",
+    "respx>=0.21",
+    "ruff>=0.5",
+]
 
 [project.scripts]
-ctxproxy = "ctxproxy:main"
+ctxproxy = "ctxproxy.cli:app"
 
 [build-system]
 requires = ["uv_build>=0.13.1,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# SPEC.md is authoritative and must never be reformatted. Ruff formats Python
+# code blocks inside Markdown files, which would rewrite it.
+extend-exclude = ["SPEC.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "ASYNC", "PERF", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+"scripts/**" = ["S101"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+mypy_path = "src"
+files = ["src"]
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = ["live: hits real provider APIs (needs keys)"]
+addopts = "-m 'not live'"
+
+[tool.coverage.run]
+branch = true
+source = ["ctxproxy"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
