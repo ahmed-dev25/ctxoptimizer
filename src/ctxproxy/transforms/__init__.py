@@ -1,4 +1,4 @@
-"""Deterministic payload transforms and the P3 registry (SPEC section 12)."""
+"""Deterministic payload transforms and the P3/P4 registry (SPEC section 12)."""
 
 from __future__ import annotations
 
@@ -7,16 +7,28 @@ from ctxproxy.transforms import ansi, dedupe_lines, progress, truncate, whitespa
 from ctxproxy.transforms.anthropic_cache import AnthropicCache
 from ctxproxy.transforms.backref import DuplicateBackref
 from ctxproxy.transforms.base import TextTransform, Transform
+from ctxproxy.transforms.cache_serve import CacheServe, CacheServeState
 from ctxproxy.transforms.eligibility import is_compactable, is_never_touch
 from ctxproxy.transforms.openai_hints import OpenAIHints
 
 
-def build_transforms(config: Config) -> list[Transform]:
+def build_transforms(
+    config: Config,
+    *,
+    disabled: set[str] | None = None,
+    cache_serve_state: CacheServeState | None = None,
+) -> list[Transform]:
     """Return enabled transforms in the fixed pipeline order."""
     transforms = config.transforms
+    removed = disabled or set()
     result: list[Transform] = []
+
+    def add(transform: Transform) -> None:
+        if transform.id not in removed:
+            result.append(transform)
+
     if transforms.ansi_strip.enabled:
-        result.append(
+        add(
             TextTransform(
                 "ansi_strip",
                 ansi.clean,
@@ -24,7 +36,7 @@ def build_transforms(config: Config) -> list[Transform]:
             )
         )
     if transforms.progress_collapse.enabled:
-        result.append(
+        add(
             TextTransform(
                 "progress_collapse",
                 progress.clean,
@@ -32,7 +44,7 @@ def build_transforms(config: Config) -> list[Transform]:
             )
         )
     if transforms.line_dedupe.enabled:
-        result.append(
+        add(
             TextTransform(
                 "line_dedupe",
                 lambda text: dedupe_lines.clean(text, transforms.line_dedupe.min_repeat),
@@ -40,7 +52,7 @@ def build_transforms(config: Config) -> list[Transform]:
             )
         )
     if transforms.whitespace_trim.enabled:
-        result.append(
+        add(
             TextTransform(
                 "whitespace_trim",
                 lambda text: whitespace.clean(text, transforms.whitespace_trim.max_blank_run),
@@ -48,7 +60,7 @@ def build_transforms(config: Config) -> list[Transform]:
             )
         )
     if transforms.smart_truncate.enabled:
-        result.append(
+        add(
             TextTransform(
                 "smart_truncate",
                 lambda text: truncate.clean(text, transforms.smart_truncate),
@@ -56,11 +68,13 @@ def build_transforms(config: Config) -> list[Transform]:
             )
         )
     if transforms.duplicate_backref.enabled:
-        result.append(DuplicateBackref())
+        add(DuplicateBackref())
+    if transforms.cache_serve.enabled and cache_serve_state is not None:
+        add(CacheServe(cache_serve_state))
     if transforms.anthropic_cache.enabled:
-        result.append(AnthropicCache())
+        add(AnthropicCache())
     if transforms.openai_hints.enabled:
-        result.append(OpenAIHints())
+        add(OpenAIHints())
     return result
 
 
