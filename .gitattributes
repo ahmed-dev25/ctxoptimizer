@@ -1,0 +1,31 @@
+# Source and docs are stored and checked out with LF regardless of the
+# system-wide core.autocrlf setting (this machine has autocrlf=true).
+* text=auto eol=lf
+*.py text eol=lf
+*.pyi text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.txt text eol=lf
+*.cfg text eol=lf
+*.ini text eol=lf
+.python-version text eol=lf
+
+# Captured provider traffic must remain byte-identical: SSE framing, CRLF
+# boundaries and chunk content are part of what the parsers are tested against.
+tests/fixtures/** -text
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary

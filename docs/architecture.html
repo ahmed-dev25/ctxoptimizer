@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ctxproxy — Agent-Run Cost Optimizer · Architecture Reference</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#2d3644;
+    --text:#e6edf3; --muted:#9aa7b4; --accent:#4ade80; --accent2:#60a5fa;
+    --amber:#fbbf24; --red:#f87171; --purple:#c084fc; --teal:#2dd4bf;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; line-height:1.55; padding-bottom:60px;}
+  a{color:var(--accent2); text-decoration:none;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 22px;}
+
+  /* ---------- header ---------- */
+  header{background:linear-gradient(135deg,#10161f 0%,#162031 55%,#12203a 100%); border-bottom:1px solid var(--border); padding:46px 0 30px;}
+  h1{font-size:2rem; letter-spacing:.3px;}
+  h1 .mono{color:var(--accent); font-family:Consolas,monospace;}
+  .tagline{color:var(--muted); font-size:1.05rem; margin-top:8px; max-width:760px;}
+  .chain{display:inline-flex; flex-wrap:wrap; gap:6px; margin-top:18px;}
+  .chain span{background:var(--panel2); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:.86rem; color:var(--text);}
+  .chain span b{color:var(--accent);}
+  .chain .arrow{border:none; background:none; padding:5px 2px; color:var(--muted);}
+  .badges{margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;}
+  .badge{font-size:.78rem; padding:4px 11px; border-radius:6px; border:1px solid var(--border); color:var(--muted);}
+  .badge.green{border-color:#14532d; color:#86efac; background:rgba(34,197,94,.08);}
+  .badge.blue{border-color:#1e3a8a; color:#93c5fd; background:rgba(59,130,246,.08);}
+  .badge.amber{border-color:#78350f; color:#fcd34d; background:rgba(245,158,11,.08);}
+
+  /* ---------- nav ---------- */
+  nav{position:sticky; top:0; z-index:50; background:rgba(13,17,23,.94); backdrop-filter:blur(6px); border-bottom:1px solid var(--border); padding:10px 0;}
+  nav .wrap{display:flex; gap:4px; flex-wrap:wrap;}
+  nav a{font-size:.85rem; color:var(--muted); padding:6px 12px; border-radius:6px;}
+  nav a:hover{color:var(--text); background:var(--panel2);}
+
+  /* ---------- sections ---------- */
+  section{padding:52px 0 10px;}
+  h2{font-size:1.45rem; margin-bottom:4px;}
+  h2 .num{color:var(--accent2); font-family:Consolas,monospace; font-size:1.1rem; margin-right:8px;}
+  .sub{color:var(--muted); margin-bottom:24px; font-size:.95rem;}
+  h3{font-size:1.05rem; margin:26px 0 12px; color:var(--accent2);}
+
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px 22px; margin-bottom:16px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  @media(max-width:860px){.grid2,.grid3,.grid4{grid-template-columns:1fr;}}
+
+  /* ---------- step flow ---------- */
+  .flow{display:flex; flex-direction:column; gap:0; counter-reset:step;}
+  .step{display:grid; grid-template-columns:74px 1fr; gap:18px; position:relative; padding-bottom:26px;}
+  .step:last-child{padding-bottom:0;}
+  .step::before{content:""; position:absolute; left:36px; top:52px; bottom:0; width:2px; background:linear-gradient(var(--border), transparent);}
+  .step:last-child::before{display:none;}
+  .stepnum{width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:Consolas,monospace; font-size:1.25rem; font-weight:700; color:#0d1117;
+    border:3px solid var(--border); background:var(--muted); flex-shrink:0; margin-left:11px;}
+  .s-green{background:var(--accent)!important; border-color:#166534!important;}
+  .s-blue{background:var(--accent2)!important; border-color:#1e40af!important;}
+  .s-amber{background:var(--amber)!important; border-color:#92400e!important;}
+  .s-purple{background:var(--purple)!important; border-color:#6b21a8!important;}
+  .s-teal{background:var(--teal)!important; border-color:#115e59!important;}
+  .s-red{background:var(--red)!important; border-color:#7f1d1d!important;}
+  .stepbody .stitle{font-weight:600; font-size:1.08rem; margin-bottom:4px;}
+  .stepbody p{color:var(--muted); font-size:.94rem;}
+  .stepbody .detail{margin-top:10px; display:flex; flex-direction:column; gap:6px;}
+  .pill{display:inline-block; font-size:.8rem; background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:3px 10px; color:var(--text);}
+  .pill b{color:var(--accent);}
+  .note{margin-top:8px; font-size:.86rem; color:var(--amber);}
+
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; font-size:.9rem;}
+  th{text-align:left; color:var(--muted); font-weight:600; font-size:.8rem; text-transform:uppercase; letter-spacing:.6px; padding:10px 12px; border-bottom:1px solid var(--border);}
+  td{padding:10px 12px; border-bottom:1px solid rgba(45,54,68,.5); vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(96,165,250,.04);}
+  td code, p code, li code{font-family:Consolas,'Courier New',monospace; background:#0a0e14; border:1px solid var(--border); border-radius:4px; padding:1px 6px; font-size:.86em; color:#a5d6ff;}
+  .tag{display:inline-block; font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:5px; letter-spacing:.4px;}
+  .t-on{background:rgba(34,197,94,.15); color:#86efac; border:1px solid #14532d;}
+  .t-off{background:rgba(248,113,113,.12); color:#fca5a5; border:1px solid #7f1d1d;}
+  .t-phase{background:rgba(96,165,250,.12); color:#93c5fd; border:1px solid #1e3a8a;}
+  .t-est{background:rgba(251,191,36,.12); color:#fcd34d; border:1px solid #78350f;}
+
+  /* ---------- pipeline strip ---------- */
+  .pipe{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:14px 0;}
+  .pipe .node{background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:8px 13px; font-size:.84rem; font-family:Consolas,monospace;}
+  .pipe .node.hot{border-color:#166534; color:#86efac;}
+  .pipe .arr{color:var(--muted); font-size:.9rem;}
+
+  /* llm callout */
+  .nocall{background:linear-gradient(135deg, rgba(34,197,94,.09), rgba(13,17,23,.4)); border:1px solid #14532d; border-radius:12px; padding:22px 24px;}
+  .nocall h3{margin-top:0; color:var(--accent);}
+  @media print{ body{background:#fff; color:#111;} .card,.nocall{border-color:#ccc; background:#fff;} :root{--text:#111; --muted:#444;} nav{display:none;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="badges" style="margin:0 0 12px;">
+      <span class="badge green">SPEC v2.0</span>
+      <span class="badge blue">Local · Deterministic · LLM-free core</span>
+      <span class="badge amber">Python 3.11+</span>
+    </div>
+    <h1><span class="mono">ctxproxy</span> — The Agent-Run Cost Optimizer</h1>
+    <p class="tagline">A transparent local HTTP proxy between AI coding agents and LLM providers.
+    Every request is <b>measured, cleaned, cached, attributed, and explained</b> — by pure deterministic
+    code — while the agent, the provider, and the user experience nothing except a smaller bill
+    and a dashboard that finally tells them where their money went.</p>
+    <div class="chain">
+      <span><b>measure</b></span><span class="arrow">→</span>
+      <span><b>diagnose</b></span><span class="arrow">→</span>
+      <span><b>optimize</b></span><span class="arrow">→</span>
+      <span><b>attribute</b></span><span class="arrow">→</span>
+      <span><b>prevent</b></span><span class="arrow">→</span>
+      <span><b>coach</b></span>
+    </div>
+  </div>
+</header>
+
+<nav><div class="wrap">
+  <a href="#flow">Request Flow</a>
+  <a href="#transforms">Transforms</a>
+  <a href="#waste">Waste Taxonomy</a>
+  <a href="#llm">Where LLMs Are Used</a>
+  <a href="#guard">Safety &amp; Self-Tuning</a>
+  <a href="#data">Data &amp; CLI</a>
+  <a href="#roadmap">Roadmap</a>
+</div></nav>
+
+<div class="wrap">
+
+<!-- ================= FLOW ================= -->
+<section id="flow">
+  <h2><span class="num">01</span>The Entire Flow — One Agent Turn, Step by Step</h2>
+  <p class="sub">What happens every time your coding agent sends a request through the proxy.</p>
+
+  <div class="card" style="margin-bottom:28px;">
+    <h3 style="margin-top:0;">Setup (once, per machine)</h3>
+    <p style="color:var(--muted); font-size:.93rem;">
+      1. <code>uv tool install ctxproxy</code> — one command.<br><br>
+      2. Point clients at the proxy:
+      <code>ANTHROPIC_BASE_URL=http://127.0.0.1:8787</code> &nbsp;·&nbsp;
+      <code>OPENAI_BASE_URL=http://127.0.0.1:8787/v1</code><br><br>
+      3. First run = <b style="color:var(--amber)">shadow mode</b>: watches &amp; reports, forwards everything untouched.
+      Trust is earned before any change is permitted. Switch to <code>active</code> when convinced.
+    </p>
+  </div>
+
+  <div class="flow">
+
+    <div class="step">
+      <div class="stepnum s-blue">1</div>
+      <div class="stepbody">
+        <div class="stitle">Receive &amp; Route <code>server.py · routing.py</code></div>
+        <p>Request arrives on <code>127.0.0.1:8787</code>. Router identifies provider (Anthropic / OpenAI / Gemini / Ollama),
+        endpoint kind, session id (from header or derived from content), and project.
+        Anything unknown → <b style="color:var(--text)">raw passthrough</b>, untouched, telemetered lightly.</p>
+        <div class="detail"><span class="pill">zero code changes for clients</span><span class="pill">loopback-only by default</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="stepnum s-blue">2</div>
+      <div class="stepbody">
+        <div class="stitle">Decode &amp; Analyze <code>analysis/*</code></div>
+        <p>JSON parsed once (<code>orjson</code>). Payload becomes <b style="color:var(--text)">segments</b> — tool defs, system prompt,
+        message blocks — each hashed &amp; token-estimated.</p>
+        <div class="detail">
+          <span class="pill"><b>Drift detector:</b> "prefix changed here → that's why your cache missed"</span>
+          <span class="pill">causes: tools · system · params · history · TTL · config · model switch</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="stepnum s-green">3</div>
+      <div class="stepbody">
+        <div class="stitle">Optimize — the Transform Pipeline <code>transforms/*</code></div>
+        <p>Deterministic, cache-safe payload reductions on <b style="color:var(--text)">tool-result text only</b>
+        (user &amp; assistant text untouched by default). Fixed order, time-budgeted, guarded:</p>
+        <div class="pipe">
+          <span class="node">ansi_strip</span><span class="arr">→</span>
+          <span class="node">progress_collapse</span><span class="arr">→</span>
+          <span class="node">line_dedupe</span><span class="arr">→</span>
+          <span class="node">whitespace_trim</span><span class="arr">→</span>
+          <span class="node">smart_truncate</span><span class="arr">→</span>
+          <span class="node">duplicate_backref</span><span class="arr">→</span>
+          <span class="node hot">cache_serve</span><span class="arr">→</span>
+          <span class="node">stale_result_elision <i>(opt-in)</i></span><span class="arr">→</span>
+          <span class="node">anthropic_cache / openai_hints</span>
+        </div>
+        <p style="color:var(--muted); font-size:.88rem;">Shadow mode runs everything, then <i>discards</i> the result and
+        keeps only the report ("what would have been saved?").</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="stepnum s-amber">4</div>
+      <div class="stepbody">
+        <div class="stitle">Attribute the Waste <code>analysis/waste.py</code> — the unique layer</div>
+        <p>Detectors compare hashes across turns &amp; sessions and record <b style="color:var(--amber)">Waste Findings</b>:
+        "file re-read unchanged 3× (≈$0.41)", "4 reads could be one batch", "session burned 40 min with no result",
+        "your system-prompt timestamp busts the cache every turn." Pure counters, hashes, thresholds —
+        findings <b>never mutate traffic</b> (INV-16).</p>
+        <div class="detail"><span class="pill">8 determinstic detectors: W1–W8</span><span class="pill"><a href="#waste">see taxonomy ↓</a></span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="stepnum s-teal">5</div>
+      <div class="stepbody">
+        <div class="stitle">Forward &amp; Measure Ground Truth <code>proxy.py</code></div>
+        <p>Request streams to the provider; response streams straight back to the client —
+        <b style="color:var(--text)">byte-for-byte, never buffered, zero perceived latency</b>.
+        A side-channel tee parses the provider's own <code>usage</code> numbers: real tokens, real cache hits.
+        Provider errors (429 etc.) pass through verbatim.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="stepnum s-amber">6</div>
+      <div class="stepbody">
+        <div class="stitle">The Honest Math <code>analysis/baseline.py · pricing.py</code></div>
+        <p><b style="color:var(--text)">Actual cost</b> from provider usage. A <b style="color:var(--text)">simulator</b> computes what the
+        untouched request would have cost. Savings are always labeled <code>sim.</code>/<code>est.</code>
+        and continuously calibrated against reality (INV-13, INV-18).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="stepnum s-purple">7</div>
+      <div class="stepbody">
+        <div class="stitle">Store, Visualize, Coach <code>telemetry/* · dashboard/*</code></div>
+        <p>Everything lands in local SQLite. Dashboard at <code>localhost:8787/_ctxproxy</code>:
+        live $ burn, actual vs simulated cost, cache health, <b style="color:var(--text)">Waste Opportunities ranked by $</b>,
+        and <b style="color:var(--text)">one-click Recommendations</b> ("prune 3 unused MCP tool schemas — projected $X/mo").
+        CLI mirror: <code>stats · waste · recommend</code>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="stepnum s-purple">8</div>
+      <div class="stepbody">
+        <div class="stitle">The Retrieval Loop — nothing is lost <code>mcp.py</code></div>
+        <p>Any transform that omitted content leaves a pointer. The agent can call the local MCP tool
+        <code>ctxproxy_expand(ref)</code> and get the <b style="color:var(--text)">original bytes back on demand</b>.
+        Deletions become lazy loading; the agent is never left without a path to the truth.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="stepnum s-red">9</div>
+      <div class="stepbody">
+        <div class="stitle">Self-Tuning Guard <code>§12.14</code></div>
+        <p>Continuous policy: too many fallbacks · any "our-fault" drift · broken expand refs · a transform
+        earning nothing → that transform <b style="color:var(--text)">auto-drops to shadow</b> for the session, with alarm + evidence.
+        <span class="note">The product tunes itself per codebase instead of fighting the user.</span></p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= TRANSFORMS ================= -->
+<section id="transforms">
+  <h2><span class="num">02</span>The Transform Arsenal</h2>
+  <p class="sub">Every mutation is deterministic, idempotent, prefix-stable, and reversible. · <span class="tag t-on">ON</span> default on · <span class="tag t-off">OFF</span> default off · <span class="tag t-phase">phase</span> build order</span></p>
+
+  <div class="card">
+    <table>
+      <tr><th>Transform</th><th>What it does</th><th>Safety class</th><th>Default</th><th>Phase</th></tr>
+      <tr><td><code>ansi_strip</code></td><td>Removes ANSI escape codes, OSC sequences, control chars</td><td rowspan="4">T0 — provable</td><td><span class="tag t-on">ON</span></td><td>P3</td></tr>
+      <tr><td><code>progress_collapse</code></td><td>Terminal overwrite (\r) &amp; progress-bar lines → last line + one marker; never touches error lines</td><td><span class="tag t-on">ON</span></td><td>P3</td></tr>
+      <tr><td><code>line_dedupe</code></td><td>Exact &amp; near-duplicate line runs (digit/timestamp-normalized) → summary markers</td><td><span class="tag t-on">ON</span></td><td>P3</td></tr>
+      <tr><td><code>whitespace_trim</code></td><td>Trailing whitespace, blank-run collapse (indentation preserved)</td><td><span class="tag t-on">ON</span></td><td>P3</td></tr>
+      <tr><td><code>smart_truncate</code></td><td>Big outputs → head + tail + <b>error-signal windows</b> (tracebacks, test summaries always survive)</td><td>T1 — lossy, reversible</td><td><span class="tag t-on">ON</span></td><td>P3</td></tr>
+      <tr><td><code>duplicate_backref</code></td><td>Identical tool output later in same request → pointer to earlier copy</td><td>T0</td><td><span class="tag t-on">ON</span></td><td>P3</td></tr>
+      <tr><td><code>cache_serve</code></td><td><b>Byte-true cross-request substitution:</b> file re-read hash-identical to content the session already holds → stub + <code>expand</code> pointer. Stateful, batch-boundary-anchored.</td><td>T0</td><td><span class="tag t-off">OFF</span></td><td>P3-8</td></tr>
+      <tr><td><code>stale_result_elision</code></td><td>Drops very old large tool outputs at stable batch boundaries</td><td>T1 positional</td><td><span class="tag t-off">OFF</span></td><td>P6</td></tr>
+      <tr><td><code>anthropic_cache</code></td><td>Injects <code>cache_control</code> breakpoints (stair-step: static prefix / previous turn / current tail)</td><td>hint</td><td><span class="tag t-on">ON</span></td><td>P4</td></tr>
+      <tr><td><code>openai_hints</code></td><td>Injects <code>prompt_cache_key</code> (api.openai.com only)</td><td>hint</td><td><span class="tag t-off">OFF</span></td><td>P4</td></tr>
+      <tr><td><code>volatile_normalizer</code></td><td>Rewrites timestamps / UUIDs in system prompt to day precision (after drift proves the bust)</td><td>opt-in</td><td><span class="tag t-off">OFF</span></td><td>P3+</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ================= WASTE ================= -->
+<section id="waste">
+  <h2><span class="num">03</span>Waste Taxonomy — W1 to W8</h2>
+  <p class="sub">The differentiator: everyone compresses — nobody tells you <i>why</i> your agent wasted $212 last week.
+  All detectors are deterministic, advisory-only (INV-16), evidence-linked, and priced (INV-18). <span class="tag t-est">est.</span></p>
+
+  <div class="card">
+    <table>
+      <tr><th>ID</th><th>Detector</th><th>Catch (plain language)</th><th>Status</th></tr>
+      <tr><td><b>W1</b></td><td><code>redundant_reread</code></td><td>Same unchanged file/tool content billed as fresh input again &amp; again — across turns and after compaction</td><td><span class="tag t-on">ON</span></td></tr>
+      <tr><td><b>W2</b></td><td><code>identical_output</code></td><td>Same tool output ≥ 3× in one session (polling / retry churn)</td><td><span class="tag t-on">ON</span></td></tr>
+      <tr><td><b>W3</b></td><td><code>unbatched_fanout</code></td><td>4+ sequential read calls in one turn that could have been one batch</td><td><span class="tag t-on">ON</span></td></tr>
+      <tr><td><b>W4</b></td><td><code>runaway_session</code></td><td>Agent "keeps working" 15+ minutes past real activity; the re-billed prefix after the gap is waste</td><td><span class="tag t-on">ON</span></td></tr>
+      <tr><td><b>W5</b></td><td><code>recurring_drift</code></td><td>Same client-side cache-bust recurring (timestamps! MCP churn! history edits!)</td><td><span class="tag t-on">ON</span></td></tr>
+      <tr><td><b>W6</b></td><td><code>params_drift</code></td><td>Model / tool_choice / thinking param changes churning the cache namespace</td><td><span class="tag t-on">ON</span></td></tr>
+      <tr><td><b>W7</b></td><td><code>churn_detector</code></td><td>Assistant edits that revert prior edits or change only whitespace — the "11 steps to do 3" pattern</td><td><span class="tag t-off">OFF</span></td></tr>
+      <tr><td><b>W8</b></td><td><code>schema_bloat</code></td><td>MCP/tool schemas loaded &amp; billed on every request though never used in the session</td><td><span class="tag t-off">OFF</span></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">Recommendations engine (§13.7)</h3>
+    <p style="color:var(--muted); font-size:.93rem; margin-bottom:10px;">Measured evidence → ranked, honest, one-click-appliable suggestions. Never auto-applies.</p>
+    <ul style="color:var(--muted); font-size:.92rem; margin-left:18px;">
+      <li>"Your system prompt contains a timestamp → enable <code>volatile_normalizer</code>" <i>(after 3+ consecutive drifts)</i></li>
+      <li>"Enable <code>cache_serve</code> — projected $X/mo from W1" <i>(above sim break-even)</i></li>
+      <li>"3 MCP tool schemas unused in 100+ requests → prune"</li>
+      <li>"Batch your reads" · "Investigate runaway sessions" · "Disable transform X — overhead without benefit"</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= LLM ================= -->
+<section id="llm">
+  <h2><span class="num">04</span>Where LLMs Are (and Are Not) Used</h2>
+  <div class="nocall">
+    <h3>⚡ Inside the proxy: zero LLM calls. Zero tokens. Zero added cost of intelligence.</h3>
+    <p style="color:var(--muted);">Every decision — cleaning, caching, attribution, recommendations, guard rules — is a
+    <b style="color:var(--text)">hash, regex, counter, or threshold check</b>. Determinism, latency, and cost guarantees are absolute (spec rule D15).
+    Anything "speculative" (cheap-model routing with LLM verification, fix-up interception) is deliberately deferred to a
+    gated future phase that must first pass its own break-even rule (<i>verification spend ≤ 10% of what it protects, circuit-breakable, deterministic-first ladder</i>).</p>
+    <div class="pipe" style="margin-top:16px;">
+      <span class="node hot">hashes &amp; regexes</span><span class="arr">·</span>
+      <span class="node hot">counters &amp; thresholds</span><span class="arr">·</span>
+      <span class="node hot">provider-reported usage (paid by user anyway)</span>
+      <span class="arr">⟶</span>
+      <span class="node">the only LLM in the picture is the one the user was already paying</span>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:16px;">
+    <div class="card"><h3 style="margin-top:0;">Why this matters commercially</h3>
+      <p style="color:var(--muted); font-size:.92rem;">The proxy promises "cheaper" without charging tokens to be clever.
+      A competitor that calls an LLM to summarize competes against itself: its savings partially pay its own inference bill.
+      ctxproxy's interventions cost microseconds of CPU.</p></div>
+    <div class="card"><h3 style="margin-top:0;">The verification ladder (future-proofing)</h3>
+      <p style="color:var(--muted); font-size:.92rem;">Deterministic checks (hash/mtime) → free repo signals (tests pass) → parsed invariants
+      → <b>only then</b> a tiny sampled model judge — and only if the EV math clears. LLM is the method of <i>last</i> resort, never the first.</p></div>
+  </div>
+</section>
+
+<!-- ================= SAFETY ================= -->
+<section id="guard">
+  <h2><span class="num">05</span>Safety &amp; Self-Tuning — Why Nobody Gets Hurt</h2>
+  <p class="sub">Hard invariants (INV-1…INV-18) make failure boring: the worst outcome is always "unchanged quality, no savings."</p>
+  <div class="grid3">
+    <div class="card"><h3 style="margin-top:0;">Fail-open (INV-1)</h3>
+      <p style="color:var(--muted); font-size:.92rem;">Any proxy error → original request forwarded untouched. Proxy bugs
+      can never surface as client errors.</p></div>
+    <div class="card"><h3 style="margin-top:0;">Shadow-first (D3)</h3>
+      <p style="color:var(--muted); font-size:.92rem;">Default mode mutates nothing. Users see <i>potential</i> savings in shadow,
+      <i>actual</i> savings in active — never invented numbers (INV-13).</p></div>
+    <div class="card"><h3 style="margin-top:0;">Retry-with-original (§9.7)</h3>
+      <p style="color:var(--muted); font-size:.92rem;">Provider rejects a mutated request (400/422)? The original is resent
+      automatically. Downside of a transform bug ≈ zero.</p></div>
+    <div class="card"><h3 style="margin-top:0;">No-regress + budget (INV-10)</h3>
+      <p style="color:var(--muted); font-size:.92rem;">A transform that doesn't save ≥ N tokens is reverted. Total CPU
+      time per request is capped (250 ms budget).</p></div>
+    <div class="card"><h3 style="margin-top:0;">Byte-truth only (T0)</h3>
+      <p style="color:var(--muted); font-size:.92rem;"><code>cache_serve</code>/backrefs emit stubs only when the content is
+      hash-provably identical. The proxy <i>never lies</i> — only cheaper truths.</p></div>
+    <div class="card"><h3 style="margin-top:0;">Auto-quarantine (§12.14)</h3>
+      <p style="color:var(--muted); font-size:.92rem;">Fallback storms, our-fault drift, broken expand refs, or no savings →
+      that transform drops to shadow for the session, with evidence. Reversible, session-scoped.</p></div>
+  </div>
+</section>
+
+<!-- ================= DATA ================= -->
+<section id="data">
+  <h2><span class="num">06</span>Data, Privacy &amp; Interfaces</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0;">What the proxy sees &amp; stores</h3>
+      <table>
+        <tr><th>Data</th><th>Scope</th></tr>
+        <tr><td>Provider <code>usage</code> numbers</td><td>fully recorded (ground truth)</td></tr>
+        <tr><td>Segment hashes &amp; token estimates</td><td>recorded</td></tr>
+        <tr><td>Drift events, waste findings, guard events</td><td>recorded (no raw text)</td></tr>
+        <tr><td>Original content of changed blocks</td><td>opt-in capture (<code>changed_blocks</code>/full), secrets redacted, retention-bounded</td></tr>
+        <tr><td>Credentials</td><td>never stored, never logged (INV-11)</td></tr>
+        <tr><td>Network</td><td>loopback + configured upstreams only — no telemetry leaves the machine</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;">CLI &amp; dashboard surface</h3>
+      <table>
+        <tr><th>Command / page</th><th>Purpose</th></tr>
+        <tr><td><code>ctxproxy run · status · env · doctor</code></td><td>install → health-check → live</td></tr>
+        <tr><td><code>ctxproxy stats · waste · recommend</code></td><td>terminal cockpit for cost, waste, actions</td></tr>
+        <tr><td><code>ctxproxy guard status/enable</code></td><td>quarantine management</td></tr>
+        <tr><td><code>ctxproxy_expand(ref)</code> (MCP)</td><td>agent-side original retrieval</td></tr>
+        <tr><td>Dashboard: Overview · Live · Sessions · Requests</td><td>$ burn, savings, per-turn drilldown</td></tr>
+        <tr><td>Dashboard: Cache &amp; Waste Health · Waste Opportunities</td><td>diagnose &amp; act — ranked by $</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ROADMAP ================= -->
+<section id="roadmap">
+  <h2><span class="num">07</span>Build Roadmap (8 Phases)</h2>
+  <p class="sub">Tasks P0-1 … P7-5 per the spec; milestones bolded.</p>
+  <div class="card">
+    <table>
+      <tr><th>Phase</th><th>Delivers</th></tr>
+      <tr><td><b>P0</b> Scaffolding</td><td>repo, CI, config, models, test infra</td></tr>
+      <tr><td><b>P1</b> Transparent proxy</td><td>routing + streaming tee + usage parsers + pricing + CLI → <b>internal alpha</b></td></tr>
+      <tr><td><b>P2</b> Analysis &amp; shadow</td><td>adapters, estimator, pipeline framework, drift detector, simulator, <b>waste detectors W1–W6</b> → <b>shadow mode already delivers value</b></td></tr>
+      <tr><td><b>P3</b> Transforms</td><td>all content transforms, active mode, retry-with-original, <b>auto-quarantine guard</b>, <b>cache_serve</b>, <b>expand MCP</b>, dogfood week</td></tr>
+      <tr><td><b>P4</b> Cache hints</td><td>anthropic breakpoints (stair-step), openai prompt_cache_key, marker-quality metric</td></tr>
+      <tr><td><b>P5</b> Full dashboard</td><td>all pages incl. <b>Waste Opportunities</b> + one-click recommendations, security hardening</td></tr>
+      <tr><td><b>P6</b> More providers</td><td>Gemini, Ollama, named upstreams, elision, churn detector (W7), schema bloat (W8)</td></tr>
+      <tr><td><b>P7</b> Ship</td><td>packaging, service install, licensing (free shadow → paid active), docs, launch · future: team tier (AI FinOps), model-drift sentry</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer style="margin-top:50px; border-top:1px solid var(--border); padding-top:24px;">
+  <div class="grid3">
+    <div><b style="color:var(--accent);">The one-liner</b>
+      <p style="color:var(--muted); font-size:.9rem; margin-top:6px;">"Everyone compresses. Nobody tells you why your agent
+      wasted $212 last week. ctxproxy does — deterministically."</p></div>
+    <div><b style="color:var(--accent2);">The moats</b>
+      <p style="color:var(--muted); font-size:.9rem; margin-top:6px;">Waste attribution dataset · session content maps ·
+      self-quarantine trust record · on-demand retrieval · honest-numbers reputation.</p></div>
+    <div><b style="color:var(--amber);">The references</b>
+      <p style="color:var(--muted); font-size:.9rem; margin-top:6px;"><code>SPEC.md</code> (authoritative, v2.0) ·
+      <code>docs/provider-notes.md</code> · <code>AGENTS.md</code> coding rules. This page is a reading aid, not a spec.</p></div>
+  </div>
+  <p style="color:var(--muted); font-size:.8rem; margin-top:22px;">ctxproxy architecture reference · generated from SPEC v2.0 · Oct 2026 · print-friendly</p>
+</footer>
+
+</div>
+</body>
+</html>
