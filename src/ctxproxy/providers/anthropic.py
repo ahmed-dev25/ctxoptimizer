@@ -88,6 +88,9 @@ class AnthropicAdapter:
             if isinstance(tool, dict) and isinstance(tool.get("name"), str)
         ]
 
+    def used_tool_names(self, payload: dict[str, Any]) -> list[str]:
+        return list(self._tool_use_names(payload).values())
+
     def _tool_use_names(self, payload: dict[str, Any]) -> dict[str, str]:
         names: dict[str, str] = {}
         for message in payload.get("messages") or []:

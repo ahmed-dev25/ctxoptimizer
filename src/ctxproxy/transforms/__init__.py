@@ -10,6 +10,7 @@ from ctxproxy.transforms.base import TextTransform, Transform
 from ctxproxy.transforms.cache_serve import CacheServe, CacheServeState
 from ctxproxy.transforms.eligibility import is_compactable, is_never_touch
 from ctxproxy.transforms.openai_hints import OpenAIHints
+from ctxproxy.transforms.stale_result_elision import StaleResultElision
 
 
 def build_transforms(
@@ -71,6 +72,8 @@ def build_transforms(
         add(DuplicateBackref())
     if transforms.cache_serve.enabled and cache_serve_state is not None:
         add(CacheServe(cache_serve_state))
+    if transforms.stale_result_elision.enabled:
+        add(StaleResultElision())
     if transforms.anthropic_cache.enabled:
         add(AnthropicCache())
     if transforms.openai_hints.enabled:

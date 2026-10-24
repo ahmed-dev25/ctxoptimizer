@@ -174,6 +174,34 @@ def test_deepseek_usage_and_cost_are_recorded(fake_upstream, tmp_path: Path) -> 
     assert body["last_cost_usd"] == pytest.approx(expected)
 
 
+def test_non_stream_json_usage_is_parsed(fake_upstream, tmp_path: Path) -> None:
+    config = Config.model_validate(
+        {
+            "upstreams": {"openai": fake_upstream.base_url},
+            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
+        }
+    )
+    fake_upstream.json(
+        {
+            "model": "gpt-6.1-sol",
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 5,
+                "prompt_tokens_details": {"cached_tokens": 2},
+            },
+        }
+    )
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(
+                f"{url}/v1/chat/completions",
+                content=b'{"model":"gpt-6.1-sol"}',
+            )
+            assert response.status_code == 200
+            body = client.get(f"{url}/_ctxproxy/health").json()
+    assert body["last_usage_source"] == "provider"
+
+
 def test_proxy_persists_request_to_sqlite(fake_upstream, tmp_path: Path) -> None:
     db_path = tmp_path / "ctxproxy.db"
     config = Config.model_validate(

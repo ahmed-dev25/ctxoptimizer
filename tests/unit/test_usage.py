@@ -177,3 +177,58 @@ def test_garbage_never_raises() -> None:
     parser.feed(b"\xff\x00not an event")
     usage = parser.result()
     assert usage.source in {"provider", "estimated", "none"}
+
+
+def test_gemini_native_stream_usage() -> None:
+    parser = new_usage_parser(Provider.GEMINI, Endpoint.GENERATE, BUILTIN_PROFILES["gemini"])
+    data = (
+        b'data: {"candidates":[{"content":{"parts":[{"text":"hi"}]}}],'
+        b'"usageMetadata":{"promptTokenCount":100,"cachedContentTokenCount":40,'
+        b'"candidatesTokenCount":20,"thoughtsTokenCount":5}}\n\n'
+    )
+    _feed(parser, data, 3)
+    usage = parser.result()
+    assert usage.source == "provider"
+    assert usage.fresh_input == 60
+    assert usage.cache_read == 40
+    assert usage.output == 20
+    assert usage.reasoning == 5
+
+
+def test_gemini_native_non_stream_body() -> None:
+    body = (
+        b'{"usageMetadata":{"promptTokenCount":30,"cachedContentTokenCount":10,'
+        b'"candidatesTokenCount":7}}'
+    )
+    usage = parse_usage_body(Provider.GEMINI, Endpoint.GENERATE, BUILTIN_PROFILES["gemini"], body)
+    assert usage.source == "provider"
+    assert usage.fresh_input == 20
+    assert usage.cache_read == 10
+    assert usage.output == 7
+
+
+def test_ollama_stream_usage_is_ndjson() -> None:
+    parser = new_usage_parser(Provider.OLLAMA, Endpoint.CHAT, BUILTIN_PROFILES["ollama"])
+    data = (
+        b'{"message":{"content":"hi"},"done":false}\n'
+        b'{"prompt_eval_count":100,"prompt_eval_cached_count":40,'
+        b'"eval_count":20,"done":true}\n'
+    )
+    _feed(parser, data, 5)
+    usage = parser.result()
+    assert usage.source == "provider"
+    assert usage.fresh_input == 60
+    assert usage.cache_read == 40
+    assert usage.output == 20
+
+
+def test_ollama_non_stream_body() -> None:
+    usage = parse_usage_body(
+        Provider.OLLAMA,
+        Endpoint.CHAT,
+        BUILTIN_PROFILES["ollama"],
+        b'{"prompt_eval_count":12,"eval_count":4,"done":true}',
+    )
+    assert usage.source == "provider"
+    assert usage.fresh_input == 12
+    assert usage.output == 4

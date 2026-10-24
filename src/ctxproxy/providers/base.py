@@ -28,6 +28,8 @@ class ProviderAdapter(Protocol):
 
     def tool_names(self, payload: dict[str, Any]) -> list[str]: ...
 
+    def used_tool_names(self, payload: dict[str, Any]) -> list[str]: ...
+
 
 class DictToolResultRef(ToolResultRef):
     """Edits a text-bearing ``content``/``output`` field inside a JSON block."""
@@ -60,6 +62,40 @@ class DictToolResultRef(ToolResultRef):
 
     def set_text(self, new_text: str) -> None:
         set_content_text(self._block, self._key, new_text)
+
+
+class MappingToolResultRef(ToolResultRef):
+    """Edits a string value on a mapping (Gemini functionResponse)."""
+
+    __slots__ = ("_block", "_key")
+
+    def __init__(
+        self,
+        block: dict[str, Any],
+        *,
+        key: str,
+        message_index: int,
+        block_index: int | None,
+        tool_use_id: str,
+        tool_name: str | None,
+        is_error: bool,
+    ) -> None:
+        super().__init__(
+            message_index=message_index,
+            block_index=block_index,
+            tool_use_id=tool_use_id,
+            tool_name=tool_name,
+            is_error=is_error,
+        )
+        self._block = block
+        self._key = key
+
+    def get_text(self) -> str | None:
+        value = self._block.get(self._key)
+        return value if isinstance(value, str) else None
+
+    def set_text(self, new_text: str) -> None:
+        self._block[self._key] = new_text
 
 
 def content_text(value: Any) -> str | None:
@@ -139,9 +175,13 @@ class PassthroughAdapter:
     def tool_names(self, payload: dict[str, Any]) -> list[str]:
         return []
 
+    def used_tool_names(self, payload: dict[str, Any]) -> list[str]:
+        return []
+
 
 __all__ = [
     "DictToolResultRef",
+    "MappingToolResultRef",
     "PassthroughAdapter",
     "ProviderAdapter",
     "blocks_of",

@@ -10,11 +10,14 @@ from ctxproxy.analysis.markers import MarkerQuality, marker_quality
 from ctxproxy.analysis.segments import Segment
 from ctxproxy.analysis.tokens import estimate_tokens
 from ctxproxy.analysis.waste import (
+    EditObservation,
     HashObservation,
+    churn_edits,
     identical_outputs,
     recurring_drift,
     redundant_rereads,
     runaway_session,
+    schema_bloat,
 )
 from ctxproxy.models import WasteFinding
 from ctxproxy.transforms.ansi import clean as ansi_clean
@@ -29,6 +32,9 @@ class SessionState:
     last_ts: float | None = None
     turns: int = 0
     drift_events: list[DriftEvent] = field(default_factory=list)
+    used_tools: set[str] = field(default_factory=set)
+    last_edits: dict[str, EditObservation] = field(default_factory=dict)
+    schema_reported: set[str] = field(default_factory=set)
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +64,12 @@ class AnalysisState:
         model: str,
         config_hash: str,
         ttl_s: float = 300.0,
+        tool_schemas: list[tuple[str, int]] | None = None,
+        used_tools: list[str] | None = None,
+        edits: list[EditObservation] | None = None,
+        churn_enabled: bool = False,
+        schema_bloat_enabled: bool = True,
+        schema_min_requests: int = 10,
     ) -> AnalysisResult:
         state = self._sessions.get(session_id)
         if state is None:
@@ -109,6 +121,35 @@ class AnalysisState:
         if drift is not None:
             findings.extend(
                 recurring_drift(state.drift_events, session_id=session_id, project=project, ts=ts)
+            )
+        if used_tools:
+            state.used_tools.update(used_tools)
+        if schema_bloat_enabled and tool_schemas:
+            request_count = state.turns + 1
+            for name, tokens in tool_schemas:
+                if name in state.used_tools or name in state.schema_reported:
+                    continue
+                bloat = schema_bloat(
+                    name,
+                    tokens,
+                    request_count,
+                    session_id=session_id,
+                    project=project,
+                    ts=ts,
+                    min_requests=schema_min_requests,
+                )
+                if bloat is not None:
+                    findings.append(bloat)
+                    state.schema_reported.add(name)
+        if churn_enabled and edits:
+            findings.extend(
+                churn_edits(
+                    edits,
+                    state.last_edits,
+                    session_id=session_id,
+                    project=project,
+                    ts=ts,
+                )
             )
 
         for observation in observations:

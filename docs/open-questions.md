@@ -49,3 +49,22 @@ the code takes the conservative path and this file records what needs confirmati
 13. **OpenCode side requests.** One `opencode run` produced three requests
     (title/side calls plus the main turn). Session derivation (P2-1) should group
     them; confirm whether that matches your expectation of one "session".
+14. **Gemini native tool-result wrapper. — NEEDS CAPTURE.** The documented
+    `functionResponse.response` is an object, but SDKs/MCP bridges may nest the
+    payload under `content`, `result`, `output`, or return a plain string. The
+    adapter handles all four string-leaf forms; confirm with one real Gemini
+    function-calling capture which form your clients emit.
+15. **Ollama native tool results. — NEEDS CAPTURE.** The native `/api/chat`
+    schema documents `role: "tool"` with `content` but does not show a
+    `tool_name` field. cxproxy uses `tool_name` when present; confirm how your
+    client pairs the result with the assistant's tool call.
+16. **W7 edit-tool schemas. — VERIFY before trusting.** The opt-in churn
+    detector recognizes `old_string`/`new_string`, `oldText`/`newText`,
+    `old_str`/`new_str`, `old_content`/`new_content`, `search`/`replace`, and
+    `old`/`new`, plus common path keys. Confirm each agent's actual edit schema
+    (Claude Code, Cursor, OpenCode, Codex) so W7 is not silently blind.
+17. **`stale_result_elision` break-even UX.** The transform is implemented and
+    off by default. SPEC P6-4 asks for a dashboard break-even estimate before
+    enabling it; that estimator/UI is still pending, so do not enable it on a
+    paid workload without a manual calculation.
+

@@ -12,6 +12,7 @@ import orjson
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
+from ctxproxy.analysis.edits import edit_observations
 from ctxproxy.analysis.session import derive_session_id, project_from_payload
 from ctxproxy.analysis.state import AnalysisResult, AnalysisState, observations_from_texts
 from ctxproxy.config import Config
@@ -28,7 +29,7 @@ from ctxproxy.telemetry.pricing import (
     load_pricing,
     price_usage,
 )
-from ctxproxy.telemetry.usage import new_usage_parser
+from ctxproxy.telemetry.usage import new_usage_parser, parse_usage_body
 from ctxproxy.transforms import build_transforms
 from ctxproxy.transforms.cache_serve import CacheServeState
 
@@ -130,6 +131,11 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
 
     ttfb_ms = (time.perf_counter() - started) * 1000
     parser = new_usage_parser(route.provider, route.endpoint, route.profile)
+    content_type = upstream.headers.get("content-type", "").lower()
+    incrementally_parsed = (
+        "text/event-stream" in content_type or "ndjson" in content_type or "jsonl" in content_type
+    )
+    body_buffer = bytearray()
 
     async def body() -> AsyncIterator[bytes]:
         outcome = "client_disconnect"
@@ -139,6 +145,8 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                     parser.feed(chunk)
                 except Exception:
                     parser.disable()
+                if not incrementally_parsed and len(body_buffer) < 4 * 1024 * 1024:
+                    body_buffer.extend(chunk)
                 yield chunk
             outcome = "completed"
         except Exception:
@@ -149,6 +157,10 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
             total_ms = (time.perf_counter() - started) * 1000
             counters[outcome] += 1
             usage = parser.result()
+            if usage.source == "none" and body_buffer:
+                usage = parse_usage_body(
+                    route.provider, route.endpoint, route.profile, bytes(body_buffer)
+                )
             priced = _price(usage, route, config, model)
             request.app.state.last_request = {
                 "request_id": request_id,
@@ -282,6 +294,17 @@ def _apply_transforms(
     analysis = getattr(request.app.state, "analysis", None)
     analysis_result: AnalysisResult | None = None
     if isinstance(analysis, AnalysisState):
+        tool_schemas = list(
+            zip(
+                adapter.tool_names(payload),
+                [
+                    segment.est_tokens
+                    for segment in result.original_segments
+                    if segment.kind == "tool_def"
+                ],
+                strict=False,
+            )
+        )
         analysis_result = analysis.observe(
             session_id=ctx.session_id,
             project=ctx.project,
@@ -290,6 +313,16 @@ def _apply_transforms(
             observations=observations_from_texts(result.original_texts),
             model=model or "",
             config_hash=ctx.config_hash,
+            tool_schemas=tool_schemas,
+            used_tools=adapter.used_tool_names(payload),
+            edits=(
+                edit_observations(payload, route.provider)
+                if config.waste.churn_detector.enabled
+                else []
+            ),
+            churn_enabled=config.waste.churn_detector.enabled,
+            schema_bloat_enabled=config.waste.schema_bloat.enabled,
+            schema_min_requests=config.waste.schema_bloat.min_session_requests,
         )
     if mode is Mode.ACTIVE and result.changed:
         return orjson.dumps(payload), True, result, ctx, analysis_result

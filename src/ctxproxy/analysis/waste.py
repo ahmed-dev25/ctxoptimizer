@@ -18,6 +18,17 @@ class HashObservation:
     tool_name: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class EditObservation:
+    """A whitespace-normalized edit pair; raw text is never persisted."""
+
+    path: str
+    old: str
+    new: str
+    tool_name: str | None = None
+    tokens: int = 0
+
+
 def redundant_rereads(
     current: list[HashObservation],
     prior: dict[bytes, HashObservation],
@@ -194,6 +205,81 @@ def recurring_drift(
     return findings
 
 
+def schema_bloat(
+    name: str,
+    tokens: int,
+    request_count: int,
+    *,
+    session_id: str,
+    project: str | None,
+    ts: float,
+    min_requests: int = 10,
+) -> WasteFinding | None:
+    """W8: an unused tool schema re-billed on every subsequent request."""
+    if request_count < min_requests:
+        return None
+    return WasteFinding(
+        finding_id=new_ulid(),
+        ts=ts,
+        session_id=session_id,
+        project=project,
+        detector="schema_bloat",
+        key_hash=sha256(f"schema_bloat:{name}".encode()).digest()[:16],
+        request_id=None,
+        occurrences=request_count,
+        first_seen_ts=ts,
+        last_seen_ts=ts,
+        evidence={"tool": name, "requests": request_count},
+        est_tokens_wasted=tokens * max(request_count - 1, 0),
+        est_cost_usd=None,
+        status="new",
+    )
+
+
+def churn_edits(
+    edits: list[EditObservation],
+    last_by_path: dict[str, EditObservation],
+    *,
+    session_id: str,
+    project: str | None,
+    ts: float,
+) -> list[WasteFinding]:
+    """W7: whitespace-only edits and A->B->A reverts (opt-in)."""
+    findings: list[WasteFinding] = []
+    for edit in edits:
+        previous = last_by_path.get(edit.path)
+        kind: str | None = None
+        if edit.new != edit.old and edit.new.strip() == edit.old.strip():
+            kind = "whitespace_only"
+        elif previous is not None and edit.old == previous.new and edit.new == previous.old:
+            kind = "revert"
+        if kind is not None:
+            findings.append(
+                WasteFinding(
+                    finding_id=new_ulid(),
+                    ts=ts,
+                    session_id=session_id,
+                    project=project,
+                    detector="churn_detector",
+                    key_hash=sha256(f"churn:{kind}:{edit.path}".encode()).digest()[:16],
+                    request_id=None,
+                    occurrences=1,
+                    first_seen_ts=ts,
+                    last_seen_ts=ts,
+                    evidence={
+                        "kind": kind,
+                        "path": edit.path,
+                        "tool": edit.tool_name,
+                    },
+                    est_tokens_wasted=edit.tokens,
+                    est_cost_usd=None,
+                    status="new",
+                )
+            )
+        last_by_path[edit.path] = edit
+    return findings
+
+
 def _finding(
     detector: str,
     observation: HashObservation,
@@ -224,10 +310,13 @@ def _finding(
 
 
 __all__ = [
+    "EditObservation",
     "HashObservation",
+    "churn_edits",
     "identical_outputs",
     "recurring_drift",
     "redundant_rereads",
     "runaway_session",
+    "schema_bloat",
     "unbatched_fanout",
 ]

@@ -72,6 +72,30 @@ def recommendations(
                 "action": "advisory: stop idle agents before resuming",
             }
         )
+    if grouped.get("schema_bloat"):
+        result.append(
+            {
+                "id": "prune_mcp_schemas",
+                "title": "Prune unused tool schemas",
+                "evidence": f"{len(grouped['schema_bloat'])} unused schema finding(s)",
+                "est_tokens": sum(item.est_tokens_wasted or 0 for item in grouped["schema_bloat"]),
+                "label": "sim.",
+                "action": "advisory: remove MCP tools the agent never calls",
+            }
+        )
+    if grouped.get("churn_detector"):
+        result.append(
+            {
+                "id": "investigate_churn",
+                "title": "Investigate revert/whitespace edit churn",
+                "evidence": f"{len(grouped['churn_detector'])} churn finding(s)",
+                "est_tokens": sum(
+                    item.est_tokens_wasted or 0 for item in grouped["churn_detector"]
+                ),
+                "label": "est.",
+                "action": "advisory: fix instructions or formatter loops",
+            }
+        )
     if not transforms_enabled:
         result.append(
             {
