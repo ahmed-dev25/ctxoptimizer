@@ -2,17 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec (P1 complete; P2 in progress)
-**Branch:** `feat/p3-7-8-9`
+**Branch:** `main`
 **Overall:** P3 complete (1–9); P2/P4 done; P5–P7 remain
 
 ## Resume here
 
-- **Last completed:** P3-7 guard, P3-8 cache_serve, P3-9 MCP expand
-  (awaiting merge).
-- **Last merge:** `f717c7b` (P2-6/P4)
+- **Last completed:** P3-7/8/9 (`97f7d5f`, merge `8890137`).
+- **Last merge:** `8890137` (P3-7/8/9)
 - **Next task:** P4-3 marker quality + P5 dashboard pages (`feat/p5-dashboard`)
 - **Blocked:** none
-- **Active branch:** `feat/p3-7-8-9` — merge to `main` before P5
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -67,9 +66,9 @@
 | P3-3 | Smart truncate | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | head/tail/signal windows/markers |
 | P3-4 | Duplicate backref | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | later-copy stubs only |
 | P3-5 | Active mode + retry + blobs | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | active wiring, 400 retry, changed-block blobs |
-| P3-7 | Auto-quarantine guard | done | `feat/p3-7-8-9` | recorded at merge | — | ruff, format, mypy, pytest (210) | fallback/drift quarantine + enable |
-| P3-8 | `cache_serve` | done | `feat/p3-7-8-9` | recorded at merge | — | ruff, format, mypy, pytest (210) | batch-anchored, stateful, opt-in |
-| P3-9 | MCP expand | done | `feat/p3-7-8-9` | recorded at merge | — | ruff, format, mypy, pytest (210) | stdio JSON-RPC + blob retrieval |
+| P3-7 | Auto-quarantine guard | done | `feat/p3-7-8-9` | `97f7d5f` | `8890137` | ruff, format, mypy, pytest (210) | fallback/drift quarantine + enable |
+| P3-8 | `cache_serve` | done | `feat/p3-7-8-9` | `97f7d5f` | `8890137` | ruff, format, mypy, pytest (210) | batch-anchored, stateful, opt-in |
+| P3-9 | MCP expand | done | `feat/p3-7-8-9` | `97f7d5f` | `8890137` | ruff, format, mypy, pytest (210) | stdio JSON-RPC + blob retrieval |
 | P4-1 | Anthropic cache hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | 4-breakpoint stair-step |
 | P4-2 | OpenAI hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | api.openai.com only |
 | P4-3 | Marker quality metric | todo | — | — | — | — | — |
@@ -102,7 +101,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P3 core | pass | pass (53 files) | 180 passed | reported, not enforced | `67f538c` |
 | 2026-10-25 | P2 analysis | pass | pass (53 files) | 189 passed | reported, not enforced | `0959c09` |
 | 2026-10-25 | P2-6/P4 | pass | pass (54 files) | 201 passed | reported, not enforced | `399c962` |
-| 2026-10-25 | P3-7/8/9 | pass | pass (55 files) | 210 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P3-7/8/9 | pass | pass (55 files) | 210 passed | reported, not enforced | `97f7d5f` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
