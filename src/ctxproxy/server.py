@@ -27,9 +27,11 @@ from ctxproxy.dashboard.api import (
     waste,
 )
 from ctxproxy.dashboard.views import overview, waste_view
+from ctxproxy.guard import Guard
 from ctxproxy.routing import Route, UnknownUpstream, classify, is_absolute_target
 from ctxproxy.telemetry.blobs import BlobStore
 from ctxproxy.telemetry.store import Store, default_db_path
+from ctxproxy.transforms.cache_serve import CacheServeState
 
 Forwarder = Callable[[Request, Route, Config], Awaitable[Response]]
 
@@ -129,6 +131,11 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
     app.state.config = config
     app.state.started = time.monotonic()
     app.state.analysis = AnalysisState()
+    app.state.guard = Guard(config)
+    app.state.cache_serve = CacheServeState(
+        config.transforms.cache_serve.max_state_sessions,
+        config.transforms.cache_serve.max_entries_per_session,
+    )
     app.state.counters = {
         "requests": 0,
         "completed": 0,

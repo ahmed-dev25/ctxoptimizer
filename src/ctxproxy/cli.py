@@ -370,5 +370,33 @@ def _to_csv(rows: list[_Request]) -> str:
     return buffer.getvalue()
 
 
+mcp_app = typer.Typer(help="MCP integration for ctxproxy_expand.")
+app.add_typer(mcp_app, name="mcp")
+
+
+@mcp_app.command("run")
+def mcp_run() -> None:
+    """Serve the expand tool over stdio."""
+    from ctxproxy.mcp import run_stdio
+
+    run_stdio()
+
+
+@mcp_app.command("snippet")
+def mcp_snippet(
+    client: Annotated[str, typer.Option("--client")] = "claude-code",
+) -> None:
+    """Print a registration snippet for an MCP client."""
+    typer.echo(
+        json.dumps(
+            {
+                "mcpServers": {"ctxproxy": {"command": "ctxproxy", "args": ["mcp", "run"]}},
+                "client": client,
+            },
+            indent=2,
+        )
+    )
+
+
 if __name__ == "__main__":
     app()

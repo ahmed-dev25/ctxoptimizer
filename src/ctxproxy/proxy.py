@@ -15,6 +15,7 @@ from starlette.responses import JSONResponse, Response, StreamingResponse
 from ctxproxy.analysis.session import derive_session_id, project_from_payload
 from ctxproxy.analysis.state import AnalysisResult, AnalysisState, observations_from_texts
 from ctxproxy.config import Config
+from ctxproxy.guard import Guard
 from ctxproxy.ids import new_ulid
 from ctxproxy.licensing import is_active_mode_allowed
 from ctxproxy.models import Endpoint, Mode, Provider, RequestContext, Usage
@@ -29,6 +30,7 @@ from ctxproxy.telemetry.pricing import (
 )
 from ctxproxy.telemetry.usage import new_usage_parser
 from ctxproxy.transforms import build_transforms
+from ctxproxy.transforms.cache_serve import CacheServeState
 
 HOP_BY_HOP = frozenset(
     {
@@ -199,6 +201,17 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                         priced=priced,
                     )
                 )
+            if fallback_used and pipeline_result is not None:
+                guard = getattr(request.app.state, "guard", None)
+                if isinstance(guard, Guard):
+                    guard.observe_fallback(
+                        session_id,
+                        [
+                            report.transform_id
+                            for report in pipeline_result.reports
+                            if report.changed and report.discarded_reason is None
+                        ],
+                    )
 
     return StreamingResponse(
         body(),
@@ -247,7 +260,15 @@ def _apply_transforms(
         started_monotonic=time.monotonic(),
     )
     try:
-        result = run_pipeline(ctx, payload, adapter, build_transforms(config), config)
+        guard = getattr(request.app.state, "guard", None)
+        disabled = guard.quarantined_for(ctx.session_id) if isinstance(guard, Guard) else set()
+        cache_state = getattr(request.app.state, "cache_serve", None)
+        transforms = build_transforms(
+            config,
+            disabled=disabled,
+            cache_serve_state=(cache_state if isinstance(cache_state, CacheServeState) else None),
+        )
+        result = run_pipeline(ctx, payload, adapter, transforms, config)
     except Exception:
         return raw, False, None, ctx, None
     analysis = getattr(request.app.state, "analysis", None)
