@@ -2,17 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec (P1 complete; P2 in progress)
-**Branch:** `feat/p2-analysis`
+**Branch:** `main`
 **Overall:** P0 + P1 complete; P2 analysis core and P3 core done
 
 ## Resume here
 
-- **Last completed:** P2-4 drift, P2-5 baseline, P2-7/P2-8 waste detectors
-  (awaiting merge).
-- **Last merge:** `ad69997` (P3 core)
+- **Last completed:** P2-4/5/7/8 analysis core (`0959c09`, merge `f7fac41`).
+- **Last merge:** `f7fac41` (P2 analysis)
 - **Next task:** P2-6 dashboard v0 (`feat/p2-6-dashboard`)
 - **Blocked:** none
-- **Active branch:** `feat/p2-analysis` — merge to `main` before P2-6
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -57,11 +56,11 @@
 | P2-1 | Adapters, segments, session | done | `feat/p2-1-adapters` | recorded at merge | — | ruff, format, mypy, pytest (156) | Anthropic/OpenAI chat/Responses structure access |
 | P2-2 | Token estimation | done | `feat/p2-1-adapters` | recorded at merge | — | ruff, format, mypy, pytest (156) | tiktoken-optional estimator + EMA calibrator |
 | P2-3 | Pipeline framework | done | `feat/p2-3-pipeline` | `b1de5ec` | `f829b6a` | ruff, format, mypy, pytest (161) | journal, no-regress, budget, shadow flag |
-| P2-4 | Drift detector | done | `feat/p2-analysis` | recorded at merge | — | ruff, format, mypy, pytest (189) | 7 causes + tracker |
-| P2-5 | Baseline simulator | done | `feat/p2-analysis` | recorded at merge | — | ruff, format, mypy, pytest (189) | explicit + implicit cache simulation |
+| P2-4 | Drift detector | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | 7 causes + tracker |
+| P2-5 | Baseline simulator | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | explicit + implicit cache simulation |
 | P2-6 | Dashboard v0 | todo | — | — | — | — | — |
-| P2-7 | Waste W1–W2 | done | `feat/p2-analysis` | recorded at merge | — | ruff, format, mypy, pytest (189) | redundant re-read + identical output |
-| P2-8 | Waste W3–W6 | done | `feat/p2-analysis` | recorded at merge | — | ruff, format, mypy, pytest (189) | fanout, runaway, recurring/params drift |
+| P2-7 | Waste W1–W2 | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | redundant re-read + identical output |
+| P2-8 | Waste W3–W6 | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | fanout, runaway, recurring/params drift |
 | P3-1 | ANSI/progress/whitespace | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | pure functions + eligibility |
 | P3-2 | Line dedupe | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | exact + near-duplicate runs |
 | P3-3 | Smart truncate | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | head/tail/signal windows/markers |
@@ -91,7 +90,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P2-1/2 | pass | pass (52 files) | 156 passed | reported, not enforced | recorded at merge |
 | 2026-10-25 | P2-3 | pass | pass (52 files) | 161 passed | reported, not enforced | `b1de5ec` |
 | 2026-10-25 | P3 core | pass | pass (53 files) | 180 passed | reported, not enforced | `67f538c` |
-| 2026-10-25 | P2 analysis | pass | pass (53 files) | 189 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P2 analysis | pass | pass (53 files) | 189 passed | reported, not enforced | `0959c09` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
