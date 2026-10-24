@@ -9,15 +9,23 @@ from __future__ import annotations
 
 import time
 from collections.abc import AsyncIterator, Mapping
+from pathlib import Path
 
 import httpx
+import orjson
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
 from ctxproxy.config import Config
 from ctxproxy.ids import new_ulid
-from ctxproxy.models import Provider
+from ctxproxy.models import Provider, Usage
 from ctxproxy.routing import Route
+from ctxproxy.telemetry.pricing import (
+    PriceResult,
+    PricingTable,
+    load_pricing,
+    price_usage,
+)
 from ctxproxy.telemetry.usage import new_usage_parser
 
 HOP_BY_HOP = frozenset(
@@ -37,6 +45,8 @@ HOP_BY_HOP = frozenset(
 
 _REQUEST_STRIP = frozenset({"host", "content-length", "accept-encoding"})
 
+_TABLES: dict[str, PricingTable] = {}
+
 
 async def forward(request: Request, route: Route, config: Config) -> Response:
     """Forward one request upstream and stream the response back."""
@@ -47,6 +57,7 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
     request.state.request_id = request_id
 
     content = await _request_content(request, config)
+    model = _extract_model(content)
     headers = _clean_request_headers(
         request.headers, force_identity=config.http.force_identity_encoding
     )
@@ -87,16 +98,22 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
             await upstream.aclose()
             total_ms = (time.perf_counter() - started) * 1000
             counters[outcome] += 1
+            usage = parser.result()
+            priced = _price(usage, route, config, model)
             request.app.state.last_request = {
                 "request_id": request_id,
                 "upstream": route.upstream_name,
                 "provider": route.provider.value,
                 "endpoint": route.endpoint.value,
+                "model": model,
                 "status_code": upstream.status_code,
                 "outcome": outcome,
                 "ttfb_ms": round(ttfb_ms, 3),
                 "total_ms": round(total_ms, 3),
-                "usage": parser.result(),
+                "usage": usage,
+                "cost_usd": priced.cost_usd,
+                "priced": priced.priced,
+                "price_source": priced.source,
             }
 
     return StreamingResponse(
@@ -138,6 +155,35 @@ def _clean_response_headers(headers: httpx.Headers, request_id: str) -> dict[str
 
 def _connection_tokens(value: str) -> frozenset[str]:
     return frozenset(token.strip().lower() for token in value.split(",") if token.strip())
+
+
+def _extract_model(content: bytes | AsyncIterator[bytes]) -> str | None:
+    if not isinstance(content, bytes):
+        return None
+    try:
+        payload = orjson.loads(content)
+    except (orjson.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    model = payload.get("model")
+    return model if isinstance(model, str) else None
+
+
+def _table_for(config: Config) -> PricingTable:
+    key = config.pricing.file
+    table = _TABLES.get(key)
+    if table is None:
+        try:
+            table = load_pricing(Path(key) if key else None)
+        except Exception:
+            table = PricingTable([])
+        _TABLES[key] = table
+    return table
+
+
+def _price(usage: Usage, route: Route, config: Config, model: str | None) -> PriceResult:
+    return price_usage(usage, _table_for(config), route.profile.pricing_provider, model)
 
 
 def error_response(provider: Provider, status: int, message: str) -> JSONResponse:

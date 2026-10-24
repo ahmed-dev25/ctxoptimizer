@@ -39,6 +39,8 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
     async def health(request: Request) -> Response:
         state = request.app.state
         counters = state.counters
+        last = state.last_request or {}
+        usage = last.get("usage")
         return JSONResponse(
             {
                 "status": "ok",
@@ -51,6 +53,10 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
                 "client_disconnect": counters["client_disconnect"],
                 "upstream_errors": counters["upstream_errors"],
                 "dropped_telemetry": counters["dropped_telemetry"],
+                "last_model": last.get("model"),
+                "last_cost_usd": last.get("cost_usd"),
+                "last_priced": last.get("priced", False),
+                "last_usage_source": getattr(usage, "source", None),
             }
         )
 

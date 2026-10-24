@@ -2,16 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `main`
-**Overall:** 9 / 12 tasks complete (Phase 0 complete)
+**Branch:** `feat/p1-4-pricing`
+**Overall:** 10 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P1-8 — Gateway usage quirks (`05d2fb9`).
+- **Last completed:** P1-4 — Pricing (awaiting merge).
 - **Last merge:** `6f20a24` (P1-8)
-- **Next task:** P1-4 — Pricing (`feat/p1-4-pricing`)
+- **Next task:** P1-5 — Store (`feat/p1-5-store`)
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p1-4-pricing` — merge to `main` before P1-5
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -27,7 +27,7 @@
 | P1-2 | Proxy core | done | `feat/p1-2-proxy-core` | `4889ee7` | `10e90f8` | ruff, format, mypy, pytest (94) | streaming tee, disconnect, 502/504, header hygiene |
 | P1-3 | Usage parsers | done | `feat/p1-3-usage-parsers` | `92721a5` | `3a78ef5` | ruff, format, mypy, pytest (112) | SSE decoder, Anthropic/OpenAI chat/Responses, doc fixtures, fuzz |
 | P1-8 | Gateway usage quirks | done | `feat/p1-8-gateway-quirks` | `05d2fb9` | `6f20a24` | ruff, format, mypy, pytest (119) | DeepSeek cache fields, OpenRouter cost/comments, Gemini/Ollama compat |
-| P1-4 | Pricing | todo | — | — | — | — | provider-reported cost supported |
+| P1-4 | Pricing | done | `feat/p1-4-pricing` | recorded at merge | — | ruff, format, mypy, pytest (130) | verified rates, provider cost, specificity, TTL buckets |
 | P1-5 | Store | todo | — | — | — | — | — |
 | P1-6 | CLI | todo | — | — | — | — | — |
 
@@ -48,6 +48,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P1-2 | pass | pass (51 files) | 94 passed | reported, not enforced | `4889ee7` |
 | 2026-10-25 | P1-3 | pass | pass (52 files) | 112 passed | reported, not enforced | `92721a5` |
 | 2026-10-25 | P1-8 | pass | pass (52 files) | 119 passed | reported, not enforced | `05d2fb9` |
+| 2026-10-25 | P1-4 | pass | pass (52 files) | 130 passed | reported, not enforced | recorded at merge |
 
 ## Changelog
 
@@ -107,6 +108,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   always-on usage plus provider-reported cost and content-free usage chunk,
   Gemini OpenAI-compat usage, Ollama OpenAI-compat estimates, optional `[DONE]`,
   and mid-stream error tolerance.
+- 2026-10-25 — P1-4: verified pricing table for Anthropic, OpenAI, DeepSeek and
+  Gemini with current source URLs and dates; provider-scoped specificity
+  matching; Anthropic 5m/1h and OpenAI 30m/12h cache-write buckets; OpenRouter
+  provider-reported cost takes precedence; unknown models stay unpriced; proxy
+  records model, cost and price source per request.
 
 ## Handoff notes
 
