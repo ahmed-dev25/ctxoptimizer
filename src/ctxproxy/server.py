@@ -1,4 +1,105 @@
-"""Starlette application, routes and lifespan (SPEC section 4.2).
+"""Starlette application, ingress and health endpoint (SPEC section 4.2).
 
-Implemented in P1-1.
+P1-1 wires classification and health. The forwarding core is injected, so the
+server can be tested without a live upstream and P1-2 can supply the real one.
 """
+
+from __future__ import annotations
+
+import time
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
+
+import httpx
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
+from starlette.routing import Route as StarletteRoute
+
+from ctxproxy import __version__
+from ctxproxy.config import Config
+from ctxproxy.routing import Route, UnknownUpstream, classify, is_absolute_target
+
+Forwarder = Callable[[Request, Route, Config], Awaitable[Response]]
+
+_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+
+
+def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
+    """Build the ASGI app. ``forwarder`` overrides the real proxy core in tests."""
+
+    @asynccontextmanager
+    async def lifespan(app: Starlette) -> AsyncIterator[None]:
+        app.state.client = _make_client(config)
+        try:
+            yield
+        finally:
+            await app.state.client.aclose()
+
+    async def health(request: Request) -> Response:
+        state = request.app.state
+        return JSONResponse(
+            {
+                "status": "ok",
+                "version": __version__,
+                "mode": config.mode.default,
+                "uptime_s": round(time.monotonic() - state.started, 3),
+                "upstreams": sorted(config.upstreams),
+            }
+        )
+
+    async def handler(request: Request) -> Response:
+        raw_target = request.scope.get("raw_path", b"").decode("latin-1")
+        if is_absolute_target(raw_target):
+            return JSONResponse(
+                {"error": "absolute-form request targets are not supported"},
+                status_code=400,
+            )
+        path = request.url.path
+        if path.startswith("/_ctxproxy"):
+            return JSONResponse({"error": "not found"}, status_code=404)
+        try:
+            route = classify(request.method, path, request.url.query, request.headers, config)
+        except UnknownUpstream as exc:
+            return JSONResponse({"error": str(exc)}, status_code=404)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        active = forwarder or _default_forwarder
+        return await active(request, route, config)
+
+    app = Starlette(
+        routes=[
+            StarletteRoute("/_ctxproxy/health", health, methods=["GET"]),
+            StarletteRoute("/{path:path}", handler, methods=_METHODS),
+        ],
+        lifespan=lifespan,
+    )
+    app.state.config = config
+    app.state.started = time.monotonic()
+    return app
+
+
+async def _default_forwarder(request: Request, route: Route, config: Config) -> Response:
+    from ctxproxy.proxy import forward
+
+    return await forward(request, route, config)
+
+
+def _make_client(config: Config) -> httpx.AsyncClient:
+    http = config.http
+    timeout = httpx.Timeout(
+        connect=http.connect_timeout_s,
+        read=None if http.read_timeout_s == 0 else http.read_timeout_s,
+        write=http.write_timeout_s,
+        pool=http.pool_timeout_s,
+    )
+    return httpx.AsyncClient(
+        http2=http.http2,
+        trust_env=True,
+        follow_redirects=False,
+        timeout=timeout,
+        limits=httpx.Limits(max_connections=http.max_connections),
+    )
+
+
+__all__ = ["Forwarder", "create_app"]
