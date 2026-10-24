@@ -1,0 +1,186 @@
+"""End-to-end proxy core against a real fake upstream."""
+
+from __future__ import annotations
+
+import json
+import socket
+import threading
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
+
+import httpx
+import pytest
+import uvicorn
+
+from ctxproxy.config import Config
+from ctxproxy.models import Provider
+from ctxproxy.proxy import error_response
+from ctxproxy.server import create_app
+
+
+@contextmanager
+def running_proxy(config: Config) -> Iterator[str]:
+    app = create_app(config)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    server = uvicorn.Server(
+        uvicorn.Config(app, log_level="critical", access_log=False, lifespan="on")
+    )
+    thread = threading.Thread(target=server.run, kwargs={"sockets": [sock]}, daemon=True)
+    thread.start()
+    deadline = time.monotonic() + 5
+    while not server.started and time.monotonic() < deadline:
+        time.sleep(0.01)
+    if not server.started:
+        raise RuntimeError("proxy failed to start")
+    try:
+        yield f"http://127.0.0.1:{port}"
+    finally:
+        server.should_exit = True
+        thread.join(timeout=5)
+        sock.close()
+
+
+@pytest.fixture
+def proxy(fake_upstream) -> Iterator[str]:
+    config = Config.model_validate(
+        {
+            "upstreams": {
+                "anthropic": fake_upstream.base_url,
+                "openai": fake_upstream.base_url,
+            }
+        }
+    )
+    with running_proxy(config) as url:
+        yield url
+
+
+def test_non_streaming_passthrough_and_header_hygiene(proxy, fake_upstream) -> None:
+    fake_upstream.json({"ok": True})
+    with httpx.Client(timeout=10) as client:
+        response = client.post(
+            f"{proxy}/v1/chat/completions?beta=true",
+            content=b'{"x":1}',
+            headers={
+                "authorization": "Bearer test-token",
+                "x-ctxproxy-session": "session-1",
+                "connection": "x-remove-me",
+                "x-remove-me": "1",
+            },
+        )
+    assert response.status_code == 200
+    assert response.content == b'{"ok": true}'
+    assert response.headers["x-ctxproxy-request-id"]
+    recorded = fake_upstream.requests[-1]
+    assert recorded.method == "POST"
+    assert recorded.path == "/v1/chat/completions"
+    assert recorded.query == "beta=true"
+    assert recorded.body == b'{"x":1}'
+    assert recorded.headers["authorization"] == "Bearer test-token"
+    assert recorded.headers["accept-encoding"] == "identity"
+    assert "x-ctxproxy-session" not in recorded.headers
+    assert "x-remove-me" not in recorded.headers
+
+
+def test_streaming_bytes_are_exact(proxy, fake_upstream) -> None:
+    payload = b'data: {"n":1}\n\ndata: {"n":2}\n\ndata: [DONE]\n\n'
+    fake_upstream.replay(payload, chunk_size=1)
+    with httpx.Client(timeout=10) as client:
+        with client.stream(
+            "POST",
+            f"{proxy}/v1/chat/completions",
+            content=b'{"stream":true}',
+            headers={"accept-encoding": "identity"},
+        ) as response:
+            received = b"".join(response.iter_raw())
+    assert response.status_code == 200
+    assert received == payload
+    assert fake_upstream.stream_completed is True
+
+
+def test_upstream_429_passes_through(proxy, fake_upstream) -> None:
+    fake_upstream.json(
+        {"error": {"message": "rate limited"}},
+        status=429,
+        headers={"retry-after": "7"},
+    )
+    with httpx.Client(timeout=10) as client:
+        response = client.post(f"{proxy}/v1/messages", content=b"{}")
+    assert response.status_code == 429
+    assert response.headers["retry-after"] == "7"
+    assert response.json()["error"]["message"] == "rate limited"
+
+
+def test_unknown_path_is_passthrough(proxy, fake_upstream) -> None:
+    fake_upstream.json({"ok": True})
+    with httpx.Client(timeout=10) as client:
+        response = client.post(f"{proxy}/random/path", content=b"raw")
+    assert response.status_code == 200
+    assert fake_upstream.requests[-1].path == "/random/path"
+
+
+def test_client_disconnect_closes_upstream_stream(proxy, fake_upstream) -> None:
+    fake_upstream.replay(b"0123456789" * 40, chunk_size=10, chunk_delay_s=0.02)
+    with httpx.Client(timeout=10) as client:
+        with client.stream("POST", f"{proxy}/v1/chat/completions", content=b"{}") as response:
+            iterator = response.iter_raw()
+            first = next(iterator)
+            assert first
+    deadline = time.monotonic() + 3
+    while not fake_upstream.stream_closed and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert fake_upstream.stream_closed is True
+    assert fake_upstream.stream_completed is False
+
+
+def test_health_reports_counters(proxy) -> None:
+    with httpx.Client(timeout=10) as client:
+        client.post(f"{proxy}/v1/chat/completions", content=b"{}")
+        body = client.get(f"{proxy}/_ctxproxy/health").json()
+    assert body["requests"] >= 1
+    assert body["completed"] >= 1
+    assert body["upstream_errors"] == 0
+
+
+def test_connect_failure_returns_provider_shaped_502() -> None:
+    config = Config.model_validate(
+        {
+            "upstreams": {
+                "anthropic": "http://127.0.0.1:1",
+                "openai": "http://127.0.0.1:1",
+            }
+        }
+    )
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(f"{url}/v1/messages", content=b"{}")
+    assert response.status_code == 502
+    payload = response.json()
+    assert payload["type"] == "error"
+    assert payload["error"]["type"] == "api_error"
+    assert "upstream unreachable" in payload["error"]["message"]
+
+
+@pytest.mark.parametrize(
+    ("provider", "status", "expected"),
+    [
+        (Provider.ANTHROPIC, 502, ("type", "error")),
+        (Provider.OPENAI, 504, ("code", "upstream_timeout")),
+        (Provider.GEMINI, 502, ("status", "UNAVAILABLE")),
+        (Provider.OLLAMA, 502, ("error", "ctxproxy: upstream unreachable")),
+    ],
+)
+def test_error_shapes(provider: Provider, status: int, expected: tuple[str, str]) -> None:
+    response = error_response(provider, status, "ctxproxy: upstream unreachable")
+    payload = json.loads(response.body)
+    if provider is Provider.ANTHROPIC:
+        assert payload[expected[0]] == expected[1]
+    elif provider is Provider.OPENAI:
+        assert payload["error"][expected[0]] == expected[1]
+    elif provider is Provider.GEMINI:
+        assert payload["error"][expected[0]] == expected[1]
+    else:
+        assert payload[expected[0]] == expected[1]
