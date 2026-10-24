@@ -2,16 +2,16 @@
 
 **Last updated:** 2026-10-24
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `main`
-**Overall:** 5 / 12 tasks complete (Phase 0 complete)
+**Branch:** `feat/p1-7-upstreams`
+**Overall:** 6 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P1-1 — Routing + ingress (`e045d48`).
+- **Last completed:** P1-7 — Named upstreams + profiles (awaiting merge).
 - **Last merge:** `7afda00` (P1-1)
-- **Next task:** P1-7 — Named upstreams + profiles (`feat/p1-7-upstreams`)
+- **Next task:** P1-2 — Proxy core (`feat/p1-2-proxy-core`)
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p1-7-upstreams` — merge to `main` before P1-2
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -23,7 +23,7 @@
 | P0-3 | Models, logging, ULID | done | `feat/p0-3-models-logging` | `7428195` | `eea33ec` | ruff, format, mypy, pytest (38) | SEC-2 sanitizer + monotonic stdlib ULID |
 | P0-4 | Test infrastructure | done | `feat/p0-4-test-infra` | `b24a59c` | `b509c9f` | ruff, format, mypy, pytest (45) | recording uvicorn fake upstream, SSE replay, golden runner |
 | P1-1 | Routing + ingress | done | `feat/p1-1-routing` | `e045d48` | `7afda00` | ruff, format, mypy, pytest (75) | §8 table, `/p/`, `/u/`, health, mode headers |
-| P1-7 | Named upstreams + profiles | todo | — | — | — | — | — |
+| P1-7 | Named upstreams + profiles | done | `feat/p1-7-upstreams` | recorded at merge | — | ruff, format, mypy, pytest (83) | built-in + override profiles, per-upstream cache policy |
 | P1-2 | Proxy core | todo | — | — | — | — | — |
 | P1-3 | Usage parsers | todo | — | — | — | — | unblocked; doc-derived fixtures allowed (ADR 0005) |
 | P1-8 | Gateway usage quirks | todo | — | — | — | — | DeepSeek/OpenRouter/Gemini/Ollama |
@@ -44,6 +44,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-24 | P0-3 | pass | pass (50 files) | 38 passed | reported, not enforced | `7428195` |
 | 2026-10-24 | P0-4 | pass | pass (50 files) | 45 passed | reported, not enforced | `b24a59c` |
 | 2026-10-24 | P1-1 | pass | pass (50 files) | 75 passed | reported, not enforced | `e045d48` |
+| 2026-10-24 | P1-7 | pass | pass (51 files) | 83 passed | reported, not enforced | recorded at merge |
 
 ## Changelog
 
@@ -84,6 +85,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   bypass headers, client UA detection), Starlette ingress with injectable
   forwarder, `/_ctxproxy/health`, absolute-form target rejection, named-upstream
   resolution and query preservation.
+- 2026-10-24 — P1-7: per-upstream profiles (`usage`, `cache_policy`,
+  `cost_source`, `cache_hints`, `inject_stream_usage`) with built-ins for
+  anthropic/openai/gemini/ollama/deepseek/deepseek-anthropic/openrouter/
+  gemini-openai/ollama-openai; string and table entries resolve through one
+  registry; routing carries the profile.
 
 ## Handoff notes
 

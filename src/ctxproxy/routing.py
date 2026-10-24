@@ -10,8 +10,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from ctxproxy.config import Config, UpstreamEntry
+from ctxproxy.config import Config
 from ctxproxy.models import Endpoint, Mode, Provider
+from ctxproxy.profiles import (
+    ResolvedUpstream,
+    UnknownUpstream,
+    UpstreamProfile,
+    resolve_upstream,
+)
 
 ADMIN_PREFIX = "/_ctxproxy"
 PROJECT_PREFIX = "/p/"
@@ -19,10 +25,6 @@ UPSTREAM_PREFIX = "/u/"
 
 _MODE_HEADERS = ("x-ctxproxy-mode", "x-ctxproxy-bypass")
 _LOOPBACK_MODES = frozenset({"passthrough", "shadow", "active"})
-
-
-class UnknownUpstream(LookupError):
-    """Raised when ``/u/<name>`` names an upstream that is not configured."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +35,7 @@ class Route:
     endpoint: Endpoint
     upstream_name: str
     upstream_base: str
+    profile: UpstreamProfile
     path: str
     query: str
     project: str | None
@@ -77,14 +80,13 @@ def classify(
         name, _, tail = remaining[len(UPSTREAM_PREFIX) :].partition("/")
         if not name:
             raise UnknownUpstream("missing upstream name after /u/")
-        base, kind = _resolve_upstream(name, config)
+        upstream = resolve_upstream(name, config)
         remaining = _normalise_path(tail)
-        provider, endpoint = _detect_for_kind(kind, method, remaining, lowered)
+        provider, endpoint = _detect_for_kind(upstream.profile.kind, method, remaining, lowered)
         return _route(
             provider=provider,
             endpoint=endpoint,
-            upstream_name=name,
-            upstream_base=base,
+            upstream=upstream,
             path=remaining,
             query=query,
             project=project,
@@ -93,12 +95,11 @@ def classify(
         )
 
     provider, endpoint, upstream_name = detect(method, remaining, lowered)
-    base, _ = _resolve_upstream(upstream_name, config)
+    upstream = resolve_upstream(upstream_name, config)
     return _route(
         provider=provider,
         endpoint=endpoint,
-        upstream_name=upstream_name,
-        upstream_base=base,
+        upstream=upstream,
         path=remaining,
         query=query,
         project=project,
@@ -159,8 +160,7 @@ def _route(
     *,
     provider: Provider,
     endpoint: Endpoint,
-    upstream_name: str,
-    upstream_base: str,
+    upstream: ResolvedUpstream,
     path: str,
     query: str,
     project: str | None,
@@ -170,8 +170,9 @@ def _route(
     return Route(
         provider=provider,
         endpoint=endpoint,
-        upstream_name=upstream_name,
-        upstream_base=upstream_base,
+        upstream_name=upstream.name,
+        upstream_base=upstream.url,
+        profile=upstream.profile,
         path=path,
         query=query,
         project=project,
@@ -208,15 +209,6 @@ def _client_name(user_agent: str) -> str | None:
     if "httpx" in lowered:
         return "python-httpx"
     return None
-
-
-def _resolve_upstream(name: str, config: Config) -> tuple[str, str | None]:
-    entry: str | UpstreamEntry | None = config.upstreams.get(name)
-    if entry is None:
-        raise UnknownUpstream(f"unknown upstream: {name}")
-    if isinstance(entry, str):
-        return entry, None
-    return entry.url, entry.kind
 
 
 def _normalise_path(tail: str) -> str:
