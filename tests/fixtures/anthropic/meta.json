@@ -1,0 +1,11 @@
+{
+  "source": "documented",
+  "provider": "anthropic",
+  "accessed": "2026-10-24",
+  "sources": [
+    "https://platform.claude.com/docs/en/build-with-claude/streaming",
+    "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+    "https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/main/src/anthropic/types/usage.py"
+  ],
+  "notes": "message_start full usage; message_delta cumulative output (and optional input/cache); cache_creation TTL breakdown only on the full Usage object."
+}

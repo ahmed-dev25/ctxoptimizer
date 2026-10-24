@@ -1,0 +1,10 @@
+{
+  "source": "documented",
+  "provider": "deepseek",
+  "accessed": "2026-10-24",
+  "sources": [
+    "https://api-docs.deepseek.com/guides/kv_cache",
+    "https://api-docs.deepseek.com/guides/anthropic_api/"
+  ],
+  "notes": "OpenAI-compatible chat with automatic disk cache; usage reports prompt_cache_hit_tokens and prompt_cache_miss_tokens instead of cached_tokens."
+}

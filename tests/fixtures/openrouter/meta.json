@@ -1,0 +1,10 @@
+{
+  "source": "documented",
+  "provider": "openrouter",
+  "accessed": "2026-10-24",
+  "sources": [
+    "https://openrouter.ai/docs/api_reference/streaming",
+    "https://openrouter.ai/docs/cookbook/administration/usage-accounting"
+  ],
+  "notes": "Usage is always present in the final Chat chunk; the chunk carries a content-free choice rather than choices: []. cost is provider-reported."
+}
