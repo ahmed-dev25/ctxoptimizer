@@ -1,0 +1,23 @@
+{
+  "version": "2026-10-24",
+  "source": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+  "models": [
+    {"match": "claude-fable-5-1*", "min_tokens": 512},
+    {"match": "claude-mythos-5-1*", "min_tokens": 512},
+    {"match": "claude-opus-5-5*", "min_tokens": 512},
+    {"match": "claude-opus-5*", "min_tokens": 512},
+    {"match": "claude-sonnet-5-5*", "min_tokens": 512},
+    {"match": "claude-sonnet-5*", "min_tokens": 1024},
+    {"match": "claude-haiku-5-5*", "min_tokens": 512},
+    {"match": "claude-fable-5*", "min_tokens": 512},
+    {"match": "claude-mythos-5*", "min_tokens": 512},
+    {"match": "claude-opus-4-8*", "min_tokens": 1024},
+    {"match": "claude-opus-4-7*", "min_tokens": 2048},
+    {"match": "claude-opus-4-6*", "min_tokens": 4096},
+    {"match": "claude-opus-4-5*", "min_tokens": 4096},
+    {"match": "claude-sonnet-4-6*", "min_tokens": 1024},
+    {"match": "claude-sonnet-4-5*", "min_tokens": 1024},
+    {"match": "claude-haiku-4-5*", "min_tokens": 4096},
+    {"match": "claude-haiku-3-5*", "min_tokens": 2048}
+  ]
+}

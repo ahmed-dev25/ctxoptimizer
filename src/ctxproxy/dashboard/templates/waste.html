@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxproxy — Waste</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    h1 { margin: 0 0 4px; font-size: 1.6rem; }
+    h2 { margin: 28px 0 10px; font-size: 1.1rem; color: #93c5fd; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .75rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    .est { color: #fcd34d; font-weight: 600; }
+    .card { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
+            padding: 14px 16px; margin-bottom: 10px; }
+    a { color: #60a5fa; }
+    code { color: #a5d6ff; }
+  </style>
+</head>
+<body>
+  <h1>Waste Opportunities</h1>
+  <p class="muted">v{{ version }} · mode {{ mode }} · advisory only, never auto-applied</p>
+
+  <h2>Recommendations <span class="est">sim.</span></h2>
+  {% for item in recommendations %}
+  <div class="card">
+    <b>{{ item["title"] }}</b> <span class="est">{{ item["label"] }}</span><br>
+    <span class="muted">{{ item["evidence"] }} · {{ item["action"] }}</span>
+  </div>
+  {% else %}
+  <p class="muted">No recommendations yet. Run some traffic through the proxy.</p>
+  {% endfor %}
+
+  <h2>Findings <span class="est">est.</span></h2>
+  <table>
+    <thead>
+      <tr><th>Detector</th><th>Session</th><th>Project</th>
+          <th>Occurrences</th><th>Est. tokens</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      {% for finding in findings %}
+      <tr>
+        <td>{{ finding.detector }}</td>
+        <td>{{ finding.session_id }}</td>
+        <td>{{ finding.project or "—" }}</td>
+        <td>{{ finding.occurrences }}</td>
+        <td class="est">{{ finding.est_tokens_wasted if finding.est_tokens_wasted is not none else "—" }}</td>
+        <td><code>{{ finding.evidence }}</code></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No findings yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="muted" style="margin-top:18px;">
+    <a href="/_ctxproxy/">Overview</a> · <a href="/_ctxproxy/api/waste">findings API</a> ·
+    <a href="/_ctxproxy/api/recommend">recommend API</a>
+  </p>
+</body>
+</html>

@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
 from ctxproxy.analysis.session import derive_session_id, project_from_payload
+from ctxproxy.analysis.state import AnalysisResult, AnalysisState, observations_from_texts
 from ctxproxy.config import Config
 from ctxproxy.ids import new_ulid
 from ctxproxy.licensing import is_active_mode_allowed
@@ -62,12 +63,13 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
     mutated = False
     pipeline_result: PipelineResult | None = None
     ctx: RequestContext | None = None
+    analysis: AnalysisResult | None = None
     if (
         isinstance(raw, bytes)
         and route.endpoint is not Endpoint.PASSTHROUGH
         and route.mode is not Mode.PASSTHROUGH
     ):
-        content, mutated, pipeline_result, ctx = _apply_transforms(
+        content, mutated, pipeline_result, ctx, analysis = _apply_transforms(
             request, route, config, request_id, raw
         )
 
@@ -171,6 +173,8 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                     if pipeline_result
                     else []
                 ),
+                "drift": analysis.drift.cause if analysis and analysis.drift else None,
+                "findings": len(analysis.findings) if analysis else 0,
             }
             store = getattr(request.app.state, "store", None)
             if store is not None:
@@ -209,18 +213,18 @@ def _apply_transforms(
     config: Config,
     request_id: str,
     raw: bytes,
-) -> tuple[bytes, bool, PipelineResult | None, RequestContext | None]:
+) -> tuple[bytes, bool, PipelineResult | None, RequestContext | None, AnalysisResult | None]:
     if request.headers.get("content-encoding"):
-        return raw, False, None, None
+        return raw, False, None, None, None
     try:
         payload = orjson.loads(raw)
     except (orjson.JSONDecodeError, TypeError):
-        return raw, False, None, None
+        return raw, False, None, None, None
     if not isinstance(payload, dict):
-        return raw, False, None, None
+        return raw, False, None, None, None
     adapter = adapter_for(route.provider, route.endpoint)
     if not adapter.is_transformable(payload):
-        return raw, False, None, None
+        return raw, False, None, None, None
     mode = route.mode
     if mode is Mode.ACTIVE and not is_active_mode_allowed():
         mode = Mode.SHADOW
@@ -244,11 +248,23 @@ def _apply_transforms(
     )
     try:
         result = run_pipeline(ctx, payload, adapter, build_transforms(config), config)
-        if mode is Mode.ACTIVE and result.changed:
-            return orjson.dumps(payload), True, result, ctx
-        return raw, False, result, ctx
     except Exception:
-        return raw, False, None, ctx
+        return raw, False, None, ctx, None
+    analysis = getattr(request.app.state, "analysis", None)
+    analysis_result: AnalysisResult | None = None
+    if isinstance(analysis, AnalysisState):
+        analysis_result = analysis.observe(
+            session_id=ctx.session_id,
+            project=ctx.project,
+            ts=time.time(),
+            segments=result.original_segments,
+            observations=observations_from_texts(result.original_texts),
+            model=model or "",
+            config_hash=ctx.config_hash,
+        )
+    if mode is Mode.ACTIVE and result.changed:
+        return orjson.dumps(payload), True, result, ctx, analysis_result
+    return raw, False, result, ctx, analysis_result
 
 
 async def _request_content(request: Request, config: Config) -> bytes | AsyncIterator[bytes]:
