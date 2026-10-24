@@ -2,17 +2,17 @@
 
 **Last updated:** 2026-10-24
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `main`
-**Overall:** 1 / 10 tasks complete
+**Branch:** `feat/p0-2-config`
+**Overall:** 2 / 10 tasks complete
 
 ## Resume here
 
-- **Last completed:** P0-1 — Toolchain + skeleton (`c7c34c7`).
+- **Last completed:** P0-2 — Config (awaiting merge).
 - **Last merge:** `afdae28` (P0-1)
-- **Next task:** P0-2 — Config (`feat/p0-2-config`)
+- **Next task:** P0-3 — Models, logging, ULID (`feat/p0-3-models-logging`)
 - **Blocked:** P1-3 — usage parsers (awaiting provider captures, see
   `docs/plan.md` §6)
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p0-2-config` — merge to `main` before starting P0-3
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -20,7 +20,7 @@
 | ID | Task | Status | Branch | Commits | Merge | Gates | Notes |
 |---|---|---|---|---|---|---|---|
 | P0-1 | Toolchain + skeleton | done | `feat/p0-1-toolchain` | `c7c34c7` | `afdae28` | ruff, format, mypy, pytest (4) | `uv build` and `ctxproxy --version` verified |
-| P0-2 | Config | todo | — | — | — | — | — |
+| P0-2 | Config | done | `feat/p0-2-config` | recorded at merge | — | ruff, format, mypy, pytest (22) | default template round-trips to model defaults; wheel ships it |
 | P0-3 | Models, logging, ULID | todo | — | — | — | — | — |
 | P0-4 | Test infrastructure | todo | — | — | — | — | — |
 | P1-1 | Routing + ingress | todo | — | — | — | — | — |
@@ -39,6 +39,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 |---|---|---|---|---|---|---|
 | 2026-10-24 | bootstrap | n/a (docs only) | n/a | n/a | n/a | `5b3f61b` |
 | 2026-10-24 | P0-1 | pass | pass (50 files) | 4 passed | reported, not enforced | `c7c34c7` |
+| 2026-10-24 | P0-2 | pass | pass (50 files) | 22 passed | reported, not enforced | recorded at merge |
 
 ## Changelog
 
@@ -52,6 +53,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   Added `pytest-cov` (needed for the §20.2 coverage gate; not in the §6 list)
   and excluded `SPEC.md` from ruff because ruff 0.17 reformats Python code
   blocks inside Markdown. `uv.lock` committed.
+- 2026-10-24 — P0-2: pydantic v2 models for the full §7.2 config plus the eight
+  gap defaults from ADR 0003; CLI > env > file > defaults precedence;
+  `config_hash` scoped to transforms/tools/pipeline; unknown-key reporting;
+  first-run creation from `data/default_config.toml`, verified to ship in the
+  wheel.
 
 ## Handoff notes
 

@@ -1,0 +1,182 @@
+# ctxproxy configuration (SPEC section 7).
+# Created on first run. Edit and reload with `ctxproxy reload` (P5).
+
+schema_version = 1
+
+[server]
+host = "127.0.0.1"
+port = 8787
+allow_remote = false
+admin_token = ""
+max_body_bytes = 33554432
+log_level = "info"
+
+[mode]
+default = "shadow"
+
+[upstreams]
+anthropic = "https://api.anthropic.com"
+openai = "https://api.openai.com"
+gemini = "https://generativelanguage.googleapis.com"
+ollama = "http://127.0.0.1:11434"
+# openrouter = { url = "https://openrouter.ai/api", kind = "openai" }
+# deepseek = { url = "https://api.deepseek.com", kind = "openai" }
+
+[http]
+connect_timeout_s = 10
+write_timeout_s = 60
+pool_timeout_s = 30
+read_timeout_s = 0
+http2 = true
+max_connections = 100
+force_identity_encoding = true
+
+[pipeline]
+time_budget_ms = 250
+offload_threshold_bytes = 262144
+min_saving_tokens = 20
+retry_original_on_status = [400, 422]
+
+[transforms.ansi_strip]
+enabled = true
+
+[transforms.progress_collapse]
+enabled = true
+
+[transforms.line_dedupe]
+enabled = true
+min_repeat = 3
+
+[transforms.whitespace_trim]
+enabled = true
+max_blank_run = 2
+
+[transforms.smart_truncate]
+enabled = true
+trigger_bytes = 16384
+target_bytes = 10240
+head_lines = 40
+tail_lines = 60
+context_lines = 3
+max_line_chars = 2000
+max_signal_lines = 150
+
+[transforms.duplicate_backref]
+enabled = true
+min_bytes = 2048
+include_never_touch = true
+
+[transforms.stale_result_elision]
+enabled = false
+keep_recent_turns = 12
+batch_turns = 8
+min_bytes = 4096
+
+[transforms.anthropic_cache]
+enabled = true
+ttl = "5m"
+respect_existing = true
+max_breakpoints = 4
+
+[transforms.openai_hints]
+enabled = false
+send_prompt_cache_key = true
+inject_stream_usage = false
+
+[transforms.cache_serve]
+enabled = false
+include_never_touch = true
+min_bytes = 2048
+max_stubs_per_request = 6
+batch_turns = 8
+keep_recent_turns = 12
+max_state_sessions = 256
+max_entries_per_session = 512
+
+[transforms.volatile_normalizer]
+enabled = false
+
+[tools]
+compactable = [
+  "*bash*",
+  "*shell*",
+  "*terminal*",
+  "*exec*",
+  "*run*",
+  "*command*",
+  "*test*",
+  "*build*",
+  "*npm*",
+  "*pytest*",
+  "*cargo*",
+]
+never_touch = [
+  "*read*",
+  "*view*",
+  "*cat*",
+  "*edit*",
+  "*write*",
+  "*patch*",
+  "*apply*",
+  "*notebook*",
+]
+
+[telemetry]
+db_path = ""
+capture_payloads = "changed_blocks"
+retention_days = 14
+redact_secrets = true
+writer_queue_max = 10000
+max_blob_bytes = 524288000
+
+[waste]
+enabled = true
+dedupe_window_min = 30
+capture_assistant_hashes = true
+
+[waste.redundant_reread]
+enabled = true
+min_bytes = 512
+
+[waste.identical_output]
+enabled = true
+min_bytes = 1024
+
+[waste.unbatched_fanout]
+enabled = true
+min_calls = 4
+
+[waste.runaway_session]
+enabled = true
+idle_gap_s = 900
+min_turns = 6
+
+[waste.recurring_drift]
+enabled = true
+min_occurrences = 2
+
+[waste.churn_detector]
+enabled = false
+
+[waste.schema_bloat]
+enabled = true
+min_session_requests = 10
+
+[guard]
+enabled = true
+fallback_window = 50
+fallback_limit = 3
+our_fault_drift_limit = 1
+min_savings_to_stay = 0.01
+notify = "dashboard"
+auto_reenable = 0
+expand_error_rate = 0.20
+
+[pricing]
+file = ""
+
+[dashboard]
+enabled = true
+
+[license]
+path = ""
