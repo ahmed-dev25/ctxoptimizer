@@ -2,18 +2,18 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec (P1–P4 complete; P5 partial; P6 core complete)
-**Branch:** `feat/p6-native`
-**Overall:** P6-1/2/3/4/5 implemented; P5 security/diff/doctor and P7 remain
+**Branch:** `main`
+**Overall:** P6 core implemented (P6-4 estimator/UI pending); P5 security/diff/doctor and P7 remain
 
 ## Resume here
 
 - **Last completed:** P6 native Gemini/Ollama adapters + usage, stale elision,
-  W7/W8 (awaiting merge).
-- **Last merge:** `5d5a851` (P4-3/P5)
+  W7/W8 (`6c265cf`, merge `969d86b`).
+- **Last merge:** `969d86b` (P6)
 - **Next task:** finish P5 (admin token/Host allowlist/CSRF, diff viewer, doctor)
   or start P7 packaging/service/licensing (`feat/p7-ship`)
 - **Blocked:** none
-- **Active branch:** `feat/p6-native` — merge to `main` before the next branch
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -75,11 +75,11 @@
 | P4-2 | OpenAI hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | api.openai.com only |
 | P4-3 | Marker quality metric | done | `feat/p5-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (214) | markers + coverage in health/last request |
 | P5 | Full dashboard | partial | `feat/p5-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (214) | Live/Sessions/Requests/Transforms/Pricing/Settings + read APIs; diff viewer, admin token/CSRF, doctor pending |
-| P6-1 | Native Gemini adapter | done | `feat/p6-native` | recorded at merge | — | ruff, format, mypy, pytest (232) | telemetry + segments + string-leaf tool results |
-| P6-2 | Native Ollama adapter | done | `feat/p6-native` | recorded at merge | — | ruff, format, mypy, pytest (232) | `/api/chat` NDJSON + `/api/generate` |
+| P6-1 | Native Gemini adapter | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | telemetry + segments + string-leaf tool results |
+| P6-2 | Native Ollama adapter | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | `/api/chat` NDJSON + `/api/generate` |
 | P6-3 | Named OpenAI-compatible upstreams | done | `main` | earlier | — | pass | ADR 0006 profiles; no change needed |
-| P6-4 | `stale_result_elision` | partial | `feat/p6-native` | recorded at merge | — | ruff, format, mypy, pytest (232) | opt-in batch-anchored transform; break-even estimator/UI pending |
-| P6-5 | W7/W8 | done | `feat/p6-native` | recorded at merge | — | ruff, format, mypy, pytest (232) | W7 opt-in heuristic, W8 default on |
+| P6-4 | `stale_result_elision` | partial | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | opt-in batch-anchored transform; break-even estimator/UI pending |
+| P6-5 | W7/W8 | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | W7 opt-in heuristic, W8 default on |
 | P7 | Packaging/service/licensing | partial | - | - | - | - | wheel builds; service/licensing pending |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
@@ -109,7 +109,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P2-6/P4 | pass | pass (54 files) | 201 passed | reported, not enforced | `399c962` |
 | 2026-10-25 | P3-7/8/9 | pass | pass (55 files) | 210 passed | reported, not enforced | `97f7d5f` |
 | 2026-10-25 | P4-3/P5 | pass | pass (56 files) | 214 passed | reported, not enforced | recorded at merge |
-| 2026-10-25 | P6 | pass | pass (58 files) | 232 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P6 | pass | pass (58 files) | 232 passed | reported, not enforced | `6c265cf` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
