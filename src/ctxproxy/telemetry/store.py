@@ -204,6 +204,31 @@ class Store:
         with sqlite3.connect(self.path) as conn:
             return int(conn.execute("SELECT COUNT(*) FROM requests").fetchone()[0])
 
+    def fetch_sessions(self, limit: int = 50) -> list[dict[str, Any]]:
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM sessions ORDER BY last_ts DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def fetch_session_requests(self, session_id: str, limit: int = 100) -> list[dict[str, Any]]:
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM requests WHERE session_id = ? ORDER BY ts DESC LIMIT ?",
+                (session_id, limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def fetch_request(self, request_id: str) -> dict[str, Any] | None:
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT * FROM requests WHERE request_id = ?", (request_id,)
+            ).fetchone()
+        return dict(row) if row is not None else None
+
     def summary(self) -> dict[str, Any]:
         with sqlite3.connect(self.path) as conn:
             row = conn.execute(

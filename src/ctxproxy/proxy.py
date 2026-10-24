@@ -177,6 +177,14 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                 ),
                 "drift": analysis.drift.cause if analysis and analysis.drift else None,
                 "findings": len(analysis.findings) if analysis else 0,
+                "marker_quality": (
+                    {
+                        "markers": analysis.marker_quality.markers,
+                        "coverage": round(analysis.marker_quality.coverage, 4),
+                    }
+                    if analysis
+                    else None
+                ),
             }
             store = getattr(request.app.state, "store", None)
             if store is not None:

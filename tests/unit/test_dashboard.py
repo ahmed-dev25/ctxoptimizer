@@ -56,3 +56,31 @@ def test_waste_page_and_apis(tmp_path: Path) -> None:
     assert "No findings yet" in page.text
     assert findings.json()["findings"] == []
     assert recommendations.json()["recommendations"] == []
+
+
+def test_admin_pages_and_apis(tmp_path: Path) -> None:
+    with TestClient(create_app(_config(tmp_path))) as client:
+        for path in (
+            "/_ctxproxy/live",
+            "/_ctxproxy/sessions",
+            "/_ctxproxy/requests",
+            "/_ctxproxy/transforms",
+            "/_ctxproxy/pricing",
+            "/_ctxproxy/settings",
+        ):
+            response = client.get(path)
+            assert response.status_code == 200, path
+        assert client.get("/_ctxproxy/api/sessions").json()["sessions"] == []
+        assert client.get("/_ctxproxy/api/transforms").json()["transforms"]
+        assert client.get("/_ctxproxy/api/pricing").json()["models"]
+        assert client.get("/_ctxproxy/api/guard").json()["quarantined"] == []
+        assert client.get("/_ctxproxy/requests/missing").status_code == 404
+        assert client.get("/_ctxproxy/api/requests/missing").status_code == 404
+
+
+def test_pricing_page_renders_bundled_rates(tmp_path: Path) -> None:
+    with TestClient(create_app(_config(tmp_path))) as client:
+        response = client.get("/_ctxproxy/pricing")
+    assert response.status_code == 200
+    assert "Pricing (" in response.text
+    assert "anthropic" in response.text

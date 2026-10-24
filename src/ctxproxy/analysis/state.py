@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from hashlib import sha256
 
 from ctxproxy.analysis.drift import DriftEvent, detect_drift
+from ctxproxy.analysis.markers import MarkerQuality, marker_quality
 from ctxproxy.analysis.segments import Segment
 from ctxproxy.analysis.tokens import estimate_tokens
 from ctxproxy.analysis.waste import (
@@ -34,6 +35,7 @@ class SessionState:
 class AnalysisResult:
     drift: DriftEvent | None
     findings: list[WasteFinding]
+    marker_quality: MarkerQuality
 
 
 class AnalysisState:
@@ -118,7 +120,11 @@ class AnalysisState:
         state.turns += 1
         self._findings.extend(findings)
         self._findings = self._findings[-self.max_findings :]
-        return AnalysisResult(drift=drift, findings=findings)
+        return AnalysisResult(
+            drift=drift,
+            findings=findings,
+            marker_quality=marker_quality(segments),
+        )
 
     def findings(self) -> list[WasteFinding]:
         return list(self._findings)
