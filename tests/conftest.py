@@ -53,6 +53,7 @@ class FakeUpstream:
         self._chunks: list[bytes] | None = None
         self._chunk_delay_s = 0.0
         self._disconnect_after: int | None = None
+        self._statuses: list[int] = []
         self._server: uvicorn.Server | None = None
         self._thread: threading.Thread | None = None
         self._socket: socket.socket | None = None
@@ -66,6 +67,7 @@ class FakeUpstream:
         self._chunks = None
         self._chunk_delay_s = 0.0
         self._disconnect_after = None
+        self._statuses = []
 
     def json(
         self,
@@ -76,6 +78,7 @@ class FakeUpstream:
     ) -> None:
         """Serve one JSON response."""
         self._chunks = None
+        self._statuses = []
         self._status = status
         self._body = json.dumps(payload).encode("utf-8")
         self._headers = {"content-type": "application/json", **(headers or {})}
@@ -98,7 +101,21 @@ class FakeUpstream:
         self._chunk_delay_s = chunk_delay_s
         self._disconnect_after = disconnect_after
         self._status = 200
+        self._statuses = []
         self._headers = {"content-type": "text/event-stream", **(headers or {})}
+
+    def sequence(
+        self,
+        statuses: list[int],
+        *,
+        body: bytes = b"{}",
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        """Return the given statuses in order, one per request."""
+        self._chunks = None
+        self._statuses = list(statuses)
+        self._body = body
+        self._headers = {"content-type": "application/json", **(headers or {})}
 
     async def _handle(self, request: Request) -> Response:
         body = await request.body()
@@ -111,9 +128,10 @@ class FakeUpstream:
                 body=body,
             )
         )
+        status = self._statuses.pop(0) if self._statuses else self._status
         if self._chunks is None:
-            return Response(self._body, status_code=self._status, headers=self._headers)
-        return StreamingResponse(self._stream(), status_code=self._status, headers=self._headers)
+            return Response(self._body, status_code=status, headers=self._headers)
+        return StreamingResponse(self._stream(), status_code=status, headers=self._headers)
 
     async def _stream(self) -> AsyncIterator[bytes]:
         self.stream_started = True

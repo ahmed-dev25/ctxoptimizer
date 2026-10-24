@@ -18,8 +18,9 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Route as StarletteRoute
 
 from ctxproxy import __version__
-from ctxproxy.config import Config
+from ctxproxy.config import Config, data_dir
 from ctxproxy.routing import Route, UnknownUpstream, classify, is_absolute_target
+from ctxproxy.telemetry.blobs import BlobStore
 from ctxproxy.telemetry.store import Store, default_db_path
 
 Forwarder = Callable[[Request, Route, Config], Awaitable[Response]]
@@ -34,6 +35,7 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
         app.state.client = _make_client(config)
         app.state.store = _make_store(config)
+        app.state.blobs = _make_blobs(config)
         try:
             yield
         finally:
@@ -68,6 +70,12 @@ def create_app(config: Config, forwarder: Forwarder | None = None) -> Starlette:
                 "last_cost_usd": last.get("cost_usd"),
                 "last_priced": last.get("priced", False),
                 "last_usage_source": getattr(usage, "source", None),
+                "last_mutated": last.get("mutated", False),
+                "last_fallback": last.get("fallback_used", False),
+                "last_transforms": last.get("transform_ids", []),
+                "blob_count": (
+                    state.blobs.count() if getattr(state, "blobs", None) is not None else 0
+                ),
             }
         )
 
@@ -142,6 +150,15 @@ def _make_store(config: Config) -> Store | None:
             queue_max=config.telemetry.writer_queue_max,
             retention_days=config.telemetry.retention_days,
         )
+    except Exception:
+        return None
+
+
+def _make_blobs(config: Config) -> BlobStore | None:
+    if config.telemetry.capture_payloads == "off":
+        return None
+    try:
+        return BlobStore(data_dir() / "blobs")
     except Exception:
         return None
 

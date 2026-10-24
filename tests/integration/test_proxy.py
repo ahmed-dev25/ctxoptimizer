@@ -203,6 +203,106 @@ def test_proxy_persists_request_to_sqlite(fake_upstream, tmp_path: Path) -> None
     assert row[2] is not None
 
 
+_ANSI = ("\x1b[31m" + "x" * 100 + "\x1b[0m\n") * 50
+_ESC_JSON = b"\\u001b"
+
+
+def _active_payload() -> bytes:
+    return json.dumps(
+        {
+            "model": "claude-sonnet-4-5",
+            "messages": [
+                {"role": "user", "content": "go"},
+                {
+                    "role": "assistant",
+                    "content": [{"type": "tool_use", "id": "t1", "name": "Bash", "input": {}}],
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "tool_result", "tool_use_id": "t1", "content": _ANSI}],
+                },
+            ],
+        }
+    ).encode("utf-8")
+
+
+def _mode_config(fake_upstream, tmp_path: Path, mode: str) -> Config:
+    return Config.model_validate(
+        {
+            "mode": {"default": mode},
+            "upstreams": {"anthropic": fake_upstream.base_url},
+            "telemetry": {
+                "db_path": str(tmp_path / "ctxproxy.db"),
+                "capture_payloads": "off",
+            },
+        }
+    )
+
+
+def test_active_mode_transforms_request(fake_upstream, tmp_path: Path) -> None:
+    fake_upstream.json({"ok": True})
+    config = _mode_config(fake_upstream, tmp_path, "active")
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(f"{url}/v1/messages", content=_active_payload())
+            health = client.get(f"{url}/_ctxproxy/health").json()
+    assert response.status_code == 200
+    recorded = fake_upstream.requests[-1].body
+    assert _ESC_JSON not in recorded
+    assert len(recorded) < len(_active_payload())
+    assert health["last_mutated"] is True
+    assert health["last_transforms"]
+
+
+def test_shadow_mode_forwards_original(fake_upstream, tmp_path: Path) -> None:
+    fake_upstream.json({"ok": True})
+    config = _mode_config(fake_upstream, tmp_path, "shadow")
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(f"{url}/v1/messages", content=_active_payload())
+            health = client.get(f"{url}/_ctxproxy/health").json()
+    assert response.status_code == 200
+    assert _ESC_JSON in fake_upstream.requests[-1].body
+    assert health["last_mutated"] is False
+
+
+def test_mutated_request_retries_with_original_on_400(fake_upstream, tmp_path: Path) -> None:
+    fake_upstream.sequence([400, 200])
+    config = _mode_config(fake_upstream, tmp_path, "active")
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(f"{url}/v1/messages", content=_active_payload())
+            health = client.get(f"{url}/_ctxproxy/health").json()
+    assert response.status_code == 200
+    assert len(fake_upstream.requests) == 2
+    first, second = fake_upstream.requests
+    assert _ESC_JSON not in first.body
+    assert _ESC_JSON in second.body
+    assert health["last_fallback"] is True
+
+
+def test_changed_blocks_are_stored(fake_upstream, tmp_path: Path, monkeypatch) -> None:
+    from ctxproxy.telemetry.blobs import BlobStore
+
+    monkeypatch.setenv("CTXPROXY_DATA_DIR", str(tmp_path / "data"))
+    fake_upstream.json({"ok": True})
+    config = Config.model_validate(
+        {
+            "mode": {"default": "active"},
+            "upstreams": {"anthropic": fake_upstream.base_url},
+            "telemetry": {
+                "db_path": str(tmp_path / "ctxproxy.db"),
+                "capture_payloads": "changed_blocks",
+            },
+        }
+    )
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            assert client.post(f"{url}/v1/messages", content=_active_payload()).status_code == 200
+    store = BlobStore(tmp_path / "data" / "blobs")
+    assert store.count() >= 1
+
+
 def test_connect_failure_returns_provider_shaped_502(tmp_path: Path) -> None:
     config = Config.model_validate(
         {

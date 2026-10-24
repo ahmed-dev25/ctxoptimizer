@@ -25,6 +25,7 @@ class PipelineResult:
     final_est_tokens: int
     changed: bool
     shadow: bool
+    changed_blocks: list[tuple[str, str]]
 
 
 def run_pipeline(
@@ -38,6 +39,7 @@ def run_pipeline(
     original_segments = adapter.segments(payload)
     orig_tokens = _token_total(original_segments)
     reports: list[TransformReport] = []
+    changed_blocks: list[tuple[str, str]] = []
     started = time.perf_counter()
     budget = config.pipeline.time_budget_ms
 
@@ -76,6 +78,11 @@ def run_pipeline(
             report.discarded_reason = "no_regress"
             report.est_tokens_after = report.est_tokens_before
             report.bytes_after = report.bytes_before
+        if report.changed and report.discarded_reason is None:
+            for ref, previous in snapshot:
+                current = ref.get_text()
+                if current is not None and current != previous:
+                    changed_blocks.append((previous, current))
         reports.append(report)
 
     final_segments = adapter.segments(payload)
@@ -87,6 +94,7 @@ def run_pipeline(
         final_est_tokens=_token_total(final_segments),
         changed=any(report.changed and report.discarded_reason is None for report in reports),
         shadow=ctx.mode is Mode.SHADOW,
+        changed_blocks=changed_blocks,
     )
 
 
