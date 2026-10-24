@@ -2,17 +2,17 @@
 
 **Last updated:** 2026-10-24
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `feat/p0-3-models-logging`
+**Branch:** `main`
 **Overall:** 3 / 10 tasks complete
 
 ## Resume here
 
-- **Last completed:** P0-3 — Models, logging, ULID (awaiting merge).
-- **Last merge:** `c37f4f7` (P0-2)
+- **Last completed:** P0-3 — Models, logging, ULID (`7428195`).
+- **Last merge:** `eea33ec` (P0-3)
 - **Next task:** P0-4 — Test infrastructure (`feat/p0-4-test-infra`)
 - **Blocked:** P1-3 — usage parsers (awaiting provider captures, see
   `docs/plan.md` §6)
-- **Active branch:** `feat/p0-3-models-logging` — merge to `main` before P0-4
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -21,7 +21,7 @@
 |---|---|---|---|---|---|---|---|
 | P0-1 | Toolchain + skeleton | done | `feat/p0-1-toolchain` | `c7c34c7` | `afdae28` | ruff, format, mypy, pytest (4) | `uv build` and `ctxproxy --version` verified |
 | P0-2 | Config | done | `feat/p0-2-config` | `116adab` | `c37f4f7` | ruff, format, mypy, pytest (22) | default template round-trips to model defaults; wheel ships it |
-| P0-3 | Models, logging, ULID | done | `feat/p0-3-models-logging` | recorded at merge | — | ruff, format, mypy, pytest (38) | SEC-2 sanitizer + monotonic stdlib ULID |
+| P0-3 | Models, logging, ULID | done | `feat/p0-3-models-logging` | `7428195` | `eea33ec` | ruff, format, mypy, pytest (38) | SEC-2 sanitizer + monotonic stdlib ULID |
 | P0-4 | Test infrastructure | todo | — | — | — | — | — |
 | P1-1 | Routing + ingress | todo | — | — | — | — | — |
 | P1-2 | Proxy core | todo | — | — | — | — | — |
@@ -40,7 +40,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-24 | bootstrap | n/a (docs only) | n/a | n/a | n/a | `5b3f61b` |
 | 2026-10-24 | P0-1 | pass | pass (50 files) | 4 passed | reported, not enforced | `c7c34c7` |
 | 2026-10-24 | P0-2 | pass | pass (50 files) | 22 passed | reported, not enforced | `116adab` |
-| 2026-10-24 | P0-3 | pass | pass (50 files) | 38 passed | reported, not enforced | recorded at merge |
+| 2026-10-24 | P0-3 | pass | pass (50 files) | 38 passed | reported, not enforced | `7428195` |
 
 ## Changelog
 
