@@ -168,6 +168,75 @@ class OpenAIResponsesUsageParser(_BaseParser):
             self._output_chars += len(_text(payload.get("delta")))
 
 
+class GeminiUsageParser(_BaseParser):
+    """Native Gemini streams usage in ``usageMetadata`` (often on every chunk)."""
+
+    def _handle(self, event: SSEEvent) -> None:
+        payload = _json(event.data)
+        if payload is None:
+            return
+        raw = payload.get("usageMetadata")
+        if isinstance(raw, dict):
+            self._usage = _gemini_usage(raw)
+        for candidate in payload.get("candidates") or []:
+            if not isinstance(candidate, dict):
+                continue
+            content = _dict(candidate.get("content"))
+            for part in content.get("parts") or []:
+                if isinstance(part, dict):
+                    self._output_chars += len(_text(part.get("text")))
+
+
+class OllamaUsageParser:
+    """Ollama speaks newline-delimited JSON, not SSE."""
+
+    def __init__(self) -> None:
+        self._buffer = bytearray()
+        self._disabled = False
+        self._usage = Usage(source="none")
+        self._output_chars = 0
+
+    def feed(self, chunk: bytes) -> None:
+        if self._disabled:
+            return
+        self._buffer.extend(chunk)
+        while True:
+            index = self._buffer.find(b"\n")
+            if index < 0:
+                break
+            line = bytes(self._buffer[:index])
+            del self._buffer[: index + 1]
+            self._handle_line(line)
+
+    def disable(self) -> None:
+        self._disabled = True
+
+    def result(self) -> Usage:
+        if self._buffer:
+            self._handle_line(bytes(self._buffer))
+            self._buffer.clear()
+        if self._usage.source != "provider" and self._output_chars:
+            self._usage.output = max(1, math.ceil(self._output_chars / 3.5))
+            self._usage.source = "estimated"
+        return self._usage
+
+    def _handle_line(self, line: bytes) -> None:
+        if not line.strip():
+            return
+        try:
+            payload = orjson.loads(line)
+        except (orjson.JSONDecodeError, TypeError):
+            self.disable()
+            return
+        if not isinstance(payload, dict):
+            return
+        message = _dict(payload.get("message"))
+        self._output_chars += len(_text(message.get("content")))
+        self._output_chars += len(_text(payload.get("response")))
+        if "prompt_eval_count" in payload or "eval_count" in payload:
+            self._usage = _ollama_usage(payload)
+
+
 def new_usage_parser(
     provider: Provider, endpoint: Endpoint, profile: UpstreamProfile
 ) -> UsageParser:
@@ -176,6 +245,10 @@ def new_usage_parser(
         return OpenAIResponsesUsageParser()
     if profile.usage == "anthropic":
         return AnthropicUsageParser()
+    if profile.usage == "gemini":
+        return GeminiUsageParser()
+    if profile.usage == "ollama":
+        return OllamaUsageParser()
     if profile.usage in _CHAT_STYLES:
         return OpenAIChatUsageParser(profile.usage)
     return NullUsageParser()
@@ -194,6 +267,11 @@ def parse_usage_body(
     if endpoint is Endpoint.RESPONSES:
         usage = payload.get("usage")
         return _responses_usage(usage) if isinstance(usage, dict) else Usage(source="none")
+    if profile.usage == "gemini":
+        usage = payload.get("usageMetadata")
+        return _gemini_usage(usage) if isinstance(usage, dict) else Usage(source="none")
+    if profile.usage == "ollama":
+        return _ollama_usage(payload)
     if profile.usage == "anthropic":
         usage = payload.get("usage")
         if not isinstance(usage, dict):
@@ -227,6 +305,35 @@ def _anthropic_usage(raw: dict[str, Any], cache_creation: dict[str, Any] | None)
         reasoning=_int(details.get("thinking_tokens")),
         source="provider",
         raw=raw_out,
+    )
+
+
+def _gemini_usage(raw: dict[str, Any]) -> Usage:
+    prompt = _int(raw.get("promptTokenCount")) or 0
+    cached = _int(raw.get("cachedContentTokenCount")) or 0
+    return Usage(
+        fresh_input=max(prompt - cached, 0),
+        cache_read=cached,
+        output=_int(raw.get("candidatesTokenCount")) or 0,
+        reasoning=_int(raw.get("thoughtsTokenCount")),
+        source="provider",
+        raw=dict(raw),
+    )
+
+
+def _ollama_usage(raw: dict[str, Any]) -> Usage:
+    prompt = _int(raw.get("prompt_eval_count"))
+    output = _int(raw.get("eval_count"))
+    if prompt is None and output is None:
+        return Usage(source="none")
+    cached = _int(raw.get("prompt_eval_cached_count"))
+    cached_tokens = cached or 0
+    return Usage(
+        fresh_input=max((prompt or 0) - cached_tokens, 0),
+        cache_read=cached_tokens if cached is not None else None,
+        output=output,
+        source="provider",
+        raw=dict(raw),
     )
 
 
@@ -317,7 +424,9 @@ def _text(value: Any) -> str:
 
 __all__ = [
     "AnthropicUsageParser",
+    "GeminiUsageParser",
     "NullUsageParser",
+    "OllamaUsageParser",
     "OpenAIChatUsageParser",
     "OpenAIResponsesUsageParser",
     "UsageParser",

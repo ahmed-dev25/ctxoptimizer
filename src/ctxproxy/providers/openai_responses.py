@@ -98,6 +98,9 @@ class OpenAIResponsesAdapter:
             if isinstance(tool, dict) and isinstance(tool.get("name"), str)
         ]
 
+    def used_tool_names(self, payload: dict[str, Any]) -> list[str]:
+        return list(self._call_names(payload).values())
+
     def _input_items(self, payload: dict[str, Any]) -> list[Any]:
         value = payload.get("input")
         if isinstance(value, str):

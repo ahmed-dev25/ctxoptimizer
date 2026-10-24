@@ -1,18 +1,19 @@
 # ctxproxy — Progress
 
 **Last updated:** 2026-10-25
-**Milestone:** P0–P7 — full spec (P1 complete; P2 in progress)
-**Branch:** `feat/p5-dashboard`
-**Overall:** P3/P4 complete; P5 partial (read-only dashboard); P6–P7 remain
+**Milestone:** P0–P7 — full spec (P1–P4 complete; P5 partial; P6 core complete)
+**Branch:** `feat/p6-native`
+**Overall:** P6-1/2/3/4/5 implemented; P5 security/diff/doctor and P7 remain
 
 ## Resume here
 
-- **Last completed:** P4-3 marker quality + P5 dashboard pages/read APIs
-  (awaiting merge).
-- **Last merge:** `8890137` (P3-7/8/9)
-- **Next task:** P6 native Gemini/Ollama adapters + usage, W7/W8 (`feat/p6-native`)
+- **Last completed:** P6 native Gemini/Ollama adapters + usage, stale elision,
+  W7/W8 (awaiting merge).
+- **Last merge:** `5d5a851` (P4-3/P5)
+- **Next task:** finish P5 (admin token/Host allowlist/CSRF, diff viewer, doctor)
+  or start P7 packaging/service/licensing (`feat/p7-ship`)
 - **Blocked:** none
-- **Active branch:** `feat/p5-dashboard` — merge to `main` before P6
+- **Active branch:** `feat/p6-native` — merge to `main` before the next branch
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -74,8 +75,12 @@
 | P4-2 | OpenAI hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | api.openai.com only |
 | P4-3 | Marker quality metric | done | `feat/p5-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (214) | markers + coverage in health/last request |
 | P5 | Full dashboard | partial | `feat/p5-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (214) | Live/Sessions/Requests/Transforms/Pricing/Settings + read APIs; diff viewer, admin token/CSRF, doctor pending |
-| P6 | Gemini/Ollama native, W7/W8 | todo | - | - | - | - | OpenAI-compat surfaces work |
-| P7 | Packaging/service/licensing | partial | — | — | — | — | wheel builds; service/licensing pending |
+| P6-1 | Native Gemini adapter | done | `feat/p6-native` | recorded at merge | — | ruff, format, mypy, pytest (232) | telemetry + segments + string-leaf tool results |
+| P6-2 | Native Ollama adapter | done | `feat/p6-native` | recorded at merge | — | ruff, format, mypy, pytest (232) | `/api/chat` NDJSON + `/api/generate` |
+| P6-3 | Named OpenAI-compatible upstreams | done | `main` | earlier | — | pass | ADR 0006 profiles; no change needed |
+| P6-4 | `stale_result_elision` | partial | `feat/p6-native` | recorded at merge | — | ruff, format, mypy, pytest (232) | opt-in batch-anchored transform; break-even estimator/UI pending |
+| P6-5 | W7/W8 | done | `feat/p6-native` | recorded at merge | — | ruff, format, mypy, pytest (232) | W7 opt-in heuristic, W8 default on |
+| P7 | Packaging/service/licensing | partial | - | - | - | - | wheel builds; service/licensing pending |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -104,6 +109,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P2-6/P4 | pass | pass (54 files) | 201 passed | reported, not enforced | `399c962` |
 | 2026-10-25 | P3-7/8/9 | pass | pass (55 files) | 210 passed | reported, not enforced | `97f7d5f` |
 | 2026-10-25 | P4-3/P5 | pass | pass (56 files) | 214 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P6 | pass | pass (58 files) | 232 passed | reported, not enforced | recorded at merge |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -209,6 +215,13 @@ Rows are in execution order; see `docs/plan.md` §4.
   client cache marker) exposed in health/last request; read-only dashboard
   pages for Live, Sessions, Requests (list + detail), Transforms, Pricing and
   Settings plus matching JSON APIs. Admin token/CSRF/diff viewer/doctor remain.
+
+- 2026-10-25 — P6: native Gemini `generateContent` and Ollama `/api/chat` /
+  `/api/generate` adapters with protocol-native segments, string-leaf tool
+  results, SSE/NDJSON usage (`usageMetadata`, `prompt_eval_count` /
+  `prompt_eval_cached_count` / `eval_count`), and non-stream JSON usage parsing.
+  Added opt-in batch-anchored `stale_result_elision`, W7 churn (opt-in
+  old/new heuristics) and W8 schema bloat (default on), plus recommendations.
 
 ## Handoff notes
 

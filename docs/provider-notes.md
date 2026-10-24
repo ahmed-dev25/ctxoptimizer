@@ -3,8 +3,8 @@
 **Researched:** 2026-10-24
 **Method:** current official provider documentation plus the official Python SDK
 type definitions (primary sources). No live traffic captured yet.
-**Scope:** Anthropic Messages, OpenAI Chat Completions, OpenAI Responses.
-Gemini and Ollama remain P6 and are not covered here.
+**Scope:** Anthropic Messages, OpenAI Chat Completions, OpenAI Responses,
+native Gemini `generateContent`, native Ollama `/api/chat` and `/api/generate`.
 **Rule:** only documented behavior is recorded below, each with a source and an
 access date. Anything absent is unknown and must not be guessed (SPEC §0.4).
 
@@ -531,3 +531,87 @@ Sources (accessed 2026-10-24):
 - https://opencode.ai/docs/providers/
 - https://ai.google.dev/gemini-api/docs/openai
 - https://docs.ollama.com/api/openai-compatibility (OpenAI-compatible `/v1`)
+
+---
+
+## 11. Native Gemini and Ollama (P6)
+
+Added 2026-10-25 from the provider reference pages below. No live captures yet;
+tests use documented shapes. Anything marked **VERIFY** must be confirmed before
+trusting a transform on real traffic.
+
+### 11.1 Gemini native (`models/{model}:generateContent`)
+
+Source (accessed 2026-10-25):
+- https://ai.google.dev/api/generate-content
+- https://ai.google.dev/gemini-api/docs/function-calling
+
+Documented request shape:
+- `contents[]` with `role` (`user` / `model`) and `parts[]`.
+- `systemInstruction` is a `Content` object with `parts[]`.
+- `tools[].functionDeclarations[]` carries `name`, `description`, `parameters`.
+- A model tool call is a part `{"functionCall": {"name": ..., "args": {...}}}`.
+- A tool result is a part
+  `{"functionResponse": {"name": ..., "response": {...}}}`. The reference shows
+  the response as a JSON object; string leaves are what the adapter can edit.
+  **VERIFY** the exact response wrapper emitted by each client (SDKs and common
+  MCP bridges may nest `content` or `result`).
+
+Documented usage metadata (`usageMetadata`):
+- `promptTokenCount` — total effective prompt tokens, including cached content.
+- `cachedContentTokenCount` — tokens in the cached part of the prompt.
+- `candidatesTokenCount` — total generated candidate tokens.
+- `thoughtsTokenCount` — thinking-model thought tokens (reported separately).
+- `toolUsePromptTokenCount` — tokens in tool-use prompts.
+- `totalTokenCount` — total.
+
+cxproxy normalization: `fresh_input = promptTokenCount -
+cachedContentTokenCount`, `cache_read = cachedContentTokenCount`,
+`output = candidatesTokenCount`, `reasoning = thoughtsTokenCount`. No cache
+write fields exist for implicit/explicit Gemini caching, so writes are not
+invented.
+
+Streaming: `:streamGenerateContent` with `alt=sse` emits SSE `data:` JSON
+chunks; the same `usageMetadata` shape appears on chunks (often the last one).
+Non-SSE array responses are not parsed incrementally; the proxy buffers a
+non-SSE JSON body and parses it at the end.
+
+Transforms (telemetry first): segments are `tool_def` per function declaration,
+`system` per system-instruction part, and `message` per content part. Only
+string leaves of a `functionResponse.response` object are exposed as tool
+results, so transforms never restructure Gemini JSON.
+
+### 11.2 Ollama native (`/api/chat`, `/api/generate`)
+
+Source (accessed 2026-10-25):
+- https://docs.ollama.com/api/chat
+- https://docs.ollama.com/api/generate
+
+Documented request shape (`/api/chat`):
+- `model`, `messages[]` with roles `system` / `user` / `assistant` / `tool`,
+  `tools[].function`, `stream` (default **true**).
+- Tool definitions are `{"type": "function", "function": {"name", ...}}`.
+- Assistant tool calls are `message.tool_calls[].function` with `name` and
+  object `arguments`.
+- Tool results are messages with `role: "tool"` and string `content`. The
+  native schema shown in the reference does not document `tool_name` on the
+  message; cxproxy uses it when present and otherwise leaves the tool name
+  unknown. **VERIFY** with a real client before relying on tool-name pairing.
+
+Documented response usage (`/api/chat` final object / stream event):
+- `prompt_eval_count` — number of prompt tokens.
+- `prompt_eval_cached_count` — prompt tokens read from cache.
+- `eval_count` — generated tokens.
+- `done` — true on the final event.
+
+cxproxy normalization: `fresh_input = prompt_eval_count -
+prompt_eval_cached_count` (cache count omitted => no `cache_read` claim),
+`output = eval_count`, `cost_source = none` (local model cost is zero).
+
+Streaming: `/api/chat` and `/api/generate` return `application/x-ndjson`
+by default; the parser is line-framed, not SSE. Non-streaming requests set
+`stream: false` and return one JSON object. `/api/generate` has a string
+`prompt` and no tool results; it is measured as one message segment.
+
+Transforms: only string `content` on `role: "tool"` messages is exposed.
+

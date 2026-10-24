@@ -105,6 +105,19 @@ class OpenAIChatAdapter:
                 names.append(function["name"])
         return names
 
+    def used_tool_names(self, payload: dict[str, Any]) -> list[str]:
+        names: list[str] = []
+        for message in payload.get("messages") or []:
+            if not isinstance(message, dict):
+                continue
+            for call in message.get("tool_calls") or []:
+                if not isinstance(call, dict):
+                    continue
+                function = call.get("function")
+                if isinstance(function, dict) and isinstance(function.get("name"), str):
+                    names.append(function["name"])
+        return names
+
     def _tool_call_names(self, payload: dict[str, Any]) -> dict[str, str]:
         names: dict[str, str] = {}
         for message in payload.get("messages") or []:
