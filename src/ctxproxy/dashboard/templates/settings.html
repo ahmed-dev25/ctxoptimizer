@@ -9,25 +9,71 @@
     body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
            font-family: 'Segoe UI', system-ui, sans-serif; }
     nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
-    nav a { color: #60a5fa; text-decoration: none; }
+    nav a, a { color: #60a5fa; text-decoration: none; }
+    h2 { margin: 26px 0 10px; font-size: 1.05rem; color: #93c5fd; }
     .muted { color: #9aa7b4; font-size: .9rem; }
+    .banner { background: #3b2300; border: 1px solid #a16207; color: #fde68a;
+              border-radius: 8px; padding: 10px 14px; margin: 14px 0; }
+    .card { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
+            padding: 14px 16px; margin-bottom: 10px; }
     pre { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
           padding: 16px; overflow: auto; font-size: .82rem; color: #a5d6ff; }
+    button { background: #1f6feb; color: white; border: 0; border-radius: 6px;
+             padding: 7px 12px; cursor: pointer; }
+    #status { color: #a5d6ff; margin-top: 8px; }
   </style>
 </head>
 <body>
   <nav>
-    <a href="/_ctxproxy/">Overview</a>
-    <a href="/_ctxproxy/live">Live</a>
-    <a href="/_ctxproxy/sessions">Sessions</a>
-    <a href="/_ctxproxy/requests">Requests</a>
-    <a href="/_ctxproxy/waste">Waste</a>
-    <a href="/_ctxproxy/transforms">Transforms</a>
-    <a href="/_ctxproxy/pricing">Pricing</a>
-    <a href="/_ctxproxy/settings">Settings</a>
+    <a href="/_ctxproxy/">Overview</a><a href="/_ctxproxy/live">Live</a>
+    <a href="/_ctxproxy/sessions">Sessions</a><a href="/_ctxproxy/requests">Requests</a>
+    <a href="/_ctxproxy/waste">Waste</a><a href="/_ctxproxy/transforms">Transforms</a>
+    <a href="/_ctxproxy/pricing">Pricing</a><a href="/_ctxproxy/settings">Settings</a>
+    <a href="/_ctxproxy/doctor">Doctor</a>
   </nav>
   <h1>{{ title }}</h1>
-  <p class="muted">v{{ version }} · mode {{ mode }} · local only</p>
+  <p class="muted">v{{ version }} · local only</p>
+  {% if privacy %}
+  <div class="banner">Privacy: payload capture is <b>{{ data["capture_payloads"] }}</b>.
+    Captured text stays in the local data dir; use <code>ctxproxy purge</code> to wipe it.</div>
+  {% endif %}
+
+  <h2>Mode</h2>
+  <div class="card">
+    <p>Current: <b>{{ data["mode"] }}</b></p>
+    <select id="mode">
+      {% for option in ("passthrough", "shadow", "active") %}
+      <option value="{{ option }}" {% if data["mode"] == option %}selected{% endif %}>{{ option }}</option>
+      {% endfor %}
+    </select>
+    <button id="save-mode">Apply</button>
+    <div id="status"></div>
+  </div>
+
+  <h2>License</h2>
+  <div class="card">
+    <p><b>{{ license.tier }}</b> · valid={{ license.valid }} · enforcement={{ license.enforcement }}</p>
+    <p class="muted">{{ license.reason }}</p>
+  </div>
+
+  <h2>Effective configuration</h2>
   <pre>{{ data | tojson(indent=2) }}</pre>
+
+  <script>
+    function csrf() {
+      const match = document.cookie.match(/(?:^|; )ctxproxy_csrf=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+    document.getElementById("save-mode").addEventListener("click", async () => {
+      const response = await fetch("/_ctxproxy/api/mode", {
+        method: "POST",
+        headers: {"content-type": "application/json", "x-ctxproxy-csrf": csrf()},
+        body: JSON.stringify({mode: document.getElementById("mode").value}),
+      });
+      const body = await response.json();
+      document.getElementById("status").textContent =
+        response.ok ? ("Mode set to " + body.mode + ".") : ("Error: " + (body.error || response.status));
+    });
+  </script>
 </body>
 </html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxproxy — {{ title }}</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
+    nav a, a { color: #60a5fa; text-decoration: none; }
+    h2 { margin: 26px 0 10px; font-size: 1.05rem; color: #93c5fd; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .84rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 7px 9px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .72rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    textarea { width: 100%; height: 280px; background: #0d1117; color: #a5d6ff;
+               border: 1px solid #2d3644; border-radius: 8px; padding: 10px;
+               font-family: Consolas, monospace; font-size: .8rem; }
+    button { background: #1f6feb; color: white; border: 0; border-radius: 6px;
+             padding: 7px 12px; cursor: pointer; }
+    #status { color: #a5d6ff; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/_ctxproxy/">Overview</a><a href="/_ctxproxy/live">Live</a>
+    <a href="/_ctxproxy/sessions">Sessions</a><a href="/_ctxproxy/requests">Requests</a>
+    <a href="/_ctxproxy/waste">Waste</a><a href="/_ctxproxy/transforms">Transforms</a>
+    <a href="/_ctxproxy/pricing">Pricing</a><a href="/_ctxproxy/settings">Settings</a>
+    <a href="/_ctxproxy/doctor">Doctor</a>
+  </nav>
+  <h1>{{ title }}</h1>
+  <p class="muted">Rates are USD per million tokens. Unknown models stay unpriced.</p>
+
+  <h2>Rates</h2>
+  <table>
+    <thead><tr><th>Provider</th><th>Model glob</th><th>Input</th><th>Output</th>
+               <th>Cache read</th><th>Verified</th><th>Source</th></tr></thead>
+    <tbody>
+      {% for model in models %}
+      <tr><td>{{ model["provider"] }}</td><td>{{ model["match"] }}</td>
+          <td>{{ model["input"] }}</td><td>{{ model["output"] }}</td>
+          <td>{{ model["cache_read"] }}</td><td>{{ model["verified"] }}</td>
+          <td>{{ model["source"] }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Unpriced models <span class="muted">est.</span></h2>
+  <table>
+    <thead><tr><th>Model</th><th>Provider</th><th>Requests</th></tr></thead>
+    <tbody>
+      {% for row in unpriced %}
+      <tr><td>{{ row["model"] }}</td><td>{{ row["provider"] }}</td><td>{{ row["requests"] }}</td></tr>
+      {% else %}
+      <tr><td colspan="3" class="muted">No unpriced models recorded.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Editor</h2>
+  <p class="muted">Edit the override JSON and save. The file is validated before use.</p>
+  <textarea id="pricing">{{ payload_json }}</textarea>
+  <button id="save">Save pricing</button>
+  <div id="status"></div>
+
+  <script>
+    function csrf() {
+      const match = document.cookie.match(/(?:^|; )ctxproxy_csrf=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+    document.getElementById("save").addEventListener("click", async () => {
+      let payload;
+      try { payload = JSON.parse(document.getElementById("pricing").value); }
+      catch (error) {
+        document.getElementById("status").textContent = "Invalid JSON: " + error;
+        return;
+      }
+      const response = await fetch("/_ctxproxy/api/pricing", {
+        method: "PUT",
+        headers: {"content-type": "application/json", "x-ctxproxy-csrf": csrf()},
+        body: JSON.stringify(payload),
+      });
+      const body = await response.json();
+      document.getElementById("status").textContent =
+        response.ok ? "Saved." : ("Error: " + (body.error || response.status));
+    });
+  </script>
+</body>
+</html>

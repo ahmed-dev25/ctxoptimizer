@@ -9,7 +9,7 @@
     body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
            font-family: 'Segoe UI', system-ui, sans-serif; }
     nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
-    nav a { color: #60a5fa; text-decoration: none; }
+    nav a, a { color: #60a5fa; text-decoration: none; }
     h2 { font-size: 1rem; color: #93c5fd; margin-top: 26px; }
     .muted { color: #9aa7b4; font-size: .9rem; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -20,29 +20,72 @@
     .value { font-size: 1.3rem; margin-top: 4px; font-family: Consolas, monospace; }
     pre { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
           padding: 16px; overflow: auto; font-size: .82rem; color: #a5d6ff; }
+    table { width: 100%; border-collapse: collapse; font-size: .84rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 7px 9px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .72rem; text-transform: uppercase; }
   </style>
 </head>
 <body>
   <nav>
-    <a href="/_ctxproxy/">Overview</a>
-    <a href="/_ctxproxy/live">Live</a>
-    <a href="/_ctxproxy/sessions">Sessions</a>
-    <a href="/_ctxproxy/requests">Requests</a>
-    <a href="/_ctxproxy/waste">Waste</a>
-    <a href="/_ctxproxy/transforms">Transforms</a>
-    <a href="/_ctxproxy/pricing">Pricing</a>
-    <a href="/_ctxproxy/settings">Settings</a>
+    <a href="/_ctxproxy/">Overview</a><a href="/_ctxproxy/live">Live</a>
+    <a href="/_ctxproxy/sessions">Sessions</a><a href="/_ctxproxy/requests">Requests</a>
+    <a href="/_ctxproxy/waste">Waste</a><a href="/_ctxproxy/transforms">Transforms</a>
+    <a href="/_ctxproxy/pricing">Pricing</a><a href="/_ctxproxy/settings">Settings</a>
+    <a href="/_ctxproxy/doctor">Doctor</a>
   </nav>
   <h1>Live</h1>
-  <p class="muted">v{{ version }} · mode {{ mode }}</p>
+  <p class="muted">v{{ version }} · mode {{ mode }} · SSE updates every 2s</p>
   <div class="cards">
-    {% for key, value in counters.items() %}
-    <div class="card"><div class="label">{{ key }}</div><div class="value">{{ value }}</div></div>
-    {% endfor %}
+    <div class="card"><div class="label">Requests</div><div class="value" id="requests">{{ counters["requests"] }}</div></div>
+    <div class="card"><div class="label">Active sessions</div><div class="value" id="active">—</div></div>
+    <div class="card"><div class="label">Burn $/min</div><div class="value" id="burn">—</div></div>
+    <div class="card"><div class="label">Upstream errors</div><div class="value" id="errors">{{ counters["upstream_errors"] }}</div></div>
+    <div class="card"><div class="label">Dropped telemetry</div><div class="value" id="dropped">{{ counters["dropped_telemetry"] }}</div></div>
   </div>
+
   <h2>Last request</h2>
-  <pre>{{ last | tojson(indent=2) }}</pre>
+  <pre id="last">{{ last | tojson(indent=2) }}</pre>
+
+  <h2>Recent requests</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Model</th><th>Status</th><th>Latency</th><th>Cache read</th><th>Cost</th><th>Fallback</th></tr></thead>
+    <tbody id="recent">
+      <tr><td colspan="7" class="muted">Waiting for data…</td></tr>
+    </tbody>
+  </table>
+
   <h2>Quarantined</h2>
   <pre>{{ quarantined | tojson(indent=2) }}</pre>
+
+  <script>
+    const source = new EventSource("/_ctxproxy/api/live");
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      }[char]));
+    }
+    source.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      document.getElementById("requests").textContent = data.counters.requests;
+      document.getElementById("errors").textContent = data.counters.upstream_errors;
+      document.getElementById("dropped").textContent = data.counters.dropped_telemetry;
+      document.getElementById("active").textContent = data.active_sessions;
+      document.getElementById("burn").textContent = "$" + data.burn_per_min_usd.toFixed(6);
+      document.getElementById("last").textContent = JSON.stringify(data.last_request, null, 2);
+      const recent = data.recent.map((row) => {
+        const total = row.fresh_input || 0;
+        const read = row.cache_read || 0;
+        const ratio = total + read ? (100 * read / (total + read)).toFixed(1) + "%" : "—";
+        return `<tr><td>${new Date((row.ts || 0) * 1000).toLocaleTimeString()}</td>
+          <td>${esc(row.model || "—")}</td><td>${esc(row.status_code || "—")}</td>
+          <td>${row.total_ms ? row.total_ms.toFixed(1) + " ms" : "—"}</td>
+          <td>${ratio}</td><td>$${(row.cost_actual_usd || 0).toFixed(6)}</td>
+          <td>${row.fallback_used ? "yes" : "no"}</td></tr>`;
+      }).join("");
+      document.getElementById("recent").innerHTML =
+        recent || '<tr><td colspan="7" class="muted">No requests yet.</td></tr>';
+    };
+  </script>
 </body>
 </html>

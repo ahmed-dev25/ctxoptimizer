@@ -12,6 +12,8 @@
     h1 { margin: 0 0 4px; font-size: 1.6rem; }
     h2 { margin: 28px 0 10px; font-size: 1.1rem; color: #93c5fd; }
     .muted { color: #9aa7b4; font-size: .9rem; }
+    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
+    nav a, a { color: #60a5fa; text-decoration: none; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
              gap: 12px; margin-top: 18px; }
     .card { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
@@ -24,21 +26,63 @@
     th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2d3644; }
     th { color: #9aa7b4; font-size: .75rem; text-transform: uppercase; }
     tr:last-child td { border-bottom: none; }
+    .est { color: #fcd34d; font-weight: 600; }
     code { color: #a5d6ff; }
-    a { color: #60a5fa; }
+    .bar { height: 10px; background: #1f6feb; border-radius: 4px; min-width: 2px; }
   </style>
 </head>
 <body>
+  <nav>
+    <a href="/_ctxproxy/">Overview</a>
+    <a href="/_ctxproxy/live">Live</a>
+    <a href="/_ctxproxy/sessions">Sessions</a>
+    <a href="/_ctxproxy/requests">Requests</a>
+    <a href="/_ctxproxy/waste">Waste</a>
+    <a href="/_ctxproxy/transforms">Transforms</a>
+    <a href="/_ctxproxy/pricing">Pricing</a>
+    <a href="/_ctxproxy/settings">Settings</a>
+    <a href="/_ctxproxy/doctor">Doctor</a>
+  </nav>
   <h1>ctxproxy</h1>
   <p class="muted">v{{ version }} · mode {{ mode }} · local only</p>
+  {% if privacy %}
+  <p class="muted">Privacy: payload capture is enabled ({{ capture }}); captured text stays local.
+    Use Settings or <code>ctxproxy purge --all</code> to manage it.</p>
+  {% endif %}
+  <p class="muted">
+    Period:
+    <a href="?period=today">today</a> ·
+    <a href="?period=7d">7d</a> ·
+    <a href="?period=30d">30d</a> ·
+    <a href="?period=all">all</a>
+    (current: {{ period }})
+  </p>
 
   <div class="cards">
     <div class="card"><div class="label">Requests</div><div class="value">{{ summary["requests"] }}</div></div>
-    <div class="card"><div class="label">Actual cost</div><div class="value">${{ "%.6f"|format(summary["cost_usd"]) }}</div></div>
+    <div class="card"><div class="label">Actual spend</div><div class="value">${{ "%.6f"|format(summary["cost_usd"]) }}</div></div>
+    <div class="card"><div class="label">Baseline <span class="est">sim.</span></div><div class="value">${{ "%.6f"|format(summary["baseline_usd"]) }}</div></div>
+    <div class="card"><div class="label">Savings <span class="est">sim.</span></div><div class="value">${{ "%.6f"|format([summary["baseline_usd"] - summary["cost_usd"], 0]|max) }}</div></div>
+    <div class="card"><div class="label">Waste <span class="est">est.</span></div><div class="value">${{ "%.6f"|format(waste["cost_usd"]) }}</div></div>
     <div class="card"><div class="label">Fresh input</div><div class="value">{{ summary["fresh_input"] }}</div></div>
     <div class="card"><div class="label">Cache read</div><div class="value">{{ summary["cache_read"] }}</div></div>
+    <div class="card"><div class="label">Cache hit ratio</div><div class="value">{% set total = summary["fresh_input"] + summary["cache_read"] %}{% if total %}{{ "%.1f%%"|format(100 * summary["cache_read"] / total) }}{% else %}—{% endif %}</div></div>
+    <div class="card"><div class="label">Tokens removed <span class="est">est.</span></div><div class="value">{{ summary["tokens_removed"] }}</div></div>
     <div class="card"><div class="label">Output</div><div class="value">{{ summary["output_tokens"] }}</div></div>
   </div>
+
+  {% if points %}
+  <h2>Spend over time <span class="est">sim.</span></h2>
+  <table>
+    <thead><tr><th>Bucket</th><th>Cost (USD)</th><th></th></tr></thead>
+    <tbody>
+      {% for point in points %}
+      <tr><td>{{ point["bucket"] }}</td><td>${{ "%.6f"|format(point["value"] or 0) }}</td>
+          <td><div class="bar" style="width: {{ ((point["value"] or 0) * 400)|round(0) }}px"></div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
 
   <h2>Recent requests</h2>
   <table>
@@ -49,7 +93,7 @@
     <tbody>
       {% for row in rows %}
       <tr>
-        <td>{{ row["ts"]|round(0) }}</td>
+        <td><a href="/_ctxproxy/requests/{{ row["request_id"] }}">{{ row["ts"]|round(0) }}</a></td>
         <td>{{ row["client"] or "—" }}</td>
         <td>{{ row["provider"] }}</td>
         <td>{{ row["model"] or "—" }}</td>
@@ -65,9 +109,39 @@
     </tbody>
   </table>
 
+  <h2>Per project</h2>
+  <table>
+    <thead><tr><th>Project</th><th>Requests</th><th>Cost</th><th>Fresh</th><th>Cache read</th><th>Output</th></tr></thead>
+    <tbody>
+      {% for row in projects %}
+      <tr><td>{{ row["name"] or "—" }}</td><td>{{ row["requests"] }}</td>
+          <td>${{ "%.6f"|format(row["cost_usd"]) }}</td><td>{{ row["fresh_input"] }}</td>
+          <td>{{ row["cache_read"] }}</td><td>{{ row["output_tokens"] }}</td></tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No project data yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Per model</h2>
+  <table>
+    <thead><tr><th>Model</th><th>Requests</th><th>Cost</th><th>Fresh</th><th>Cache read</th><th>Output</th></tr></thead>
+    <tbody>
+      {% for row in models %}
+      <tr><td>{{ row["name"] or "—" }}</td><td>{{ row["requests"] }}</td>
+          <td>${{ "%.6f"|format(row["cost_usd"]) }}</td><td>{{ row["fresh_input"] }}</td>
+          <td>{{ row["cache_read"] }}</td><td>{{ row["output_tokens"] }}</td></tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No model data yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
   <p class="muted" style="margin-top:18px;">
-    Metadata only; prompts are not shown. API: <a href="/_ctxproxy/api/summary">summary</a> ·
-    <a href="/_ctxproxy/api/requests">requests</a>.
+    Metadata only; prompts are not shown. API:
+    <a href="/_ctxproxy/api/summary">summary</a> ·
+    <a href="/_ctxproxy/api/requests">requests</a> ·
+    <a href="/_ctxproxy/api/timeseries">timeseries</a>.
   </p>
 </body>
 </html>

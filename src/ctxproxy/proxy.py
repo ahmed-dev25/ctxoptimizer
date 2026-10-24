@@ -29,6 +29,7 @@ from ctxproxy.telemetry.pricing import (
     load_pricing,
     price_usage,
 )
+from ctxproxy.telemetry.redact import redact_bytes
 from ctxproxy.telemetry.usage import new_usage_parser, parse_usage_body
 from ctxproxy.transforms import build_transforms
 from ctxproxy.transforms.cache_serve import CacheServeState
@@ -80,7 +81,7 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
     session_id = ctx.session_id if ctx else route.session_id
     project = ctx.project if ctx else route.project
     effective_mode = ctx.mode if ctx else route.mode
-    _capture_blobs(request, config, raw, pipeline_result)
+    captures = _capture_blobs(request, config, raw, pipeline_result, content)
 
     headers = _clean_request_headers(
         request.headers, force_identity=config.http.force_identity_encoding
@@ -105,11 +106,18 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
         return error_response(route.provider, 502, "ctxproxy: upstream unreachable")
 
     fallback_used = False
+    fallback_error: str | None = None
     if (
         mutated
         and isinstance(raw, bytes)
         and upstream.status_code in config.pipeline.retry_original_on_status
     ):
+        try:
+            fallback_error = redact_bytes((await upstream.aread())[:2048]).decode(
+                "utf-8", "replace"
+            )
+        except Exception:
+            fallback_error = None
         await upstream.aclose()
         fallback_used = True
         try:
@@ -162,6 +170,7 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                     route.provider, route.endpoint, route.profile, bytes(body_buffer)
                 )
             priced = _price(usage, route, config, model)
+            baseline_cost = _baseline_price(analysis, route, config, model)
             request.app.state.last_request = {
                 "request_id": request_id,
                 "upstream": route.upstream_name,
@@ -219,6 +228,11 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                         total_ms=total_ms,
                         usage=usage,
                         priced=priced,
+                        pipeline_result=pipeline_result,
+                        analysis=analysis,
+                        captures=captures,
+                        baseline_cost=baseline_cost,
+                        error=fallback_error,
                     )
                 )
             if fallback_used and pipeline_result is not None:
@@ -323,6 +337,7 @@ def _apply_transforms(
             churn_enabled=config.waste.churn_detector.enabled,
             schema_bloat_enabled=config.waste.schema_bloat.enabled,
             schema_min_requests=config.waste.schema_bloat.min_session_requests,
+            cache_policy=route.profile.cache_policy,
         )
     if mode is Mode.ACTIVE and result.changed:
         return orjson.dumps(payload), True, result, ctx, analysis_result
@@ -342,20 +357,32 @@ def _capture_blobs(
     config: Config,
     raw: bytes | AsyncIterator[bytes],
     result: PipelineResult | None,
-) -> None:
+    final: bytes | AsyncIterator[bytes] | None = None,
+) -> list[dict[str, Any]]:
     capture = config.telemetry.capture_payloads
+    captures: list[dict[str, Any]] = []
     if capture == "off" or not isinstance(raw, bytes):
-        return
+        return captures
     blobs = getattr(request.app.state, "blobs", None)
     if blobs is None:
-        return
+        return captures
     if capture == "full":
-        blobs.put(raw)
-    elif result is not None:
-        for before, _after in result.changed_blocks:
-            data = before.encode("utf-8")
-            if len(data) >= 2048:
-                blobs.put(data)
+        blobs.put(redact_bytes(raw))
+        if isinstance(final, bytes):
+            blobs.put(redact_bytes(final))
+    if result is not None:
+        for index, (before, after) in enumerate(result.changed_blocks):
+            before_hash = blobs.put(redact_bytes(before.encode("utf-8")))
+            after_hash = blobs.put(redact_bytes(after.encode("utf-8")))
+            captures.append(
+                {
+                    "transform_id": None,
+                    "location": f"block-{index}",
+                    "before_hash": before_hash,
+                    "after_hash": after_hash,
+                }
+            )
+    return captures
 
 
 def _clean_request_headers(headers: Mapping[str, str], *, force_identity: bool) -> dict[str, str]:
@@ -425,6 +452,26 @@ def _price(usage: Usage, route: Route, config: Config, model: str | None) -> Pri
     return price_usage(usage, _table_for(config), route.profile.pricing_provider, model)
 
 
+def _baseline_price(
+    analysis: AnalysisResult | None,
+    route: Route,
+    config: Config,
+    model: str | None,
+) -> float | None:
+    if analysis is None:
+        return None
+    sim = analysis.baseline
+    usage = Usage(
+        fresh_input=sim.fresh_tokens,
+        cache_read=sim.read_tokens,
+        cache_write_5m=sim.write_5m_tokens,
+        cache_write_1h=sim.write_1h_tokens,
+        source="estimated",
+    )
+    priced = _price(usage, route, config, model)
+    return priced.cost_usd if priced.priced else None
+
+
 def _store_record(
     *,
     request_id: str,
@@ -444,6 +491,11 @@ def _store_record(
     total_ms: float,
     usage: Usage,
     priced: PriceResult,
+    pipeline_result: PipelineResult | None = None,
+    analysis: AnalysisResult | None = None,
+    captures: list[dict[str, Any]] | None = None,
+    baseline_cost: float | None = None,
+    error: str | None = None,
 ) -> dict[str, Any]:
     raw_size = len(raw) if isinstance(raw, bytes) else None
     final_size = len(content) if isinstance(content, bytes) else raw_size
@@ -466,8 +518,11 @@ def _store_record(
         "outcome": outcome,
         "ttfb_ms": round(ttfb_ms, 3),
         "total_ms": round(total_ms, 3),
+        "proxy_overhead_ms": round(max(total_ms - ttfb_ms, 0.0), 3),
         "orig_bytes": raw_size,
         "final_bytes": final_size,
+        "orig_est_tokens": pipeline_result.orig_est_tokens if pipeline_result else None,
+        "final_est_tokens": pipeline_result.final_est_tokens if pipeline_result else None,
         "usage_source": usage.source,
         "fresh_input": usage.fresh_input,
         "cache_read": usage.cache_read,
@@ -481,6 +536,14 @@ def _store_record(
         "priced": 1 if priced.priced else 0,
         "price_source": priced.source,
         "cost_actual_usd": priced.cost_usd,
+        "_transform_reports": pipeline_result.reports if pipeline_result else [],
+        "_drift": analysis.drift if analysis else None,
+        "_findings": analysis.findings if analysis else [],
+        "_captures": captures or [],
+        "cost_baseline_sim_usd": baseline_cost,
+        "sim_read_baseline": analysis.baseline.read_tokens if analysis else None,
+        "sim_read_optimized": usage.cache_read,
+        "error": error,
     }
 
 

@@ -54,8 +54,13 @@ def test_health_endpoint(tmp_path: Path) -> None:
 
 
 def test_unknown_admin_path_is_404(tmp_path: Path) -> None:
-    with TestClient(create_app(_config(tmp_path))) as client:
-        response = client.get("/_ctxproxy/api/reload")
+    app = create_app(_config(tmp_path))
+    with TestClient(
+        app,
+        base_url="http://127.0.0.1",
+        headers={"x-ctxproxy-admin-token": app.state.admin_token},
+    ) as client:
+        response = client.get("/_ctxproxy/api/nope")
     assert response.status_code == 404
 
 
