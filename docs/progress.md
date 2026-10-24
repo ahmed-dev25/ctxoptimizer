@@ -2,17 +2,17 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec (P1 complete; P2 in progress)
-**Branch:** `feat/p2-6-dashboard`
+**Branch:** `main`
 **Overall:** P2 complete; P3 core and P4 hints done; P3-7/8/9, P5–P7 remain
 
 ## Resume here
 
-- **Last completed:** P2-6 dashboard/waste page + P4-1/P4-2 cache hints
-  (awaiting merge).
-- **Last merge:** `f7fac41` (P2 analysis)
+- **Last completed:** P2-6 dashboard + analysis wiring + P4-1/P4-2 cache hints
+  (`399c962`, merge `f717c7b`).
+- **Last merge:** `f717c7b`
 - **Next task:** P3-7 auto-quarantine guard / P3-8 cache_serve / P3-9 MCP expand
 - **Blocked:** none
-- **Active branch:** `feat/p2-6-dashboard` — merge to `main` before P3-7
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -59,7 +59,7 @@
 | P2-3 | Pipeline framework | done | `feat/p2-3-pipeline` | `b1de5ec` | `f829b6a` | ruff, format, mypy, pytest (161) | journal, no-regress, budget, shadow flag |
 | P2-4 | Drift detector | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | 7 causes + tracker |
 | P2-5 | Baseline simulator | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | explicit + implicit cache simulation |
-| P2-6 | Dashboard v0 | done | `feat/p2-6-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (201) | overview + waste page + admin API |
+| P2-6 | Dashboard v0 | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | overview + waste page + admin API |
 | P2-7 | Waste W1–W2 | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | redundant re-read + identical output |
 | P2-8 | Waste W3–W6 | done | `feat/p2-analysis` | `0959c09` | `f7fac41` | ruff, format, mypy, pytest (189) | fanout, runaway, recurring/params drift |
 | P3-1 | ANSI/progress/whitespace | done | `feat/p3-core-transforms` | `67f538c` | `ad69997` | ruff, format, mypy, pytest (180) | pure functions + eligibility |
@@ -70,8 +70,8 @@
 | P3-7 | Auto-quarantine guard | todo | — | — | — | — | — |
 | P3-8 | `cache_serve` | todo | — | — | — | — | — |
 | P3-9 | MCP expand | todo | — | — | — | — | — |
-| P4-1 | Anthropic cache hints | done | `feat/p2-6-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (201) | 4-breakpoint stair-step |
-| P4-2 | OpenAI hints | done | `feat/p2-6-dashboard` | recorded at merge | — | ruff, format, mypy, pytest (201) | api.openai.com only |
+| P4-1 | Anthropic cache hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | 4-breakpoint stair-step |
+| P4-2 | OpenAI hints | done | `feat/p2-6-dashboard` | `399c962` | `f717c7b` | ruff, format, mypy, pytest (201) | api.openai.com only |
 | P4-3 | Marker quality metric | todo | — | — | — | — | — |
 | P5 | Full dashboard | partial | — | — | — | — | v0 exists; Live/Request/Diff/Pricing/Settings pending |
 | P6 | Gemini/Ollama native, W7/W8 | todo | — | — | — | — | OpenAI-compat surfaces work |
@@ -101,7 +101,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P2-3 | pass | pass (52 files) | 161 passed | reported, not enforced | `b1de5ec` |
 | 2026-10-25 | P3 core | pass | pass (53 files) | 180 passed | reported, not enforced | `67f538c` |
 | 2026-10-25 | P2 analysis | pass | pass (53 files) | 189 passed | reported, not enforced | `0959c09` |
-| 2026-10-25 | P2-6/P4 | pass | pass (54 files) | 201 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P2-6/P4 | pass | pass (54 files) | 201 passed | reported, not enforced | `399c962` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog

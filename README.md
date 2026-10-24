@@ -12,10 +12,11 @@ prompt caching missed, and applies cache-safe payload reductions.
 
 ## Status
 
-P1 alpha. The proxy, ground-truth telemetry, pricing, SQLite store and CLI are
-working. Transforms, drift detection, waste attribution and the dashboard land in
-later phases. The default operating mode is `shadow`: observe and report, forward
-the request untouched.
+P2 alpha. The proxy now measures, transforms (active mode), retries safely,
+records cost, computes drift/waste findings and serves a local dashboard. Still
+pending: the auto-quarantine guard, `cache_serve`, MCP expand, the full dashboard
+pages, native Gemini/Ollama, and packaging/service install. The default mode is
+still `shadow`.
 
 ## Quickstart
 
