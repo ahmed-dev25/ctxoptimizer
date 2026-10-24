@@ -12,9 +12,23 @@ prompt caching missed, and applies cache-safe payload reductions.
 
 ## Status
 
-Pre-alpha. P0 (scaffolding) and P1 (transparent proxy + ground-truth telemetry)
-are in progress. Nothing is shipped yet. The default operating mode is `shadow`:
-observe and report, forward the request untouched.
+P1 alpha. The proxy, ground-truth telemetry, pricing, SQLite store and CLI are
+working. Transforms, drift detection, waste attribution and the dashboard land in
+later phases. The default operating mode is `shadow`: observe and report, forward
+the request untouched.
+
+## Quickstart
+
+```powershell
+uv run ctxproxy run
+uv run ctxproxy env --shell powershell
+uv run ctxproxy status
+uv run ctxproxy stats
+```
+
+Point a client at the printed base URL. See
+[`docs/client-setup.md`](docs/client-setup.md) for Claude Code, OpenCode,
+DeepSeek, OpenRouter, Codex and the other supported clients.
 
 ## Documentation
 
@@ -24,7 +38,3 @@ observe and report, forward the request untouched.
 - [`docs/progress.md`](docs/progress.md) — build status and handoff notes
 - [`docs/decisions/`](docs/decisions/) — architecture decision records
 - [`AGENTS.md`](AGENTS.md) — coding and git workflow rules
-
-## Quickstart
-
-Not available yet. The quickstart lands at the end of Phase 1.

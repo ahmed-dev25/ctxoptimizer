@@ -2,16 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0 + P1 — transparent proxy + ground-truth telemetry
-**Branch:** `main`
-**Overall:** 11 / 12 tasks complete (Phase 0 complete)
+**Branch:** `feat/p1-6-cli`
+**Overall:** 12 / 12 tasks complete (Phase 0 complete)
 
 ## Resume here
 
-- **Last completed:** P1-5 — Store (`0e3496f`).
+- **Last completed:** P1-6 — CLI (awaiting merge).
 - **Last merge:** `3ae9fea` (P1-5)
-- **Next task:** P1-6 — CLI (`feat/p1-6-cli`)
+- **Next task:** final verification and the DeepSeek-through-OpenCode smoke test.
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p1-6-cli` — merge to `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Status board
@@ -29,7 +29,7 @@
 | P1-8 | Gateway usage quirks | done | `feat/p1-8-gateway-quirks` | `05d2fb9` | `6f20a24` | ruff, format, mypy, pytest (119) | DeepSeek cache fields, OpenRouter cost/comments, Gemini/Ollama compat |
 | P1-4 | Pricing | done | `feat/p1-4-pricing` | `0719d9a` | `be61b57` | ruff, format, mypy, pytest (130) | verified rates, provider cost, specificity, TTL buckets |
 | P1-5 | Store | done | `feat/p1-5-store` | `0e3496f` | `3ae9fea` | ruff, format, mypy, pytest (139) | writer thread, WAL, overflow, prune, migration |
-| P1-6 | CLI | todo | — | — | — | — | — |
+| P1-6 | CLI | done | `feat/p1-6-cli` | recorded at merge | — | ruff, format, mypy, pytest (149) | run/status/env/doctor/stats/export/purge |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -50,6 +50,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P1-8 | pass | pass (52 files) | 119 passed | reported, not enforced | `05d2fb9` |
 | 2026-10-25 | P1-4 | pass | pass (52 files) | 130 passed | reported, not enforced | `0719d9a` |
 | 2026-10-25 | P1-5 | pass | pass (52 files) | 139 passed | reported, not enforced | `0e3496f` |
+| 2026-10-25 | P1-6 | pass | pass (52 files) | 149 passed | reported, not enforced | recorded at merge |
 
 ## Changelog
 
@@ -118,6 +119,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   writer thread with 100-row/250 ms batching, drop-with-counter overflow,
   forward-only schema versioning, retention/purge, request persistence from the
   proxy, and a 20k-row burst test.
+- 2026-10-25 — P1-6: CLI `run`, `status`, `env` (bash/zsh/fish/powershell),
+  `doctor` (bind/db/pricing/port/tiktoken/upstreams), `stats`, `export`
+  (JSON/CSV, `--since`), and `purge`; `docs/client-setup.md` with recipes for
+  Claude Code, OpenCode, DeepSeek, OpenRouter, Codex, Aider, Gemini-compat and
+  Ollama-compat.
 
 ## Handoff notes
 
