@@ -2,17 +2,16 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P7 — full spec (P1 complete; P2 in progress)
-**Branch:** `feat/p2-1-adapters`
-**Overall:** P0 + P1 complete; 2 P2 tasks done
+**Branch:** `feat/p2-3-pipeline`
+**Overall:** P0 + P1 complete; 3 P2 tasks done
 
 ## Resume here
 
-- **Last completed:** P2-1 adapters/segments/session and P2-2 token estimation
-  (awaiting merge).
-- **Last merge:** `b8769c1` (P1-6); smoke docs at `fcf8ecd` (`v0.1.0-alpha`)
-- **Next task:** P2-3 pipeline framework (`feat/p2-3-pipeline`)
+- **Last completed:** P2-3 pipeline framework (awaiting merge).
+- **Last merge:** `d6b3c74` (P2-1/P2-2)
+- **Next task:** P3-1/P3-2 transforms (`feat/p3-core-transforms`)
 - **Blocked:** none
-- **Active branch:** `feat/p2-1-adapters` — merge to `main` before P2-3
+- **Active branch:** `feat/p2-3-pipeline` — merge to `main` before P3
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -56,7 +55,7 @@
 | P1-6 | CLI | done | `feat/p1-6-cli` | `689bbb8` | `b8769c1` | ruff, format, mypy, pytest (149) | run/status/env/doctor/stats/export/purge |
 | P2-1 | Adapters, segments, session | done | `feat/p2-1-adapters` | recorded at merge | — | ruff, format, mypy, pytest (156) | Anthropic/OpenAI chat/Responses structure access |
 | P2-2 | Token estimation | done | `feat/p2-1-adapters` | recorded at merge | — | ruff, format, mypy, pytest (156) | tiktoken-optional estimator + EMA calibrator |
-| P2-3 | Pipeline framework | todo | — | — | — | — | — |
+| P2-3 | Pipeline framework | done | `feat/p2-3-pipeline` | recorded at merge | — | ruff, format, mypy, pytest (161) | journal, no-regress, budget, shadow flag |
 | P2-4 | Drift detector | todo | — | — | — | — | — |
 | P2-5 | Baseline simulator | todo | — | — | — | — | — |
 | P2-6 | Dashboard v0 | todo | — | — | — | — | — |
@@ -84,6 +83,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P1-5 | pass | pass (52 files) | 139 passed | reported, not enforced | `0e3496f` |
 | 2026-10-25 | P1-6 | pass | pass (52 files) | 149 passed | reported, not enforced | `689bbb8` |
 | 2026-10-25 | P2-1/2 | pass | pass (52 files) | 156 passed | reported, not enforced | recorded at merge |
+| 2026-10-25 | P2-3 | pass | pass (52 files) | 161 passed | reported, not enforced | recorded at merge |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -166,6 +166,9 @@ Rows are in execution order; see `docs/plan.md` §4.
   tool-result handles, canonical segments/hashes, system/first-user/tool-name
   extraction, session derivation + project detection, key fingerprinting, and a
   tiktoken-optional token estimator with EMA calibration.
+- 2026-10-25 — P2-3: transform protocol, pure-text driver, ordered pipeline with
+  per-transform journal/restore, exception isolation, time budget, no-regress
+  guard and shadow flag.
 
 ## Handoff notes
 
