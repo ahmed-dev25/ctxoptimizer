@@ -37,6 +37,7 @@ stale-result elision. No request body is ever mutated in this milestone; INV-2
 | 5 | Provider fixtures come from real captures only; no invented fixtures | 0004 |
 | 6 | Provider docs are researched in P1 and dated in `docs/provider-notes.md` | — |
 | 7 | CI is committed now but stays dormant until a remote exists | 0001 |
+| 8 | Documented-shape fixtures are allowed when sourced and dated | 0005 |
 
 ## 3. Environment
 
@@ -65,7 +66,7 @@ Tasks are strictly sequential: one branch, one gate run, one merge at a time.
 | 7 | P1-4 Pricing | P0-2 | `feat/p1-4-pricing` |
 | 8 | P1-5 Store | P0-2, P0-3 | `feat/p1-5-store` |
 | 9 | P1-6 CLI | P1-2, P1-5 | `feat/p1-6-cli` |
-| 10 | P1-3 Usage parsers | captures, P0-4 | `feat/p1-3-usage-parsers` |
+| 10 | P1-3 Usage parsers | documented shapes, P0-4 | `feat/p1-3-usage-parsers` |
 
 P1-3 is deliberately last: parser code is written against real provider bytes
 (SPEC §0.4). Until captures exist, `proxy.py` uses a null parser that records
@@ -172,11 +173,15 @@ usage if captures exist, otherwise `usage_source="none"`.
 **Deliverable:** `telemetry/usage.py` with an incremental SSE splitter (CRLF,
 split mid-event, split mid-UTF-8, comment lines, `data: [DONE]`), Anthropic
 stream/non-stream, OpenAI chat with and without `include_usage`, OpenAI Responses
-`response.completed`, and normalization per §14.1.
-**Tests:** one suite per captured provider fixture; hypothesis fuzz feeding random
-bytes in random chunk sizes with no exception and bounded memory.
+`response.completed`/`response.incomplete`, and normalization per §14.1 plus the
+corrections in `docs/provider-notes.md` §5 (OpenAI `cache_write_tokens`,
+Anthropic `thinking_tokens`, OpenAI TTL write buckets).
+**Tests:** one suite per fixture; hypothesis fuzz feeding random bytes in random
+chunk sizes with no exception and bounded memory.
 **DoD:** all gates; parsers never raise into the forwarding path (INV-1/INV-3).
-**Blocked until:** captures listed in §6 are present.
+**Unblocked by:** the dated research in `docs/provider-notes.md`. Fixtures may
+be derived from documented shapes under ADR 0005; live captures remain the
+preferred validation and replace them when available.
 
 ## 6. Fixture contract (P1-3)
 
@@ -196,10 +201,12 @@ tests/fixtures/openai/responses.json
 Rules:
 - Raw bytes from the wire, including CRLF and SSE framing.
 - `tests/fixtures/**` is marked `-text` so git never rewrites line endings.
-- Each provider folder gets a `meta.json`: capture date, client, model, and
-  confirmation that prompts/secrets were sanitized.
-- No hand-written fixture may be presented as real. A missing provider stays on
-  the null parser.
+- Each provider folder gets a `meta.json` with the source. For a capture:
+  capture date, client, model, and confirmation that prompts/secrets were
+  sanitized. For a documented fixture: `"source": "documented"`, the source URL,
+  the access date, and what the case exercises (ADR 0005).
+- A documented fixture is never labelled a capture. Real captures supersede it.
+- A missing provider stays on the null parser.
 
 ## 7. Config gap defaults (ADR 0003)
 
@@ -234,7 +241,7 @@ the implemented modules and >= 90% on `telemetry/usage.py` once P1-3 lands.
 | Risk | Impact | Mitigation |
 |---|---|---|
 | P1-2 streaming tee / disconnect semantics | Silent corruption or hangs | Byte-equality tests at 1/7/4096 bytes written before the code |
-| No captures -> P1-3 stuck | No ground-truth usage | Null parser keeps the milestone usable; parser lands when captures arrive |
+| Documentation drift in provider shapes | Parser mismatch | Dated `docs/provider-notes.md`, doc-derived fixtures, captures supersede when available |
 | Windows CRLF vs SSE fixtures | Tests exercise the wrong bytes | `tests/fixtures/** -text` + `core.autocrlf=false` |
 | Stub modules drag coverage down | False red gates | Enforce coverage only on implemented modules |
 | CI dormant (no remote) | Regressions not caught automatically | Local gates mandatory before every merge |
@@ -246,4 +253,5 @@ the implemented modules and >= 90% on `telemetry/usage.py` once P1-3 lands.
 - Blocking `pip-audit` gate — P7 packaging.
 - `v0.1.0-alpha` tag at the end of P1 — optional, awaiting owner decision.
 - Live contract tests (`pytest -m live`) — require owner-supplied keys.
+- Live captures to validate the documented fixtures from ADR 0005.
 - Coverage enforcement for transforms/analysis — when those modules exist.

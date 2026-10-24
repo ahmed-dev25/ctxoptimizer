@@ -10,8 +10,8 @@
 - **Last completed:** P0-4 — Test infrastructure (`b24a59c`).
 - **Last merge:** `b509c9f` (P0-4)
 - **Next task:** P1-1 — Routing + ingress (`feat/p1-1-routing`)
-- **Blocked:** P1-3 — usage parsers (awaiting provider captures, see
-  `docs/plan.md` §6)
+- **Blocked:** none — P1-3 is unblocked by the dated provider research in
+  `docs/provider-notes.md` (ADR 0005)
 - **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
@@ -28,7 +28,7 @@
 | P1-4 | Pricing | todo | — | — | — | — | — |
 | P1-5 | Store | todo | — | — | — | — | — |
 | P1-6 | CLI | todo | — | — | — | — | — |
-| P1-3 | Usage parsers | blocked | — | — | — | — | waiting on captures |
+| P1-3 | Usage parsers | todo | — | — | — | — | unblocked; doc-derived fixtures allowed (ADR 0005) |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -66,6 +66,13 @@ Rows are in execution order; see `docs/plan.md` §4.
   ephemeral loopback port, SSE replay with chunking/delays/abrupt cut, client
   disconnect observation, golden runner with `UPDATE_GOLDEN=1`, and temp DB/data
   fixtures. Phase 0 complete.
+- 2026-10-24 — Provider research: dated wire formats and usage schemas for
+  Anthropic Messages, OpenAI Chat Completions and OpenAI Responses, sourced from
+  official docs and official SDK types (`docs/provider-notes.md`). Found three
+  spec corrections: OpenAI `fresh_input` must also subtract
+  `cache_write_tokens`; Anthropic now exposes
+  `output_tokens_details.thinking_tokens`; OpenAI GPT-5.6+ has 30m/12h
+  cache-write buckets and rates. P1-3 unblocked under ADR 0005.
 
 ## Handoff notes
 
@@ -74,7 +81,8 @@ Rows are in execution order; see `docs/plan.md` §4.
 - The system git config sets `core.autocrlf=true`; this repo overrides it to
   `false` and normalizes via `.gitattributes`.
 - No remote is configured yet, so `.github/workflows/ci.yml` is dormant.
-- No provider captures exist yet; P1-3 stays blocked and P1-2 ships a null parser.
+- No live provider captures exist yet. P1-3 may use documented fixtures with a
+  `meta.json` source (ADR 0005); captures replace them when available.
 - Run `uv sync --extra dev` after cloning; `uv.lock` is committed.
 - Ruff formats Python code blocks inside Markdown. `SPEC.md` is excluded in
   `pyproject.toml`; do not remove that exclusion.
