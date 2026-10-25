@@ -2,17 +2,17 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P11 — MIT open-source release
-**Branch:** `feat/p11-mit-license`
-**Overall:** P11 implemented; gates pass; ready to merge and tag `v0.4.0`
+**Branch:** `main`
+**Overall:** P11 merged; gates pass; ready to tag `v0.4.0`
 
 ## Resume here
 
 - **Last completed:** P11 MIT relicense (`7ee05d9`).
-- **Last merge:** `b37b12b` (CI repair)
-- **Next task:** merge P11, tag `v0.4.0`, publish release assets/manifest,
-  make the repository public.
+- **Last merge:** `123d8ee` (P11)
+- **Next task:** tag `v0.4.0`, publish release assets/manifest, make the
+  repository public.
 - **Blocked:** none
-- **Active branch:** `feat/p11-mit-license`
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -86,9 +86,9 @@
 | P10 | Release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (292), coverage 80.64% | release artifacts, signed self-update, version `0.3.0`, release tooling |
 | P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (292), coverage 80.64% | signed-manifest test, dev update extra |
 | P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
-| P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | pending | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates retained |
+| P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates retained |
 | Release | `v0.3.0-alpha` | tagged | — | — | — | — | pre-release; superseded by `v0.4.0` |
-| Release | `v0.4.0` | pending | — | `7ee05d9` | — | ruff, format, mypy, pytest (292), coverage 81.64% | MIT release; tag after merge; repository still private |
+| Release | `v0.4.0` | pending | — | `123d8ee` | — | ruff, format, mypy, pytest (292), coverage 81.64% | MIT release; tag and publish; repository still private |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
