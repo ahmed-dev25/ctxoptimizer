@@ -2,18 +2,18 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P13 — MIT open-source release
-**Branch:** `feat/p13-release-hardening`
-**Overall:** repository public; P13 security docs/release assets implemented; ready to merge and tag `v0.4.0`
+**Branch:** `main`
+**Overall:** repository public; P13 merged; ready to tag `v0.4.0`
 
 ## Resume here
 
 - **Last completed:** P13 release hardening (`986f54d`).
-- **Last merge:** `e776e6e` (P12)
-- **Next task:** merge P13, tag `v0.4.0`, verify the public release, then start
-  the website spec.
+- **Last merge:** `9afe91b` (P13)
+- **Next task:** tag `v0.4.0`, verify the public release, then start the website
+  spec.
 - **Blocked:** PyPI publication requires owner credentials; installs use Git
   until the package name is published.
-- **Active branch:** `feat/p13-release-hardening`
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -89,10 +89,10 @@
 | P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
 | P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates later removed in P12 |
 | P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | `e776e6e` | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxproxy update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
-| P13 | Release hardening | done | `feat/p13-release-hardening` | `986f54d` | pending | ruff, format, mypy, pytest (278) | added SECURITY/CONTRIBUTING/CoC/templates/Dependabot; enabled secret scanning, push protection, Dependabot updates, CodeQL and branch protection; release workflow publishes wheel, sdist and unsigned OS binaries with checksums; Git install documented until PyPI |
+| P13 | Release hardening | done | `feat/p13-release-hardening` | `986f54d` | `9afe91b` | ruff, format, mypy, pytest (278) | added SECURITY/CONTRIBUTING/CoC/templates/Dependabot; enabled secret scanning, push protection, Dependabot updates, CodeQL and branch protection; release workflow publishes wheel, sdist and unsigned OS binaries with checksums; Git install documented until PyPI |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
-| Release | `v0.4.0` | pending | — | `986f54d` | — | ruff, format, mypy, pytest (278), coverage 81.69% | MIT release; public repository; tag and publish |
+| Release | `v0.4.0` | pending | — | `9afe91b` | — | ruff, format, mypy, pytest (278), coverage 81.69% | MIT release; public repository; tag and publish |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
