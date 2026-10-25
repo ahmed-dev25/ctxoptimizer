@@ -7,9 +7,9 @@
 
 ## Resume here
 
-- **Last completed:** P10 proprietary license, signed self-update, version
-  `0.3.0` (`ff54faa`, merge `f50a2cf`).
-- **Last merge:** `f50a2cf` (P10)
+- **Last completed:** P10 release + hardening (`ff54faa`/`4322f03`, merge
+  `ca1481e`).
+- **Last merge:** `ca1481e` (P10-1)
 - **Next task:** complete `docs/release-checklist.md`; tag/release is
   `v0.3.0-alpha`.
 - **Blocked:** none
@@ -85,6 +85,7 @@
 | P9 | Hardening pass 2 | done | `feat/p9-hardening` | `3a34064` | `0ba10a2` | ruff, format, mypy, pytest (288), coverage 80.20% | recommendation suppression, row pricing editor, guard auto-re-enable/expand health, release workflow/checklist |
 | P9-1 | Low-savings guard | done | `feat/p9-1-savings` | `58410ee` | `6173b3b` | ruff, format, mypy, pytest (288), coverage 80.20% | min_savings_to_stay over the guard window |
 | P10 | Commercial release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (288), coverage 80.20% | proprietary LICENSE/EULA/NOTICE, signed self-update, version `0.3.0`, release tooling |
+| P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (288), coverage 80.20% | signed-manifest test, dev license extra |
 | Release | `v0.3.0-alpha` | tagged | — | — | — | — | pre-release; live captures/signing/fresh-machine checks pending |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
@@ -120,6 +121,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P9 hardening | pass | pass (63 files) | 288 passed | 80.20% enforced (CI) | `3a34064` |
 | 2026-10-25 | P9-1 savings | pass | pass (63 files) | 288 passed | 80.20% enforced (CI) | `58410ee` |
 | 2026-10-25 | P10 release | pass | pass (64 files) | 288 passed | 80.20% enforced (CI) | `ff54faa` |
+| 2026-10-25 | P10-1 hardening | pass | pass (64 files) | 288 passed | 80.20% enforced (CI) | `4322f03` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
