@@ -90,7 +90,7 @@ def _verify_signature(payload: dict[str, Any], signature: str, public_key: str) 
         from nacl.exceptions import BadSignatureError
         from nacl.signing import VerifyKey
     except ImportError as exc:
-        raise UpdateError("install the [license] extra to verify updates") from exc
+        raise UpdateError("install the [update] extra to verify updates") from exc
     message = {key: value for key, value in payload.items() if key != "signature"}
     canonical = json.dumps(message, sort_keys=True, separators=(",", ":")).encode()
     try:

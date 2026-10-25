@@ -10,13 +10,13 @@ prompt caching missed, and applies cache-safe payload reductions.
 - **Honest numbers** — provider-reported usage is ground truth; everything else
   is labelled `est.` or `sim.`.
 - **Fail-open** — invalid transforms retry with the original bytes; the proxy
-  never blocks traffic to enforce a license.
+  never blocks traffic.
 
 ## Install
 
 ```powershell
-uv tool install ctxproxy
-# or: pipx install ctxproxy
+uv tool install "ctxproxy[update]"
+# or: pipx install "ctxproxy[update]"
 ctxproxy run
 ```
 
@@ -85,20 +85,12 @@ by retention. `ctxproxy purge --all` wipes telemetry, blobs and findings. See
 ```powershell
 ctxproxy service install        # launchd / systemd --user / Windows scheduled task
 ctxproxy service install --dry-run
-ctxproxy license status
-ctxproxy license install .\license.json
 ```
-
-This open build verifies Ed25519 licenses offline but ships with
-`LICENSE_ENFORCEMENT = "off"` (ADR 0002/0007), so active mode is never blocked.
-A paid build flips that single flag and embeds the public key.
 
 ## License
 
-ctxproxy is commercial software licensed under the ctxproxy Commercial License
-v1.0. See [`LICENSE`](LICENSE), [`EULA.md`](EULA.md) and [`NOTICE`](NOTICE).
-One license is required per user; updates within the same major version are
-included. It is not open source.
+ctxproxy is free and open-source software licensed under the **MIT License**.
+See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
 ## Updates
 

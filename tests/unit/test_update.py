@@ -112,7 +112,7 @@ def test_manifest_field_and_transport_errors(tmp_path: Path) -> None:
         fetch_manifest((tmp_path / "missing.json").as_uri(), public_key=None)
 
 
-def test_signature_requires_license_extra() -> None:
+def test_signature_requires_update_extra() -> None:
     payload = {
         "version": "1.0.0",
         "url": "https://example.com/x.whl",

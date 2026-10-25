@@ -101,7 +101,7 @@ jobs:
           python-version: "3.11"
 
       - name: Build one-file binary
-        run: uv run --with pyinstaller pyinstaller --onefile --name ctxproxy scripts/ctxproxy_entry.py
+        run: uv run --extra update --with pyinstaller pyinstaller --onefile --name ctxproxy scripts/ctxproxy_entry.py
 
       - name: Binary version smoke (unix)
         if: runner.os != 'Windows'

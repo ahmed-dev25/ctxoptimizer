@@ -528,7 +528,7 @@ wheels = [
 
 [[package]]
 name = "ctxproxy"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx", extra = ["http2"] },
@@ -555,14 +555,14 @@ dev = [
     { name = "respx" },
     { name = "ruff" },
 ]
-license = [
-    { name = "pynacl" },
-]
 re2 = [
     { name = "google-re2" },
 ]
 tokens = [
     { name = "tiktoken" },
+]
+update = [
+    { name = "pynacl" },
 ]
 
 [package.metadata]
@@ -578,7 +578,7 @@ requires-dist = [
     { name = "platformdirs", specifier = ">=4.2" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pynacl", marker = "extra == 'dev'", specifier = ">=1.5" },
-    { name = "pynacl", marker = "extra == 'license'", specifier = ">=1.5" },
+    { name = "pynacl", marker = "extra == 'update'", specifier = ">=1.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
     { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=4" },
@@ -590,7 +590,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.12" },
     { name = "uvicorn", specifier = ">=0.30" },
 ]
-provides-extras = ["tokens", "license", "re2", "dev"]
+provides-extras = ["tokens", "update", "re2", "dev"]
 
 [[package]]
 name = "cyclonedx-python-lib"

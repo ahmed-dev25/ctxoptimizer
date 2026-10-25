@@ -71,7 +71,6 @@ from ctxproxy.dashboard.views import (
     waste_view,
 )
 from ctxproxy.guard import Guard
-from ctxproxy.licensing import default_license_path, set_license_path
 from ctxproxy.routing import Route, UnknownUpstream, classify, is_absolute_target
 from ctxproxy.telemetry.blobs import BlobStore
 from ctxproxy.telemetry.store import Store, default_db_path
@@ -239,7 +238,6 @@ def create_app(
     )
     app.state.config = config
     app.state.config_path = config_path
-    set_license_path(config.license.path or default_license_path())
     app.state.started = time.monotonic()
     admin_token, csrf_token = admin_credentials()
     if config.server.admin_token:

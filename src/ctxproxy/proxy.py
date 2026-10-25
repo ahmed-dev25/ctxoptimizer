@@ -19,7 +19,6 @@ from ctxproxy.analysis.state import AnalysisResult, AnalysisState, observations_
 from ctxproxy.config import Config
 from ctxproxy.guard import Guard
 from ctxproxy.ids import new_ulid
-from ctxproxy.licensing import is_active_mode_allowed
 from ctxproxy.models import Endpoint, Mode, Provider, RequestContext, Usage
 from ctxproxy.pipeline import PipelineResult, run_pipeline
 from ctxproxy.providers import adapter_for
@@ -293,8 +292,6 @@ def _apply_transforms(
     if not adapter.is_transformable(payload):
         return raw, False, None, None, None
     mode = route.mode
-    if mode is Mode.ACTIVE and not is_active_mode_allowed():
-        mode = Mode.SHADOW
     model = adapter.model_of(payload) or _extract_model(raw)
     ctx = RequestContext(
         request_id=request_id,

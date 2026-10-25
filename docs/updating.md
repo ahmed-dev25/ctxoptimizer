@@ -48,7 +48,7 @@ $env:CTXPROXY_UPDATE_PUBLIC_KEY = "…"
 ## Generate a signed manifest (dev only)
 
 ```powershell
-uv run --extra license python tools/make_update_manifest.py `
+uv run --extra update python tools/make_update_manifest.py `
   --artifact dist\ctxproxy-0.3.1-py3-none-any.whl `
   --version 0.3.1 `
   --url https://example.com/ctxproxy-0.3.1-py3-none-any.whl `
@@ -67,11 +67,10 @@ build.
 - Source/Python installs of a binary artifact are not replaced automatically;
   the command reports that the verified artifact was downloaded.
 - `--dry-run` verifies and prints the action without installing.
-- `--allow-unsigned` exists only for local development; never use it for a paid
+- `--allow-unsigned` exists only for local development; never use it for a
   release.
 
 ## Version policy
 
-- All updates within the purchased major version are included.
-- A future major version may require a new purchase.
+- Updates are free; ctxproxy is MIT open source.
 - `ctxproxy update --check` is safe to run frequently.

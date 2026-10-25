@@ -53,7 +53,7 @@ The bundled pricing table only contains verified/public rates. Unknown models
 stay unpriced rather than inventing a number; add an override in the Pricing
 page or `pricing.json`.
 
-## Does active mode require a license?
+## Is ctxproxy open source?
 
-In this open build, no: enforcement is off. A paid build may disable active
-mode without a valid license, but never blocks passthrough/shadow traffic.
+Yes. ctxproxy is free and open-source software under the MIT License. There is
+no license key, activation step or active-mode gate. See `LICENSE`.

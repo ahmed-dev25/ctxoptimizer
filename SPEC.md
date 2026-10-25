@@ -176,7 +176,7 @@ Client ──HTTP──▶ [1 Ingress: route/auth/limits]
 | Dashboard | `ctxproxy/dashboard/*` | Admin API + Jinja/HTMX UI under `/_ctxproxy/`. |
 | CLI | `ctxproxy/cli.py` | Typer commands (§15). |
 | Config | `ctxproxy/config.py` | TOML + env + CLI → validated `Config` (§7). |
-| Licensing | `ctxproxy/licensing.py` | Offline license check, isolated for removal (§19). |
+| Update | `ctxproxy/update.py` | Signed self-update verification and installation (§21). |
 
 ### 4.3 Concurrency model
 - Single process, single asyncio event loop (`uvicorn --workers 1`; state like session caches and the SQLite writer assume one process).
@@ -248,9 +248,8 @@ ctxproxy/
 │   │   ├── views.py
 │   │   ├── templates/
 │   │   └── static/            # bundled JS/CSS/fonts (NO CDN)
-│   ├── data/
-│   │   └── pricing.json
-│   └── licensing.py
+│   └── data/
+│       └── pricing.json
 ├── tests/
 │   ├── unit/
 │   ├── property/
@@ -279,7 +278,7 @@ ctxproxy/
 | Config validation | `pydantic` v2 (config only) | |
 | Paths | `platformdirs` | Data/log/config dirs per OS. |
 | Tokens (optional extra `[tokens]`) | `tiktoken` | **Downloads encodings on first use** → must degrade to heuristic when offline (§12.0.2). |
-| License verification (optional extra `[license]`) | `pynacl` (Ed25519) | |
+| Update signature verification (optional extra `[update]`) | `pynacl` (Ed25519) | |
 | Dev | `pytest`, `pytest-asyncio`, `respx`, `hypothesis`, `ruff`, `mypy`, `coverage`, `pytest-benchmark` | |
 | Packaging | `hatchling`; distribute with `uv tool install` / `pipx`; later PyInstaller/Nuitka | |
 
@@ -416,9 +415,6 @@ file = ""                        # optional user override; merged over bundled d
 
 [dashboard]
 enabled = true
-
-[license]
-path = ""                        # default: user_data_dir/ctxproxy/license.json
 ```
 
 ### 7.3 Environment variables
@@ -1034,7 +1030,6 @@ Secrets redaction (`telemetry/redact.py`) at capture time: patterns for `sk-ant-
 | `ctxproxy replay FILE [--config]` | Run the pipeline on a captured request offline; print reports and diff. Great for debugging transforms. |
 | `ctxproxy bench` | Latency/throughput harness (see §18). |
 | `ctxproxy purge [--all]` | Delete stored data. |
-| `ctxproxy license install\|status` | §19. |
 | `ctxproxy mcp run` | Start the expand MCP stdio server (§12.13); `ctxproxy mcp snippet --client claude-code` prints registration config. |
 | `ctxproxy service install\|uninstall` (Phase 7) | launchd / systemd --user / Windows Task Scheduler. |
 | `ctxproxy --version` | |
@@ -1054,7 +1049,7 @@ Admin/UI endpoints require: loopback source (or admin token if `allow_remote`), 
 5. **Cache & Waste Health** — former Cache Health, plus waste rollups: per-cause W1–W8 totals (`est.`, INV-18 labeling), per-transform quarantine status and history (§12.14), and expand-usage counters.
 6. **Transforms** — per-transform: fire rate, avg tokens saved, avg duration, discard reasons, fallback incidents; toggle switches (hot reload).
 7. **Pricing** — table editor for models, "unpriced" list, last-updated stamp.
-8. **Settings** — mode, upstreams, capture level, retention, privacy banner, license status.
+8. **Settings** — mode, upstreams, capture level, retention, privacy banner, MIT license notice.
 9. **Waste Opportunities** — ranked findings per §13.6: cause, project/session, evidence (turns, hashes — no raw text), occurrences, `est. tokens/$ wasted`, status controls (ack/skip/fixed), and the linked recommendation where one exists (§13.7) with one-click apply + confirm.
 10. **Doctor** — results of `ctxproxy doctor` in UI.
 Number labeling (INV-13): every non-provider figure gets a badge `est.` / `sim.` with tooltip explaining the method.
@@ -1072,7 +1067,7 @@ Server-rendered pages (Jinja + HTMX) call the same service layer; no heavy SPA b
 | SEC-1 | Bind loopback by default. `allow_remote=true` requires `admin_token` and prints a warning; proxy paths still forward client-supplied credentials only. |
 | SEC-2 | Never log `authorization`, `x-api-key`, `x-goog-api-key`, cookies, or `key=` query params. Log sanitizer applies to URLs and headers globally. |
 | SEC-3 | No outbound connections except configured upstreams. No analytics, no update checks (an opt-in `ctxproxy update-check` may be added later). |
-| SEC-4 | DB, blobs, logs, and license under the per-user data dir; POSIX perms `0600/0700`; Windows user-profile ACL default. |
+| SEC-4 | DB, blobs, and logs under the per-user data dir; POSIX perms `0600/0700`; Windows user-profile ACL default. |
 | SEC-5 | Secrets redaction on all captured/stored text (§14.4). Redaction patterns have unit tests with positive and negative samples. |
 | SEC-6 | Admin endpoints protected by Host allowlist, admin token, CSRF (§16.1). |
 | SEC-7 | HTML output is auto-escaped (Jinja autoescape on); diff viewer renders captured text as text, never HTML. |
@@ -1106,13 +1101,16 @@ Implementation rules:
 
 ---
 
-## 19. Licensing (optional module, isolated for easy removal/sale)
+## 19. License
 
-- Single module `licensing.py` exposing `is_active_mode_allowed() -> bool` and `license_status() -> LicenseStatus`. Nothing else may import licensing internals.
-- Offline Ed25519-signed license file: `{"email","tier","issued_at","expires_at|null","features":[...],"sig"}`; public key embedded; private key never in repo. Verification offline; no phone-home.
-- Suggested tiers: **Free** = passthrough + shadow + dashboard (shows *potential* savings — a strong conversion funnel); **Paid (lifetime)** = active mode + all transforms. Keep this configurable (`LICENSE_ENFORCEMENT=on|off` build flag) so a buyer can remove it.
-- Checkout/key issuance (Lemon Squeezy/Gumroad/Paddle webhook → key generator) is out of scope for this repo; provide `tools/make_license.py` (dev-only, excluded from the wheel).
-- Grace behavior: expired/invalid license → fall back to shadow mode with a banner; never block traffic.
+- ctxproxy is free and open-source software under the **MIT License**.
+- `LICENSE` is the canonical license; `NOTICE` covers attribution and provider
+  trademarks.
+- No activation key, tier gate, license server, or phone-home.
+- Active mode is always available.
+- Signed self-updates are a security feature, not a licensing mechanism; see
+  ?21.
+- The MIT license starts with `v0.4.0`.
 
 ---
 
@@ -1145,7 +1143,7 @@ GitHub Actions matrix: {ubuntu, macos, windows} × {3.11, 3.12, 3.13}. Gates: `r
 
 ## 21. Packaging & Distribution
 
-- `pyproject.toml` (hatchling), src layout, console script `ctxproxy = ctxproxy.cli:app`; extras `[tokens]`, `[license]`, `[re2]`, `[dev]`. Package data: templates, static, `data/*.json` (access via `importlib.resources`).
+- `pyproject.toml` (hatchling), src layout, console script `ctxproxy = ctxproxy.cli:app`; extras `[tokens]`, `[update]`, `[re2]`, `[dev]`. Package data: templates, static, `data/*.json` (access via `importlib.resources`).
 - Primary install: `uv tool install ctxproxy` / `pipx install ctxproxy`. Document Python version requirement; `uv` can fetch Python itself.
 - Standalone binaries (Phase 7): PyInstaller `--onefile` (or Nuitka) per OS via CI. Expect 40–80 MB artifacts; macOS requires codesign + notarization; Windows may trigger SmartScreen/AV false positives (budget time for signing). Do **not** market as "tiny single binary".
 - Autostart: `ctxproxy service install` generates launchd plist (`~/Library/LaunchAgents`), systemd user unit (`~/.config/systemd/user`), or a Windows Scheduled Task ("at logon"); `uninstall` reverses.
@@ -1205,7 +1203,7 @@ Each task = one coding-model session. "DoD" = definition of done (all gates in �
 - **P6-1** Gemini adapter (telemetry first, then limited transforms). **P6-2** Ollama adapter. **P6-3** Named OpenAI-compatible upstreams. **P6-4** `stale_result_elision` (opt-in) with break-even estimator. **P6-5** `churn_detector` (W7, opt-in, needs edit-tool input schemas per client — VERIFY §26.11) and `schema_bloat` (W8).
 
 ### Phase 7 — Ship (week 8)
-- **P7-1** Packaging (wheel, PyInstaller CI), service install. **P7-2** Licensing module. **P7-3** Docs/site, README GIF, FAQ. **P7-4** Launch checklist: fresh-machine install test on all OSes, privacy statement, changelog. **P7-5** (Optional) packaging for sale: architecture doc, test report, dependency licenses file, clean git history.
+- **P7-1** Packaging (wheel, PyInstaller CI), service install. **P7-2** Signed self-updates. **P7-3** Docs/site, README GIF, FAQ. **P7-4** Launch checklist: fresh-machine install test on all OSes, privacy statement, changelog. **P7-5** Release packaging: architecture doc, test report, dependency licenses file, clean git history.
 
 ---
 
@@ -1322,7 +1320,7 @@ Tip: for the transforms phase, give the model the **pure function signature and 
 6. Cursor feasibility (likely not proxyable locally).
 7. ~~Whether to add an optional MCP server exposing `ctxproxy_expand(ref)`~~ **Promoted to Phase 3 scope (§12.13, Decision D16).** Remaining open: stdio registration UX per client (see #12).
 8. Optional JSON-aware truncation for large JSON tool results (v2).
-9. Payment/licensing vendor choice and refund/lifetime-update policy (business decision).
+9. Release signing-key custody and update policy (owner decision).
 10. Legal: trademark-safe product name; no use of provider names in the product title.
 11. Edit-tool input schemas per client/agent (old_string/new_string vs unified diffs, etc.) needed by `churn_detector` (W7) — VERIFY per client before Phase 6.
 12. MCP stdio registration UX per client (`claude mcp add` semantics, VS Code/Cursor config shapes) for `ctxproxy_expand` — VERIFY.
@@ -1386,7 +1384,7 @@ dependencies = [
 ]
 [project.optional-dependencies]
 tokens  = ["tiktoken>=0.7"]
-license = ["pynacl>=1.5"]
+update  = ["pynacl>=1.5"]
 re2     = ["google-re2>=1.1"]
 dev     = ["pytest>=8", "pytest-asyncio>=0.23", "respx>=0.21", "hypothesis>=6.100",
            "ruff>=0.5", "mypy>=1.10", "coverage>=7", "pytest-benchmark>=4", "pip-audit"]

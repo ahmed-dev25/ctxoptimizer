@@ -1,19 +1,18 @@
 # ctxproxy — Progress
 
 **Last updated:** 2026-10-25
-**Milestone:** P0–P10 — commercial release prep
-**Branch:** `main`
-**Overall:** P10 merged; release `v0.3.0-alpha` tagged; external checks remain
+**Milestone:** P0–P11 — MIT open-source release
+**Branch:** `feat/p11-mit-license`
+**Overall:** P11 implemented; gates pass; ready to merge and tag `v0.4.0`
 
 ## Resume here
 
-- **Last completed:** P10 release + hardening + CI repair
-  (`12049e1`, merge `b37b12b`).
+- **Last completed:** P11 MIT relicense (`7ee05d9`).
 - **Last merge:** `b37b12b` (CI repair)
-- **Next task:** complete `docs/release-checklist.md`; tag/release is
-  `v0.3.0-alpha`.
+- **Next task:** merge P11, tag `v0.4.0`, publish release assets/manifest,
+  make the repository public.
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p11-mit-license`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -80,14 +79,16 @@
 | P6-3 | Named OpenAI-compatible upstreams | done | `main` | earlier | — | pass | ADR 0006 profiles; no change needed |
 | P6-4 | `stale_result_elision` | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | opt-in transform + break-even estimator API/UI |
 | P6-5 | W7/W8 | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | W7 opt-in heuristic, W8 default on |
-| P7 | Packaging/service/licensing | done | `feat/p5-p7-complete` | `e63ba16` | `67b4ff3` | ruff, format, mypy, pytest (252) | wheel + PyInstaller CI, service install/uninstall, Ed25519 verify (enforcement off), docs/changelog/licenses |
+| P7 | Packaging/service/updates | done | `feat/p5-p7-complete` | `e63ba16` | `67b4ff3` | ruff, format, mypy, pytest (252) | wheel + PyInstaller CI, service install/uninstall, signed-update verification, docs |
 | P8 | Hardening pass | done | `feat/p8-hardening` | `22814b6` | `279ea97` | ruff, format, mypy, pytest (266) | volatile normalizer, stream usage injection, expand counters, guard window, export reports, full capture fixtures, migration backup, redacted headers, golden/property tests |
 | P9 | Hardening pass 2 | done | `feat/p9-hardening` | `3a34064` | `0ba10a2` | ruff, format, mypy, pytest (292), coverage 80.64% | recommendation suppression, row pricing editor, guard auto-re-enable/expand health, release workflow/checklist |
 | P9-1 | Low-savings guard | done | `feat/p9-1-savings` | `58410ee` | `6173b3b` | ruff, format, mypy, pytest (292), coverage 80.64% | min_savings_to_stay over the guard window |
-| P10 | Commercial release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (292), coverage 80.64% | proprietary LICENSE/EULA/NOTICE, signed self-update, version `0.3.0`, release tooling |
-| P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (292), coverage 80.64% | signed-manifest test, dev license extra |
+| P10 | Release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (292), coverage 80.64% | release artifacts, signed self-update, version `0.3.0`, release tooling |
+| P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (292), coverage 80.64% | signed-manifest test, dev update extra |
 | P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
-| Release | `v0.3.0-alpha` | tagged | — | — | — | — | pre-release; live captures/signing/fresh-machine checks pending |
+| P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | pending | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates retained |
+| Release | `v0.3.0-alpha` | tagged | — | — | — | — | pre-release; superseded by `v0.4.0` |
+| Release | `v0.4.0` | pending | — | `7ee05d9` | — | ruff, format, mypy, pytest (292), coverage 81.64% | MIT release; tag after merge; repository still private |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -124,6 +125,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P10 release | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `ff54faa` |
 | 2026-10-25 | P10-1 hardening | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `4322f03` |
 | 2026-10-25 | P10-2 CI repair | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `12049e1` |
+| 2026-10-25 | P11 MIT | pass | pass (63 files) | 292 passed | 81.64% (local + CI gate) | `7ee05d9` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -242,10 +244,10 @@ Rows are in execution order; see `docs/plan.md` §4.
   read APIs (timeseries/drift/transform stats/export/SSE live); persisted
   reports, drift, findings and captures; Overview period/rollups, Live SSE,
   Session detail, Request diff viewer, Transforms toggles/stats, Pricing
-  editor, Settings/privacy/license, Doctor page; stale-elision break-even
-  calculator; Ed25519 offline license module; service install/uninstall;
+  editor, Settings/privacy, Doctor page; stale-elision break-even
+  calculator; service install/uninstall;
   wheel/PyInstaller CI; README/privacy/FAQ/architecture/test-report/changelog/
-  licenses.
+  MIT license.
 
 - 2026-10-25 — P8 hardening: implemented and registered
   `volatile_normalizer`; opt-in `inject_stream_usage`; MCP expand
@@ -260,9 +262,13 @@ Rows are in execution order; see `docs/plan.md` §4.
   expand-error health, CI coverage gate at 80%, release workflow and release
   checklist; doctor/service helper tests.
 
-- 2026-10-25 — P10 commercial release prep: proprietary LICENSE/EULA/NOTICE,
-  update config and signed self-update (`ctxproxy update --check/update`),
-  manifest signer, version 0.3.0, release workflow/checklist.
+- 2026-10-25 — P10 release prep: release packaging, signed self-update
+  (`ctxproxy update --check/update`), manifest signer, version 0.3.0, release
+  workflow/checklist.
+
+- 2026-10-25 — P11 MIT relicense: MIT `LICENSE`/`NOTICE`; removed the license
+  module, CLI, config and EULA; active mode is unconditional; version 0.4.0;
+  signed updates remain.
 
 ## Handoff notes
 

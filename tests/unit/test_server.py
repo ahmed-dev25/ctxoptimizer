@@ -48,7 +48,7 @@ def test_health_endpoint(tmp_path: Path) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
-    assert body["version"] == "0.3.0"
+    assert body["version"] == "0.4.0"
     assert body["mode"] == "shadow"
     assert "openai" in body["upstreams"]
 

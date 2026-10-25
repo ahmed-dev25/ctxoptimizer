@@ -1,4 +1,4 @@
-"""Break-even estimator, service plans and license status (P6-4/P7)."""
+"""Break-even estimator and service plans (P6-4/P7)."""
 
 from __future__ import annotations
 
@@ -7,12 +7,6 @@ from pathlib import Path
 import pytest
 
 from ctxproxy.analysis.break_even import estimate_stale_elision
-from ctxproxy.licensing import (
-    install_license,
-    license_status,
-    set_license_path,
-    verify_license_file,
-)
 from ctxproxy.service import install_service, service_plan, uninstall_service
 
 
@@ -88,18 +82,3 @@ def test_service_default_platform(monkeypatch, tmp_path: Path) -> None:
     assert service_plan(home=tmp_path).platform == "darwin"
     monkeypatch.setattr("ctxproxy.service.sys.platform", "linux")
     assert service_plan(home=tmp_path).platform == "linux"
-
-
-def test_license_status_default_and_invalid(tmp_path: Path) -> None:
-    set_license_path(tmp_path / "license.json")
-    status = license_status()
-    assert status.tier == "unlicensed"
-    assert status.valid is False
-    assert status.enforcement == "off"
-
-    invalid = tmp_path / "bad.json"
-    invalid.write_text("{not json", encoding="utf-8")
-    assert verify_license_file(invalid).valid is False
-
-    with pytest.raises(ValueError):
-        install_license(invalid)

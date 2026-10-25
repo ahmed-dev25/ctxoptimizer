@@ -22,7 +22,7 @@ reports `usage_source="none"` for providers whose traffic has not been captured 
 
 Transforms and the pipeline (§12), drift detection (§13.4), waste detectors (§13.6),
 baseline simulator (§13.5), active mode, dashboard (§16), MCP expand server
-(§12.13), license enforcement (§19), Gemini/Ollama adapters, cache hints, and
+(§12.13), Gemini/Ollama adapters, cache hints, and
 stale-result elision. No request body is ever mutated in this milestone; INV-2
 (passthrough on unchanged) is therefore trivially satisfied.
 
@@ -32,7 +32,7 @@ stale-result elision. No request body is ever mutated in this milestone; INV-2
 |---|---|---|
 | 1 | Keep `uv_build`; `requires-python >=3.11`; dev on 3.14; CI on 3.11 + 3.14 | 0001 |
 | 2 | Repo-local identity `ahmed` / `ahmed.devv25@gmail.com`; merge `--no-ff` per task | 0001 |
-| 3 | License module is a stub; enforcement disabled in v1 | 0002 |
+| 3 | Open-source MIT license; no activation checks | 0009 |
 | 4 | Seven settings missing from §7.2 get documented defaults | 0003 |
 | 5 | Provider fixtures come from real captures only; no invented fixtures | 0004 |
 | 6 | Provider docs are researched in P1 and dated in `docs/provider-notes.md` | — |
@@ -83,8 +83,7 @@ P1-3 is deliberately last: parser code is written against real provider bytes
 tree per SPEC §5; `.github/workflows/ci.yml`; smoke test.
 **Files:** `pyproject.toml`, `src/ctxproxy/**`, `tests/conftest.py`,
 `tests/unit/test_smoke.py`, `.github/workflows/ci.yml`.
-**Tests:** package exposes version `0.1.0`; every module imports cleanly; license
-stub returns `True`.
+**Tests:** package exposes version `0.4.0`; every module imports cleanly.
 **DoD:** `ruff check`, `ruff format --check`, `mypy --strict src`, `pytest -q` pass;
 `uv build` produces a wheel; `uv run ctxproxy --version` prints `0.1.0`.
 **Note:** coverage is reported but not enforced while most modules are stubs.
