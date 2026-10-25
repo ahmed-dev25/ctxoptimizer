@@ -73,14 +73,17 @@ jobs:
       - name: Build wheel
         run: uv build --wheel
 
+      - name: Create smoke venv
+        run: uv venv .wheel-smoke
+
       - name: Install wheel
-        run: uv pip install --system dist/*.whl
+        run: uv pip install --python .wheel-smoke/bin/python dist/*.whl
 
       - name: Version smoke
-        run: ctxproxy --version
+        run: .wheel-smoke/bin/ctxproxy --version
 
       - name: Import smoke
-        run: python -c "from ctxproxy.server import create_app; print('ok')"
+        run: .wheel-smoke/bin/python -c "from ctxproxy.server import create_app; print('ok')"
 
   binary:
     name: pyinstaller smoke (${{ matrix.os }})

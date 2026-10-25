@@ -191,6 +191,41 @@ def test_frozen_binary_replacement(monkeypatch, tmp_path: Path) -> None:
     assert (tmp_path / "ctxproxy.exe.old").exists()
 
 
+def test_frozen_binary_replacement_posix(monkeypatch, tmp_path: Path) -> None:
+    import os
+    from types import SimpleNamespace
+
+    executable = tmp_path / "ctxproxy"
+    executable.write_bytes(b"old")
+    artifact = tmp_path / "new-binary"
+    artifact.write_bytes(b"new")
+    monkeypatch.setattr(
+        "ctxproxy.update.sys",
+        SimpleNamespace(executable=str(executable), frozen=True),
+    )
+    monkeypatch.setattr(
+        "ctxproxy.update.os",
+        SimpleNamespace(name="posix", replace=os.replace),
+    )
+    install_artifact(artifact, dry_run=False)
+    assert executable.read_bytes() == b"new"
+    assert (tmp_path / "ctxproxy.old").read_bytes() == b"old"
+
+
+def test_wheel_install_runs_pip(monkeypatch, tmp_path: Path) -> None:
+    import subprocess
+
+    wheel = tmp_path / "x.whl"
+    wheel.write_bytes(b"")
+    calls = []
+    monkeypatch.setattr(
+        "ctxproxy.update.subprocess.run",
+        lambda command, check: calls.append(command) or subprocess.CompletedProcess(command, 0),
+    )
+    assert install_artifact(wheel, dry_run=False) == "wheel installed"
+    assert calls and calls[0][:3] == [__import__("sys").executable, "-m", "pip"]
+
+
 def test_signed_manifest_roundtrip() -> None:
     pytest.importorskip("nacl.signing")
     import base64
