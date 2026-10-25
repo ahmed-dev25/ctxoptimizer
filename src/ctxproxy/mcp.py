@@ -4,17 +4,23 @@ from __future__ import annotations
 
 import json
 import sys
+from collections.abc import Callable
 from typing import Any
 
 from ctxproxy import __version__
 from ctxproxy.analysis.tokens import estimate_tokens
 from ctxproxy.config import data_dir
 from ctxproxy.telemetry.blobs import BlobStore
+from ctxproxy.telemetry.expand import record_expand
 
 _PROTOCOL_VERSION = "2024-11-05"
 
 
-def handle_message(message: dict[str, Any], blobs: BlobStore) -> dict[str, Any] | None:
+def handle_message(
+    message: dict[str, Any],
+    blobs: BlobStore,
+    on_expand: Callable[[str, bool], None] | None = None,
+) -> dict[str, Any] | None:
     """Handle one JSON-RPC message. Notifications return None."""
     request_id = message.get("id")
     method = message.get("method")
@@ -55,6 +61,8 @@ def handle_message(message: dict[str, Any], blobs: BlobStore) -> dict[str, Any] 
         ref = str(arguments.get("ref") or "")
         data = blobs.get(ref)
         if data is None:
+            if on_expand is not None:
+                on_expand(ref, False)
             return _result(
                 request_id,
                 {
@@ -76,6 +84,8 @@ def handle_message(message: dict[str, Any], blobs: BlobStore) -> dict[str, Any] 
             head = text[: max_tokens * 2]
             tail = text[-max_tokens * 2 :]
             text = f"{head}\n[ctxproxy: middle omitted; ref={ref}]\n{tail}"
+        if on_expand is not None:
+            on_expand(ref, True)
         return _result(request_id, {"content": [{"type": "text", "text": text}]})
     return _error(request_id, -32601, f"unknown method: {method}")
 
@@ -93,7 +103,7 @@ def run_stdio() -> None:
             continue
         if not isinstance(message, dict):
             continue
-        response = handle_message(message, blobs)
+        response = handle_message(message, blobs, on_expand=record_expand)
         if response is not None:
             sys.stdout.write(json.dumps(response) + "\n")
             sys.stdout.flush()

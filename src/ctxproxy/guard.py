@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from ctxproxy.config import Config
 
@@ -11,7 +11,15 @@ from ctxproxy.config import Config
 class Guard:
     def __init__(self, config: Config) -> None:
         self.config = config
-        self._fallbacks: dict[tuple[str, str], int] = defaultdict(int)
+        self._fallbacks: dict[tuple[str, str], deque[float]] = defaultdict(
+            lambda: deque(
+                maxlen=max(
+                    1,
+                    config.guard.fallback_window,
+                    config.guard.fallback_limit + 1,
+                )
+            )
+        )
         self._drift: dict[tuple[str, str], int] = defaultdict(int)
         self._quarantined: dict[tuple[str, str], str] = {}
         self._store: object | None = None
@@ -36,8 +44,8 @@ class Guard:
             return
         for transform_id in transform_ids:
             key = (session_id, transform_id)
-            self._fallbacks[key] += 1
-            if self._fallbacks[key] > self.config.guard.fallback_limit:
+            self._fallbacks[key].append(time.time())
+            if len(self._fallbacks[key]) > self.config.guard.fallback_limit:
                 self._quarantined[key] = "fallbacks"
                 self._record(session_id, transform_id, "fallbacks")
 

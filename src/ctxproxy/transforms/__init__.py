@@ -11,6 +11,7 @@ from ctxproxy.transforms.cache_serve import CacheServe, CacheServeState
 from ctxproxy.transforms.eligibility import is_compactable, is_never_touch
 from ctxproxy.transforms.openai_hints import OpenAIHints
 from ctxproxy.transforms.stale_result_elision import StaleResultElision
+from ctxproxy.transforms.volatile import VolatileNormalizer
 
 
 def build_transforms(
@@ -74,6 +75,8 @@ def build_transforms(
         add(CacheServe(cache_serve_state))
     if transforms.stale_result_elision.enabled:
         add(StaleResultElision())
+    if transforms.volatile_normalizer.enabled:
+        add(VolatileNormalizer())
     if transforms.anthropic_cache.enabled:
         add(AnthropicCache())
     if transforms.openai_hints.enabled:

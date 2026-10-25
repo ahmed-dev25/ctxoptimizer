@@ -1,0 +1,3 @@
+[transforms.line_dedupe]
+enabled = true
+min_repeat = 3

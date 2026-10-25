@@ -202,6 +202,30 @@ def test_non_stream_json_usage_is_parsed(fake_upstream, tmp_path: Path) -> None:
     assert body["last_usage_source"] == "provider"
 
 
+def test_full_capture_stores_request_and_response(
+    fake_upstream, tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("CTXPROXY_DATA_DIR", str(tmp_path / "data"))
+    db_path = tmp_path / "ctxproxy.db"
+    config = Config.model_validate(
+        {
+            "upstreams": {"openai": fake_upstream.base_url},
+            "telemetry": {"db_path": str(db_path), "capture_payloads": "full"},
+        }
+    )
+    fake_upstream.json({"model": "gpt-6.1-sol", "usage": {"prompt_tokens": 1}})
+    with running_proxy(config) as url:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(
+                f"{url}/v1/chat/completions",
+                content=b'{"model":"gpt-6.1-sol","messages":[]}',
+            )
+            assert response.status_code == 200
+    with sqlite3.connect(db_path) as conn:
+        locations = {row[0] for row in conn.execute("SELECT location FROM captures").fetchall()}
+    assert {"request", "response"} <= locations
+
+
 def test_proxy_persists_request_to_sqlite(fake_upstream, tmp_path: Path) -> None:
     db_path = tmp_path / "ctxproxy.db"
     config = Config.model_validate(

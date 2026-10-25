@@ -104,3 +104,27 @@ def test_openai_hints_dont_touch_third_party_hosts() -> None:
     adapter = adapter_for(Provider.OPENAI, Endpoint.CHAT)
     ctx = _ctx(config, provider=Provider.OPENAI, endpoint=Endpoint.CHAT, upstream="openai")
     assert OpenAIHints().applies(ctx, payload, adapter) is False
+
+
+def test_openai_hints_injects_stream_usage_when_opted_in() -> None:
+    config = Config.model_validate(
+        {
+            "transforms": {
+                "openai_hints": {
+                    "enabled": True,
+                    "send_prompt_cache_key": False,
+                    "inject_stream_usage": True,
+                }
+            },
+            "upstreams": {"openai": "https://api.openai.com"},
+        }
+    )
+    payload: dict[str, Any] = {"model": "gpt-6.1-sol", "messages": [], "stream": True}
+    adapter = adapter_for(Provider.OPENAI, Endpoint.CHAT)
+    ctx = _ctx(config, provider=Provider.OPENAI, endpoint=Endpoint.CHAT, upstream="openai")
+    assert OpenAIHints().applies(ctx, payload, adapter) is True
+    report = OpenAIHints().apply(ctx, payload, adapter, config)
+    assert report.changed is True
+    assert payload["stream_options"]["include_usage"] is True
+    assert "prompt_cache_key" not in payload
+    assert OpenAIHints().applies(ctx, payload, adapter) is False

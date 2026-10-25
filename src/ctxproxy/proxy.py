@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from collections.abc import AsyncIterator, Mapping
 from pathlib import Path
@@ -144,6 +145,7 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
         "text/event-stream" in content_type or "ndjson" in content_type or "jsonl" in content_type
     )
     body_buffer = bytearray()
+    response_buffer = bytearray()
 
     async def body() -> AsyncIterator[bytes]:
         outcome = "client_disconnect"
@@ -155,6 +157,11 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                     parser.disable()
                 if not incrementally_parsed and len(body_buffer) < 4 * 1024 * 1024:
                     body_buffer.extend(chunk)
+                if (
+                    config.telemetry.capture_payloads == "full"
+                    and len(response_buffer) < 8 * 1024 * 1024
+                ):
+                    response_buffer.extend(chunk)
                 yield chunk
             outcome = "completed"
         except Exception:
@@ -169,6 +176,17 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                 usage = parse_usage_body(
                     route.provider, route.endpoint, route.profile, bytes(body_buffer)
                 )
+            if response_buffer:
+                blobs = getattr(request.app.state, "blobs", None)
+                if blobs is not None:
+                    captures.append(
+                        {
+                            "transform_id": None,
+                            "location": "response",
+                            "before_hash": blobs.put(redact_bytes(bytes(response_buffer))),
+                            "after_hash": None,
+                        }
+                    )
             priced = _price(usage, route, config, model)
             baseline_cost = _baseline_price(analysis, route, config, model)
             request.app.state.last_request = {
@@ -233,6 +251,7 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                         captures=captures,
                         baseline_cost=baseline_cost,
                         error=fallback_error,
+                        headers=_safe_headers(request.headers),
                     )
                 )
             if fallback_used and pipeline_result is not None:
@@ -367,9 +386,25 @@ def _capture_blobs(
     if blobs is None:
         return captures
     if capture == "full":
-        blobs.put(redact_bytes(raw))
+        request_hash = blobs.put(redact_bytes(raw))
+        captures.append(
+            {
+                "transform_id": None,
+                "location": "request",
+                "before_hash": request_hash,
+                "after_hash": None,
+            }
+        )
         if isinstance(final, bytes):
-            blobs.put(redact_bytes(final))
+            final_hash = blobs.put(redact_bytes(final))
+            captures.append(
+                {
+                    "transform_id": None,
+                    "location": "final_request",
+                    "before_hash": final_hash,
+                    "after_hash": None,
+                }
+            )
     if result is not None:
         for index, (before, after) in enumerate(result.changed_blocks):
             before_hash = blobs.put(redact_bytes(before.encode("utf-8")))
@@ -383,6 +418,31 @@ def _capture_blobs(
                 }
             )
     return captures
+
+
+_DROPPED_HEADERS = frozenset(
+    {
+        "authorization",
+        "x-api-key",
+        "x-goog-api-key",
+        "cookie",
+        "set-cookie",
+        "proxy-authorization",
+    }
+)
+_SECRET_HEADER_PARTS = ("key", "token", "secret", "password")
+
+
+def _safe_headers(headers: Mapping[str, str]) -> dict[str, str]:
+    """Redacted request headers for the local dashboard (INV-14)."""
+    safe: dict[str, str] = {}
+    for name, value in headers.items():
+        lower = name.lower()
+        if lower in _DROPPED_HEADERS or any(part in lower for part in _SECRET_HEADER_PARTS):
+            safe[name] = "[redacted]"
+        else:
+            safe[name] = value
+    return safe
 
 
 def _clean_request_headers(headers: Mapping[str, str], *, force_identity: bool) -> dict[str, str]:
@@ -496,6 +556,7 @@ def _store_record(
     captures: list[dict[str, Any]] | None = None,
     baseline_cost: float | None = None,
     error: str | None = None,
+    headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     raw_size = len(raw) if isinstance(raw, bytes) else None
     final_size = len(content) if isinstance(content, bytes) else raw_size
@@ -523,6 +584,7 @@ def _store_record(
         "final_bytes": final_size,
         "orig_est_tokens": pipeline_result.orig_est_tokens if pipeline_result else None,
         "final_est_tokens": pipeline_result.final_est_tokens if pipeline_result else None,
+        "request_headers_json": json.dumps(headers or {}, sort_keys=True),
         "usage_source": usage.source,
         "fresh_input": usage.fresh_input,
         "cache_read": usage.cache_read,
@@ -544,6 +606,15 @@ def _store_record(
         "sim_read_baseline": analysis.baseline.read_tokens if analysis else None,
         "sim_read_optimized": usage.cache_read,
         "error": error,
+        "_fallback_transform_ids": (
+            [
+                report.transform_id
+                for report in pipeline_result.reports
+                if report.changed and report.discarded_reason is None
+            ]
+            if fallback_used and pipeline_result
+            else []
+        ),
     }
 
 

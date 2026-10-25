@@ -24,6 +24,7 @@ def test_initialize_and_tools_list(tmp_path: Path) -> None:
 def test_expand_returns_original_and_missing_is_honest(tmp_path: Path) -> None:
     blobs = _store(tmp_path)
     ref = blobs.put(b"original bytes")
+    events: list[tuple[str, bool]] = []
     response = handle_message(
         {
             "jsonrpc": "2.0",
@@ -35,9 +36,11 @@ def test_expand_returns_original_and_missing_is_honest(tmp_path: Path) -> None:
             },
         },
         blobs,
+        on_expand=lambda value, ok: events.append((value, ok)),
     )
     assert response is not None
     assert response["result"]["content"][0]["text"] == "original bytes"
+    assert events == [(ref[:8], True)]
 
     missing = handle_message(
         {
@@ -47,9 +50,11 @@ def test_expand_returns_original_and_missing_is_honest(tmp_path: Path) -> None:
             "params": {"name": "ctxproxy_expand", "arguments": {"ref": "deadbeef"}},
         },
         blobs,
+        on_expand=lambda value, ok: events.append((value, ok)),
     )
     assert missing is not None
     assert missing["result"]["isError"] is True
+    assert events[-1] == ("deadbeef", False)
 
 
 def test_max_tokens_truncates_with_marker(tmp_path: Path) -> None:

@@ -1,0 +1,26 @@
+{
+  "model": "claude-sonnet-4-5",
+  "tools": [
+    {"name": "Bash", "input_schema": {"type": "object"}}
+  ],
+  "system": "You are an agent.\nToday's date: 2026-10-25T13:05:11Z",
+  "messages": [
+    {"role": "user", "content": "run tests"},
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "tool_use", "id": "call_1", "name": "Bash", "input": {"command": "pytest -q"}}
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "call_1",
+          "content": "\u001b[31mFAILED\u001b[0m test_one\nDownloading 10%\nDownloading 20%\nDownloading 30%\nDownloading 40%\nline\nline\nline\nline\n"
+        }
+      ]
+    }
+  ]
+}

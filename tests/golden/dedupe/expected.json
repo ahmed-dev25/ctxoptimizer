@@ -1,0 +1,109 @@
+{
+  "final_tokens": 35,
+  "original_tokens": 35,
+  "payload": {
+    "messages": [
+      {
+        "content": "run",
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "id": "call_1",
+            "input": {},
+            "name": "Bash",
+            "type": "tool_use"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "cache_control": {
+              "type": "ephemeral"
+            },
+            "content": "head\nline\nline\nline\nline\nline\nline\ntail",
+            "tool_use_id": "call_1",
+            "type": "tool_result"
+          }
+        ],
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-4-5"
+  },
+  "payload_json": "{\"messages\": [{\"content\": \"run\", \"role\": \"user\"}, {\"content\": [{\"id\": \"call_1\", \"input\": {}, \"name\": \"Bash\", \"type\": \"tool_use\"}], \"role\": \"assistant\"}, {\"content\": [{\"cache_control\": {\"type\": \"ephemeral\"}, \"content\": \"head\\nline\\nline\\nline\\nline\\nline\\nline\\ntail\", \"tool_use_id\": \"call_1\", \"type\": \"tool_result\"}], \"role\": \"user\"}], \"model\": \"claude-sonnet-4-5\"}",
+  "reports": [
+    {
+      "changed": false,
+      "discarded_reason": null,
+      "items_touched": 0,
+      "notes": {},
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "ansi_strip"
+    },
+    {
+      "changed": false,
+      "discarded_reason": null,
+      "items_touched": 0,
+      "notes": {},
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "progress_collapse"
+    },
+    {
+      "changed": false,
+      "discarded_reason": "no_regress",
+      "items_touched": 1,
+      "notes": {},
+      "tokens_after": 12,
+      "tokens_before": 12,
+      "transform_id": "line_dedupe"
+    },
+    {
+      "changed": false,
+      "discarded_reason": "no_regress",
+      "items_touched": 1,
+      "notes": {},
+      "tokens_after": 12,
+      "tokens_before": 12,
+      "transform_id": "whitespace_trim"
+    },
+    {
+      "changed": false,
+      "discarded_reason": null,
+      "items_touched": 0,
+      "notes": {},
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "smart_truncate"
+    },
+    {
+      "changed": false,
+      "discarded_reason": null,
+      "items_touched": 0,
+      "notes": {},
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "duplicate_backref"
+    },
+    {
+      "changed": true,
+      "discarded_reason": null,
+      "items_touched": 2,
+      "notes": {
+        "added": [
+          "text",
+          "tool_result"
+        ],
+        "existing": 0
+      },
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "anthropic_cache"
+    }
+  ]
+}

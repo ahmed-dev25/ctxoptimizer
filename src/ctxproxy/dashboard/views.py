@@ -21,6 +21,7 @@ from ctxproxy.dashboard.service import (
 )
 from ctxproxy.doctor import run_checks
 from ctxproxy.licensing import license_status
+from ctxproxy.telemetry.expand import expand_stats
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
@@ -56,6 +57,7 @@ async def overview(request: Request) -> Response:
             "cost_usd": 0.0,
         }
     )
+    waste_points = store.waste_timeseries("day", since) if store is not None else []
     return templates.TemplateResponse(
         request,
         "overview.html",
@@ -71,6 +73,7 @@ async def overview(request: Request) -> Response:
             "privacy": state.config.telemetry.capture_payloads != "off",
             "capture": state.config.telemetry.capture_payloads,
             "waste": waste,
+            "waste_points": waste_points,
         },
     )
 
@@ -178,7 +181,12 @@ async def request_view(request: Request) -> Response:
     status_code = 200 if row is not None else 404
     usage = {}
     timing = {}
+    headers: dict[str, Any] = {}
     if row is not None:
+        try:
+            headers = json.loads(row.get("request_headers_json") or "{}")
+        except (TypeError, json.JSONDecodeError):
+            headers = {}
         usage = {
             key.removeprefix("cache_write_"): row[key]
             for key in row
@@ -212,6 +220,7 @@ async def request_view(request: Request) -> Response:
             "diff": diff,
             "usage": usage,
             "timing": timing,
+            "headers": headers,
         },
         status_code=status_code,
     )
@@ -252,6 +261,7 @@ async def transforms_view(request: Request) -> Response:
             "avg_ms": round(float(stats.get(name, {}).get("avg_ms") or 0.0), 3),
             "errors": stats.get(name, {}).get("errors", 0),
             "no_regress": stats.get(name, {}).get("no_regress", 0),
+            "fallbacks": stats.get(name, {}).get("fallbacks", 0),
         }
         for name, value in state.config.transforms.model_dump().items()
         if isinstance(value, dict)
@@ -264,6 +274,7 @@ async def transforms_view(request: Request) -> Response:
             "mode": state.config.mode.default,
             "rows": rows,
             "guard_events": store.fetch_guard_events() if store else [],
+            "expand": expand_stats(),
             "csrf": state.csrf_token,
         },
     )

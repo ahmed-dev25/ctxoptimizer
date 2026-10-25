@@ -62,6 +62,17 @@
     </tr></tbody>
   </table>
 
+  <h2>Request headers (redacted)</h2>
+  <table>
+    <tbody>
+      {% for name, value in headers.items() %}
+      <tr><th>{{ name }}</th><td>{{ value }}</td></tr>
+      {% else %}
+      <tr><td class="muted">No headers captured.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
   <h2>Transform reports</h2>
   <table>
     <thead><tr><th>Transform</th><th>Changed</th><th>Items</th><th>Tokens saved</th>
