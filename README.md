@@ -15,8 +15,8 @@ prompt caching missed, and applies cache-safe payload reductions.
 ## Install
 
 ```powershell
-uv tool install "ctxproxy[update]"
-# or: pipx install "ctxproxy[update]"
+uv tool install ctxproxy
+# or: pipx install ctxproxy
 ctxproxy run
 ```
 
@@ -80,7 +80,7 @@ Captured text stays in the per-user data directory, is redacted, and is bounded
 by retention. `ctxproxy purge --all` wipes telemetry, blobs and findings. See
 [`docs/privacy.md`](docs/privacy.md).
 
-## Service and licensing
+## Service
 
 ```powershell
 ctxproxy service install        # launchd / systemd --user / Windows scheduled task
@@ -92,14 +92,18 @@ ctxproxy service install --dry-run
 ctxproxy is free and open-source software licensed under the **MIT License**.
 See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
-## Updates
+## Updating
+
+Use the package manager that installed ctxproxy:
 
 ```powershell
-ctxproxy update --check
-ctxproxy update --yes
+uv tool upgrade ctxproxy
+# or
+pipx upgrade ctxproxy
 ```
 
-Updates are delivered as signed manifests + SHA-256 verified artifacts. See
+There is no built-in self-update command. Release integrity is provided by the
+package index/GitHub release channel and TLS. See
 [`docs/updating.md`](docs/updating.md).
 
 ## Documentation
@@ -112,7 +116,7 @@ Updates are delivered as signed manifests + SHA-256 verified artifacts. See
 - [`docs/privacy.md`](docs/privacy.md) — data handling and purge
 - [`docs/faq.md`](docs/faq.md) — cache, savings, troubleshooting
 - [`docs/test-report.md`](docs/test-report.md) — gates and test coverage summary
-- [`docs/updating.md`](docs/updating.md) — signed self-update and release artifacts
+- [`docs/updating.md`](docs/updating.md) — package-manager upgrades and release artifacts
 - [`docs/release-checklist.md`](docs/release-checklist.md) — release/signing checklist
 - [`docs/progress.md`](docs/progress.md) — build status and handoff notes
 - [`CHANGELOG.md`](CHANGELOG.md)

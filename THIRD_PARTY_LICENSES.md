@@ -18,13 +18,12 @@ before shipping a binary.
 | certifi | TLS roots | MPL-2.0 |
 | idna / sniffio / anyio | HTTP dependencies | BSD-3-Clause / MIT |
 | tiktoken (optional) | Token estimation | MIT |
-| pynacl / libsodium (optional) | Ed25519 license verification | Apache-2.0 |
 | google-re2 (optional) | ReDoS-resistant regex | BSD-3-Clause |
 | hypothesis / pytest / ruff / mypy / coverage (dev) | Development and CI | MIT / Apache-2.0 / PSF |
 
 PyInstaller (used only in CI for standalone binaries) is GPL-2.0-with-exception;
 its bootloader exception permits distributing bundled applications. Review the
-final artifact and included license texts before a commercial release.
+final artifact and included license texts before a public release.
 
 No provider SDK is bundled. Provider names are used descriptively only; see
 `SPEC.md` §26 for the trademark note.

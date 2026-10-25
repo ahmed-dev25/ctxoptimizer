@@ -72,7 +72,7 @@ jobs:
           python-version: "3.11"
 
       - name: Build one-file binary
-        run: uv run --extra update --with pyinstaller pyinstaller --onefile --name ctxproxy scripts/ctxproxy_entry.py
+        run: uv run --with pyinstaller pyinstaller --onefile --name ctxproxy scripts/ctxproxy_entry.py
 
       - name: Upload binary
         uses: actions/upload-artifact@v4

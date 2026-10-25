@@ -23,14 +23,12 @@ dependencies = [
 
 [project.optional-dependencies]
 tokens = ["tiktoken>=0.7"]
-update = ["pynacl>=1.5"]
 re2 = ["google-re2>=1.1"]
 dev = [
     "coverage>=7",
     "hypothesis>=6.100",
     "mypy>=1.10",
     "pip-audit",
-    "pynacl>=1.5",
     "pytest>=8",
     "pytest-asyncio>=0.23",
     "pytest-benchmark>=4",

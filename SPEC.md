@@ -176,7 +176,6 @@ Client ──HTTP──▶ [1 Ingress: route/auth/limits]
 | Dashboard | `ctxproxy/dashboard/*` | Admin API + Jinja/HTMX UI under `/_ctxproxy/`. |
 | CLI | `ctxproxy/cli.py` | Typer commands (§15). |
 | Config | `ctxproxy/config.py` | TOML + env + CLI → validated `Config` (§7). |
-| Update | `ctxproxy/update.py` | Signed self-update verification and installation (§21). |
 
 ### 4.3 Concurrency model
 - Single process, single asyncio event loop (`uvicorn --workers 1`; state like session caches and the SQLite writer assume one process).
@@ -278,7 +277,6 @@ ctxproxy/
 | Config validation | `pydantic` v2 (config only) | |
 | Paths | `platformdirs` | Data/log/config dirs per OS. |
 | Tokens (optional extra `[tokens]`) | `tiktoken` | **Downloads encodings on first use** → must degrade to heuristic when offline (§12.0.2). |
-| Update signature verification (optional extra `[update]`) | `pynacl` (Ed25519) | |
 | Dev | `pytest`, `pytest-asyncio`, `respx`, `hypothesis`, `ruff`, `mypy`, `coverage`, `pytest-benchmark` | |
 | Packaging | `hatchling`; distribute with `uv tool install` / `pipx`; later PyInstaller/Nuitka | |
 
@@ -1066,7 +1064,7 @@ Server-rendered pages (Jinja + HTMX) call the same service layer; no heavy SPA b
 |---|---|
 | SEC-1 | Bind loopback by default. `allow_remote=true` requires `admin_token` and prints a warning; proxy paths still forward client-supplied credentials only. |
 | SEC-2 | Never log `authorization`, `x-api-key`, `x-goog-api-key`, cookies, or `key=` query params. Log sanitizer applies to URLs and headers globally. |
-| SEC-3 | No outbound connections except configured upstreams. No analytics, no update checks (an opt-in `ctxproxy update-check` may be added later). |
+| SEC-3 | No outbound connections except configured upstreams. No analytics, no update checks, no phone-home. |
 | SEC-4 | DB, blobs, and logs under the per-user data dir; POSIX perms `0600/0700`; Windows user-profile ACL default. |
 | SEC-5 | Secrets redaction on all captured/stored text (§14.4). Redaction patterns have unit tests with positive and negative samples. |
 | SEC-6 | Admin endpoints protected by Host allowlist, admin token, CSRF (§16.1). |
@@ -1108,8 +1106,6 @@ Implementation rules:
   trademarks.
 - No activation key, tier gate, license server, or phone-home.
 - Active mode is always available.
-- Signed self-updates are a security feature, not a licensing mechanism; see
-  ?21.
 - The MIT license starts with `v0.4.0`.
 
 ---
@@ -1143,8 +1139,9 @@ GitHub Actions matrix: {ubuntu, macos, windows} × {3.11, 3.12, 3.13}. Gates: `r
 
 ## 21. Packaging & Distribution
 
-- `pyproject.toml` (hatchling), src layout, console script `ctxproxy = ctxproxy.cli:app`; extras `[tokens]`, `[update]`, `[re2]`, `[dev]`. Package data: templates, static, `data/*.json` (access via `importlib.resources`).
+- `pyproject.toml` (hatchling), src layout, console script `ctxproxy = ctxproxy.cli:app`; extras `[tokens]`, `[re2]`, `[dev]`. Package data: templates, static, `data/*.json` (access via `importlib.resources`).
 - Primary install: `uv tool install ctxproxy` / `pipx install ctxproxy`. Document Python version requirement; `uv` can fetch Python itself.
+- Updates: no built-in self-update. Users run `uv tool upgrade ctxproxy` or `pipx upgrade ctxproxy`; trust comes from the package index/GitHub release channel and TLS. Publish `SHA256SUMS` for manual binary downloads.
 - Standalone binaries (Phase 7): PyInstaller `--onefile` (or Nuitka) per OS via CI. Expect 40–80 MB artifacts; macOS requires codesign + notarization; Windows may trigger SmartScreen/AV false positives (budget time for signing). Do **not** market as "tiny single binary".
 - Autostart: `ctxproxy service install` generates launchd plist (`~/Library/LaunchAgents`), systemd user unit (`~/.config/systemd/user`), or a Windows Scheduled Task ("at logon"); `uninstall` reverses.
 - Versioning: SemVer; DB migrations forward-only with automatic backup (`ctxproxy.db.bak-<version>`) before migrating; config `schema_version` with warnings on unknown keys.
@@ -1203,7 +1200,7 @@ Each task = one coding-model session. "DoD" = definition of done (all gates in �
 - **P6-1** Gemini adapter (telemetry first, then limited transforms). **P6-2** Ollama adapter. **P6-3** Named OpenAI-compatible upstreams. **P6-4** `stale_result_elision` (opt-in) with break-even estimator. **P6-5** `churn_detector` (W7, opt-in, needs edit-tool input schemas per client — VERIFY §26.11) and `schema_bloat` (W8).
 
 ### Phase 7 — Ship (week 8)
-- **P7-1** Packaging (wheel, PyInstaller CI), service install. **P7-2** Signed self-updates. **P7-3** Docs/site, README GIF, FAQ. **P7-4** Launch checklist: fresh-machine install test on all OSes, privacy statement, changelog. **P7-5** Release packaging: architecture doc, test report, dependency licenses file, clean git history.
+- **P7-1** Packaging (wheel, PyInstaller CI), service install. **P7-2** Package-manager update docs. **P7-3** Docs/site, README GIF, FAQ. **P7-4** Launch checklist: fresh-machine install test on all OSes, privacy statement, changelog. **P7-5** Release packaging: architecture doc, test report, dependency licenses file, clean git history.
 
 ---
 
@@ -1320,7 +1317,7 @@ Tip: for the transforms phase, give the model the **pure function signature and 
 6. Cursor feasibility (likely not proxyable locally).
 7. ~~Whether to add an optional MCP server exposing `ctxproxy_expand(ref)`~~ **Promoted to Phase 3 scope (§12.13, Decision D16).** Remaining open: stdio registration UX per client (see #12).
 8. Optional JSON-aware truncation for large JSON tool results (v2).
-9. Release signing-key custody and update policy (owner decision).
+9. Release checksum/signing policy for downloadable binaries (owner decision).
 10. Legal: trademark-safe product name; no use of provider names in the product title.
 11. Edit-tool input schemas per client/agent (old_string/new_string vs unified diffs, etc.) needed by `churn_detector` (W7) — VERIFY per client before Phase 6.
 12. MCP stdio registration UX per client (`claude mcp add` semantics, VS Code/Cursor config shapes) for `ctxproxy_expand` — VERIFY.
@@ -1384,7 +1381,6 @@ dependencies = [
 ]
 [project.optional-dependencies]
 tokens  = ["tiktoken>=0.7"]
-update  = ["pynacl>=1.5"]
 re2     = ["google-re2>=1.1"]
 dev     = ["pytest>=8", "pytest-asyncio>=0.23", "respx>=0.21", "hypothesis>=6.100",
            "ruff>=0.5", "mypy>=1.10", "coverage>=7", "pytest-benchmark>=4", "pip-audit"]

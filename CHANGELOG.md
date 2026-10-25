@@ -4,7 +4,8 @@
 
 - Relicensed ctxproxy under the **MIT License**.
 - Removed activation checks, license CLI, license config and EULA.
-- Retained signed self-updates as a security feature.
+- Removed the built-in self-update command and signing manifest; upgrade with
+  `uv tool upgrade ctxproxy` or `pipx upgrade ctxproxy`.
 - Source is intended to be public; see `NOTICE` for attribution/trademarks.
 
 ## 0.3.0-alpha — 2026-10-25

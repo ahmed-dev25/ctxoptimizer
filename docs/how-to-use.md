@@ -42,15 +42,15 @@ ctxproxy --version
 From a published wheel:
 
 ```powershell
-uv tool install "ctxproxy[update]"
+uv tool install ctxproxy
 # or
-pipx install "ctxproxy[update]"
+pipx install ctxproxy
 ```
 
 From a local wheel:
 
 ```powershell
-uv tool install --force .\ctxproxy-0.4.0-py3-none-any.whl --with pynacl
+uv tool install --force .\ctxproxy-0.4.0-py3-none-any.whl
 ```
 
 From a checkout:
@@ -60,7 +60,7 @@ uv sync --extra dev
 uv run ctxproxy --version
 ```
 
-`[update]` / `--with pynacl` is needed for signed-update verification.
+No optional signature extra is required; ctxproxy has no built-in self-update.
 
 ### Option C — development install
 
@@ -337,23 +337,19 @@ Wipe everything:
 ctxproxy purge --all
 ```
 
-## 13. Updates
+## 13. Updating
+
+Use the package manager that installed ctxproxy:
 
 ```powershell
-ctxproxy update --check
-ctxproxy update --yes
+uv tool upgrade ctxproxy
+# or
+pipx upgrade ctxproxy
 ```
 
-The update command verifies an Ed25519 signature and SHA-256 before installing.
-Set the production manifest URL/public key:
-
-```toml
-[update]
-manifest_url = "https://example.com/ctxproxy/manifest.json"
-public_key = "base64-ed25519-public-key"
-```
-
-Never use `--allow-unsigned` for a release. See `docs/updating.md`.
+There is no built-in self-update command. Updates come from the package index or
+GitHub release channel; verify release checksums and only install from the
+official source. See `docs/updating.md`.
 
 ## 14. License
 
@@ -383,7 +379,6 @@ Supported: launchd (macOS), systemd `--user` (Linux), Windows scheduled task.
 | Transform fallbacks | Check Transforms page; guard may quarantine; inspect request detail. |
 | No cache hits | Check Waste/drift; look for changing system prompt/tools/history. |
 | `ctxproxy status` fails | Proxy not running, wrong port, or firewall; try the printed URL. |
-| Update says unsigned | Set `update.public_key`; use `--allow-unsigned` only for local tests. |
 | Windows SmartScreen | Binary is unsigned; only bypass for a trusted release. |
 
 Diagnostics:
@@ -423,7 +418,6 @@ ctxproxy guard status|enable|disable <transform>
 ctxproxy replay <request.json>
 ctxproxy bench
 ctxproxy capture --out <dir>
-ctxproxy update --check|--yes
 ctxproxy purge --all
 ctxproxy mcp run
 ctxproxy mcp snippet --client claude-code

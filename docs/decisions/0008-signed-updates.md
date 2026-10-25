@@ -1,6 +1,6 @@
 # 0008 — Signed self-updates
 
-- Status: accepted
+- Status: superseded by 0010
 - Date: 2026-10-25
 - Spec refs: §21
 
