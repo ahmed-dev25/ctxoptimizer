@@ -65,4 +65,4 @@ def test_doctor_checks_are_structured(tmp_path: Path) -> None:
     config = Config.model_validate({"telemetry": {"db_path": str(tmp_path / "ctxproxy.db")}})
     checks = run_checks(config, offline=True)
     names = {check.name for check in checks}
-    assert {"bind host", "database writable", "pricing", "license"} <= names
+    assert {"bind host", "database writable", "pricing"} <= names

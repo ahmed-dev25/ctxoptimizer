@@ -20,7 +20,6 @@ from ctxproxy.dashboard.service import (
     pricing_payload,
 )
 from ctxproxy.doctor import run_checks
-from ctxproxy.licensing import license_status
 from ctxproxy.telemetry.expand import expand_stats
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -338,7 +337,6 @@ async def settings_view(request: Request) -> Response:
             "mode": config.mode.default,
             "title": "Settings",
             "data": data,
-            "license": license_status(),
             "privacy": config.telemetry.capture_payloads != "off",
             "csrf": request.app.state.csrf_token,
         },

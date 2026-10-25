@@ -9,7 +9,7 @@ your config; there is no analytics, update check, or phone-home.
 |---|---|---|
 | SQLite (`ctxproxy.db`) | request metadata, usage, cost, transform reports, drift, findings, quarantine events | enabled |
 | Blob directory | original bytes for changed/omitted blocks, and optional full request bodies | only when `capture_payloads != "off"` |
-| License file | signed JSON in the per-user data dir (mode 0600 on POSIX) | optional |
+| License file | not used; ctxproxy is MIT open source | — |
 | Logs | request IDs, provider/model, status, latency; never authorization or API keys | stderr |
 
 `capture_payloads` values:

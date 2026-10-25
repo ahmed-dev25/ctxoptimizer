@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 — 2026-10-25
+
+- Relicensed ctxproxy under the **MIT License**.
+- Removed activation checks, license CLI, license config and EULA.
+- Retained signed self-updates as a security feature.
+- Source is intended to be public; see `NOTICE` for attribution/trademarks.
+
 ## 0.3.0-alpha — 2026-10-25
 
 - Recommendation dismissal (30-day suppression) with dashboard controls.
@@ -8,7 +15,6 @@
 - CI coverage gate at 80% overall.
 - Release workflow (wheel/sdist, checksums, unsigned binaries) and release
   checklist.
-- Proprietary commercial license (`LICENSE`, `EULA.md`, `NOTICE`).
 - Signed self-update (`ctxproxy update --check/update`) with Ed25519 + SHA-256
   verification.
 - `volatile_normalizer` implemented and registered (opt-in).

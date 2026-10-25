@@ -42,15 +42,15 @@ ctxproxy --version
 From a published wheel:
 
 ```powershell
-uv tool install "ctxproxy[license]"
+uv tool install "ctxproxy[update]"
 # or
-pipx install "ctxproxy[license]"
+pipx install "ctxproxy[update]"
 ```
 
 From a local wheel:
 
 ```powershell
-uv tool install --force .\ctxproxy-0.3.0-py3-none-any.whl --with pynacl
+uv tool install --force .\ctxproxy-0.4.0-py3-none-any.whl --with pynacl
 ```
 
 From a checkout:
@@ -60,8 +60,7 @@ uv sync --extra dev
 uv run ctxproxy --version
 ```
 
-`[license]` / `--with pynacl` is needed for signed-update and license
-verification.
+`[update]` / `--with pynacl` is needed for signed-update verification.
 
 ### Option C — development install
 
@@ -76,7 +75,7 @@ uv run ctxproxy run
 
 ```powershell
 ctxproxy --version
-# 0.3.0
+# 0.4.0
 ```
 
 If the command is not found on Windows:
@@ -98,7 +97,7 @@ ctxproxy run
 The banner prints:
 
 ```text
-ctxproxy 0.3.0 listening on http://127.0.0.1:8787 (shadow)
+ctxproxy 0.4.0 listening on http://127.0.0.1:8787 (shadow)
 dashboard: http://127.0.0.1:8787/_ctxproxy/?token=...
 ```
 
@@ -354,18 +353,12 @@ manifest_url = "https://example.com/ctxproxy/manifest.json"
 public_key = "base64-ed25519-public-key"
 ```
 
-Never use `--allow-unsigned` for a paid release. See `docs/updating.md`.
+Never use `--allow-unsigned` for a release. See `docs/updating.md`.
 
 ## 14. License
 
-```powershell
-ctxproxy license status
-ctxproxy license install .\license.json
-```
-
-This open build has `LICENSE_ENFORCEMENT = "off"`, so active mode is not
-blocked. A paid build can enable enforcement and fall back to shadow mode for
-invalid/expired licenses. See `LICENSE`, `EULA.md` and ADR 0008.
+ctxproxy is free and open-source software licensed under the **MIT License**.
+See `LICENSE` and `NOTICE`.
 
 ## 15. Run at login
 
@@ -432,7 +425,6 @@ ctxproxy bench
 ctxproxy capture --out <dir>
 ctxproxy update --check|--yes
 ctxproxy purge --all
-ctxproxy license install|status
 ctxproxy mcp run
 ctxproxy mcp snippet --client claude-code
 ctxproxy service install|uninstall

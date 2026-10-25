@@ -10,7 +10,6 @@ from datetime import date
 from pathlib import Path
 
 from ctxproxy.config import LOOPBACK_HOSTS, Config, data_dir
-from ctxproxy.licensing import license_status
 from ctxproxy.telemetry.pricing import load_pricing
 
 
@@ -122,15 +121,6 @@ def run_checks(config: Config, *, offline: bool = True) -> list[Check]:
             except httpx.HTTPError as exc:
                 checks.append(Check(f"upstream {name}", False, str(exc), warning=True))
 
-    status = license_status()
-    checks.append(
-        Check(
-            "license",
-            status.valid or status.enforcement == "off",
-            f"{status.tier} ({status.reason})",
-            warning=not status.valid,
-        )
-    )
     return checks
 
 

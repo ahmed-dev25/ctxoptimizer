@@ -332,13 +332,13 @@
     <div class="pipe" style="margin-top:16px;">
       <span class="node hot">hashes &amp; regexes</span><span class="arr">·</span>
       <span class="node hot">counters &amp; thresholds</span><span class="arr">·</span>
-      <span class="node hot">provider-reported usage (paid by user anyway)</span>
+      <span class="node hot">provider-reported usage (billed by provider)</span>
       <span class="arr">⟶</span>
       <span class="node">the only LLM in the picture is the one the user was already paying</span>
     </div>
   </div>
   <div class="grid2" style="margin-top:16px;">
-    <div class="card"><h3 style="margin-top:0;">Why this matters commercially</h3>
+    <div class="card"><h3 style="margin-top:0;">Why this matters</h3>
       <p style="color:var(--muted); font-size:.92rem;">The proxy promises "cheaper" without charging tokens to be clever.
       A competitor that calls an LLM to summarize competes against itself: its savings partially pay its own inference bill.
       ctxproxy's interventions cost microseconds of CPU.</p></div>
@@ -419,7 +419,7 @@
       <tr><td><b>P4</b> Cache hints</td><td>anthropic breakpoints (stair-step), openai prompt_cache_key, marker-quality metric</td></tr>
       <tr><td><b>P5</b> Full dashboard</td><td>all pages incl. <b>Waste Opportunities</b> + one-click recommendations, security hardening</td></tr>
       <tr><td><b>P6</b> More providers</td><td>Gemini, Ollama, named upstreams, elision, churn detector (W7), schema bloat (W8)</td></tr>
-      <tr><td><b>P7</b> Ship</td><td>packaging, service install, licensing (free shadow → paid active), docs, launch · future: team tier (AI FinOps), model-drift sentry</td></tr>
+      <tr><td><b>P7</b> Ship</td><td>packaging, service install, signed updates, docs, launch</td></tr>
     </table>
   </div>
 </section>

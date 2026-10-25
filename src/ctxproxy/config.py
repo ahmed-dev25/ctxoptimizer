@@ -314,10 +314,6 @@ class DashboardConfig(_Section):
     enabled: bool = True
 
 
-class LicenseConfig(_Section):
-    path: str = ""
-
-
 class UpdateConfig(_Section):
     enabled: bool = True
     manifest_url: str = (
@@ -351,7 +347,6 @@ class Config(_Section):
     guard: GuardConfig = Field(default_factory=GuardConfig)
     pricing: PricingConfig = Field(default_factory=PricingConfig)
     dashboard: DashboardConfig = Field(default_factory=DashboardConfig)
-    license: LicenseConfig = Field(default_factory=LicenseConfig)
     update: UpdateConfig = Field(default_factory=UpdateConfig)
 
     @field_validator("upstreams")

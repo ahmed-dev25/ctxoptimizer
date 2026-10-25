@@ -1,20 +1,20 @@
-"""Smoke tests: package wiring, CLI entry point and license stub."""
+"""Smoke tests: package wiring and CLI entry point."""
 
 from __future__ import annotations
 
 import importlib
 import pkgutil
+from importlib.util import find_spec
 
 from typer.testing import CliRunner
 
 import ctxproxy
 from ctxproxy import __version__
 from ctxproxy.cli import app
-from ctxproxy.licensing import is_active_mode_allowed, license_status
 
 
 def test_version_is_declared() -> None:
-    assert __version__ == "0.3.0"
+    assert __version__ == "0.4.0"
 
 
 def test_cli_reports_version() -> None:
@@ -23,11 +23,16 @@ def test_cli_reports_version() -> None:
     assert result.stdout.strip() == __version__
 
 
-def test_license_stub_allows_active_mode() -> None:
-    assert is_active_mode_allowed() is True
-    status = license_status()
-    assert status.enforcement == "off"
-    assert status.valid is False
+def test_license_command_is_removed() -> None:
+    result = CliRunner().invoke(app, ["license"])
+    assert result.exit_code != 0
+
+
+def test_config_has_no_license_section() -> None:
+    from ctxproxy.config import Config
+
+    assert "license" not in Config.model_fields
+    assert find_spec("ctxproxy.licensing") is None
 
 
 def test_every_module_imports() -> None:

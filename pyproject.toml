@@ -1,10 +1,10 @@
 [project]
 name = "ctxproxy"
-version = "0.3.0"
+version = "0.4.0"
 description = "Local, deterministic cost optimizer for AI coding agents"
 readme = "README.md"
-license = "LicenseRef-Proprietary"
-license-files = ["LICENSE", "NOTICE", "EULA.md"]
+license = "MIT"
+license-files = ["LICENSE", "NOTICE"]
 requires-python = ">=3.11"
 authors = [{ name = "ahmed" }]
 classifiers = [
@@ -23,7 +23,7 @@ dependencies = [
 
 [project.optional-dependencies]
 tokens = ["tiktoken>=0.7"]
-license = ["pynacl>=1.5"]
+update = ["pynacl>=1.5"]
 re2 = ["google-re2>=1.1"]
 dev = [
     "coverage>=7",

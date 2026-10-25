@@ -50,12 +50,9 @@ decision or external credentials.
 
 ## 6. Product/legal (owner)
 
-- [x] Choose the project license: proprietary commercial license (ADR 0008).
-- [ ] Have the short EULA reviewed for your jurisdiction/sales platform.
-- [ ] Decide whether paid builds enable license enforcement (open build keeps
-      it off).
-- [ ] Finalize pricing/current model IDs and peak/off-peak policy.
+- [x] Choose the project license: MIT open source.
 - [ ] Confirm provider/trademark wording in README and metadata.
+- [ ] Finalize model pricing/current model IDs and peak/off-peak policy.
 - [ ] Review `THIRD_PARTY_LICENSES.md` against the built artifact.
-- [ ] Tag with SemVer (`v0.3.0-alpha` recommended for this build) and update
+- [ ] Tag with SemVer (`v0.4.0` recommended for the MIT release) and update
       `CHANGELOG.md`/`docs/test-report.md`.

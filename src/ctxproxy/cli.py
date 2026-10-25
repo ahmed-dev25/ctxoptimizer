@@ -32,7 +32,6 @@ from ctxproxy.config import (
     load_config,
 )
 from ctxproxy.dashboard.service import findings_from_rows
-from ctxproxy.licensing import install_license, license_status, set_license_path
 from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
 from ctxproxy.pipeline import run_pipeline
 from ctxproxy.providers import adapter_for
@@ -199,7 +198,6 @@ def doctor(
 ) -> None:
     """Check the local configuration, storage and upstream reachability."""
     config = _load(config_path)
-    set_license_path(config.license.path or None)
     failures = 0
 
     def report(ok: bool, label: str, detail: str = "") -> None:
@@ -855,9 +853,6 @@ def _to_csv(rows: list[_Request]) -> str:
 mcp_app = typer.Typer(help="MCP integration for ctxproxy_expand.")
 app.add_typer(mcp_app, name="mcp")
 
-license_app = typer.Typer(help="Offline license management.")
-app.add_typer(license_app, name="license")
-
 service_app = typer.Typer(help="Install or remove the per-user autostart service.")
 app.add_typer(service_app, name="service")
 
@@ -886,37 +881,6 @@ def service_uninstall(
     for command in plan.remove_commands:
         typer.echo("run: " + " ".join(command))
     typer.echo(f"removed: {plan.path}")
-
-
-@license_app.command("install")
-def license_install(
-    path: Annotated[Path, typer.Argument()],
-) -> None:
-    """Validate and install a signed license file."""
-    try:
-        destination = install_license(path)
-    except (OSError, ValueError) as exc:
-        typer.echo(f"error: {exc}", err=True)
-        raise typer.Exit(code=1) from exc
-    typer.echo(f"installed {destination}")
-
-
-@license_app.command("status")
-def license_show(
-    config_path: Annotated[Path | None, typer.Option("--config")] = None,
-) -> None:
-    """Show the current license status."""
-    config = _load(config_path)
-    set_license_path(config.license.path or None)
-    status = license_status()
-    typer.echo(f"tier: {status.tier}")
-    typer.echo(f"valid: {status.valid}")
-    typer.echo(f"enforcement: {status.enforcement}")
-    typer.echo(f"reason: {status.reason}")
-    if status.email:
-        typer.echo(f"email: {status.email}")
-    if status.expires_at:
-        typer.echo(f"expires_at: {status.expires_at}")
 
 
 @mcp_app.command("run")
