@@ -56,6 +56,8 @@ _ENV_FIELDS = {
     "CTXPROXY_PORT": "server.port",
     "CTXPROXY_MODE": "mode.default",
     "CTXPROXY_LOG_LEVEL": "server.log_level",
+    "CTXPROXY_UPDATE_MANIFEST": "update.manifest_url",
+    "CTXPROXY_UPDATE_PUBLIC_KEY": "update.public_key",
 }
 
 
@@ -316,6 +318,14 @@ class LicenseConfig(_Section):
     path: str = ""
 
 
+class UpdateConfig(_Section):
+    enabled: bool = True
+    manifest_url: str = (
+        "https://github.com/ahmed-dev25/ctxproxy/releases/latest/download/manifest.json"
+    )
+    public_key: str = ""
+
+
 def _default_upstreams() -> dict[str, str | UpstreamEntry]:
     return {
         "anthropic": "https://api.anthropic.com",
@@ -342,6 +352,7 @@ class Config(_Section):
     pricing: PricingConfig = Field(default_factory=PricingConfig)
     dashboard: DashboardConfig = Field(default_factory=DashboardConfig)
     license: LicenseConfig = Field(default_factory=LicenseConfig)
+    update: UpdateConfig = Field(default_factory=UpdateConfig)
 
     @field_validator("upstreams")
     @classmethod

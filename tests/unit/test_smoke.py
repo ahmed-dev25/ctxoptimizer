@@ -14,7 +14,7 @@ from ctxproxy.licensing import is_active_mode_allowed, license_status
 
 
 def test_version_is_declared() -> None:
-    assert __version__ == "0.1.0"
+    assert __version__ == "0.3.0"
 
 
 def test_cli_reports_version() -> None:

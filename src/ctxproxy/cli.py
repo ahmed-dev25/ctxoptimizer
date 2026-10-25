@@ -43,6 +43,7 @@ from ctxproxy.telemetry.pricing import load_pricing
 from ctxproxy.telemetry.redact import redact_text
 from ctxproxy.telemetry.store import default_db_path
 from ctxproxy.transforms import build_transforms
+from ctxproxy.update import UpdateError, perform_update
 
 app = typer.Typer(
     add_completion=False,
@@ -614,6 +615,43 @@ def capture(
                 (target / f"response.{suffix}").write_text(text, encoding="utf-8")
         written += 1
     typer.echo(f"wrote {written} fixture(s) to {out}")
+
+
+@app.command()
+def update(
+    config_path: Annotated[Path | None, typer.Option("--config")] = None,
+    manifest: Annotated[str | None, typer.Option("--manifest")] = None,
+    public_key: Annotated[str | None, typer.Option("--public-key")] = None,
+    check_only: Annotated[bool, typer.Option("--check")] = False,
+    allow_unsigned: Annotated[bool, typer.Option("--allow-unsigned")] = False,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+    yes: Annotated[bool, typer.Option("--yes", "-y")] = False,
+) -> None:
+    """Check for or install a signed ctxproxy update."""
+    overrides: dict[str, object] = {}
+    if manifest:
+        overrides["update.manifest_url"] = manifest
+    if public_key:
+        overrides["update.public_key"] = public_key
+    config = _load(config_path, overrides or None)
+    if allow_unsigned:
+        typer.echo("warning: unsigned update explicitly allowed", err=True)
+    try:
+        if check_only:
+            result = perform_update(config, check_only=True, allow_unsigned=allow_unsigned)
+            typer.echo(f"current: {result.current}")
+            typer.echo(f"latest:  {result.latest}")
+            typer.echo("update available" if result.available else "up to date")
+            return
+        if not yes:
+            typer.confirm("Install the latest verified update?", abort=True)
+        result = perform_update(config, allow_unsigned=allow_unsigned, dry_run=dry_run)
+    except UpdateError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"current: {result.current}")
+    typer.echo(f"latest:  {result.latest}")
+    typer.echo("up to date" if not result.available else "update verified and installed")
 
 
 @app.command()

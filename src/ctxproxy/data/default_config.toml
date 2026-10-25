@@ -186,3 +186,8 @@ enabled = true
 
 [license]
 path = ""
+
+[update]
+enabled = true
+manifest_url = "https://github.com/ahmed-dev25/ctxproxy/releases/latest/download/manifest.json"
+public_key = ""
