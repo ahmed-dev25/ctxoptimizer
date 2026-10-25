@@ -58,6 +58,8 @@ async def overview(request: Request) -> Response:
         }
     )
     waste_points = store.waste_timeseries("day", since) if store is not None else []
+    spend_line = _polyline([float(point.get("value") or 0) for point in points])
+    waste_line = _polyline([float(point.get("cost_usd") or 0) for point in waste_points])
     return templates.TemplateResponse(
         request,
         "overview.html",
@@ -74,6 +76,8 @@ async def overview(request: Request) -> Response:
             "capture": state.config.telemetry.capture_payloads,
             "waste": waste,
             "waste_points": waste_points,
+            "spend_line": spend_line,
+            "waste_line": waste_line,
         },
     )
 
@@ -94,6 +98,8 @@ async def waste_view(request: Request) -> Response:
         volatile_normalizer_enabled=state.config.transforms.volatile_normalizer.enabled,
         transforms_enabled=True,
     )
+    suppressed = store.suppressed_recommendations() if store is not None else set()
+    items = [item for item in items if item["id"] not in suppressed]
     return templates.TemplateResponse(
         request,
         "waste.html",
@@ -136,6 +142,12 @@ async def session_view(request: Request) -> Response:
     by_request = {item["request_id"]: item for item in drift}
     for row in rows:
         row["drift"] = (by_request.get(row["request_id"]) or {}).get("cause")
+    ratios = [
+        100
+        * (row.get("cache_read") or 0)
+        / max((row.get("cache_read") or 0) + (row.get("fresh_input") or 0), 1)
+        for row in rows
+    ]
     return templates.TemplateResponse(
         request,
         "session.html",
@@ -145,6 +157,7 @@ async def session_view(request: Request) -> Response:
             "title": f"Session {session_id}",
             "session_id": session_id,
             "rows": rows,
+            "ratio_line": _polyline(ratios),
         },
     )
 
@@ -361,6 +374,17 @@ async def doctor_view(request: Request) -> Response:
             "title": "Doctor",
             "checks": checks,
         },
+    )
+
+
+def _polyline(values: list[float], width: int = 600, height: int = 80) -> str:
+    if len(values) < 2:
+        return ""
+    maximum = max(max(values), 1e-9)
+    step = width / (len(values) - 1)
+    return " ".join(
+        f"{index * step:.1f},{height - (value / maximum) * height:.1f}"
+        for index, value in enumerate(values)
     )
 
 

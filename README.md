@@ -102,6 +102,7 @@ A paid build flips that single flag and embeds the public key.
 - [`docs/privacy.md`](docs/privacy.md) — data handling and purge
 - [`docs/faq.md`](docs/faq.md) — cache, savings, troubleshooting
 - [`docs/test-report.md`](docs/test-report.md) — gates and test coverage summary
+- [`docs/release-checklist.md`](docs/release-checklist.md) — release/signing checklist
 - [`docs/progress.md`](docs/progress.md) — build status and handoff notes
 - [`CHANGELOG.md`](CHANGELOG.md)
 - [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)

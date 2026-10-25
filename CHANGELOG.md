@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — P9 hardening
+
+- Recommendation dismissal (30-day suppression) with dashboard controls.
+- Per-row pricing editor with validated JSON fallback.
+- Guard auto-re-enable and expand-error-rate quarantine.
+- CI coverage gate at 80% overall.
+- Release workflow (wheel/sdist, checksums, unsigned binaries) and release
+  checklist.
+
 ## Unreleased — P8 hardening
 
 - `volatile_normalizer` implemented and registered (opt-in).

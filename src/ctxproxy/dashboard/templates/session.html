@@ -28,6 +28,12 @@
   </nav>
   <h1>{{ title }}</h1>
   <p class="muted">Turn-by-turn metadata. Cache-read ratio = cache read / (fresh + cache read).</p>
+  {% if ratio_line %}
+  <svg viewBox="0 0 600 80" width="100%" height="100" preserveAspectRatio="none"
+       style="background:#161b22;border:1px solid #2d3644;border-radius:10px;">
+    <polyline fill="none" stroke="#4ade80" stroke-width="2" points="{{ ratio_line }}"/>
+  </svg>
+  {% endif %}
   <table>
     <thead>
       <tr><th>#</th><th>Time</th><th>Model</th><th>Orig tokens</th><th>Final tokens</th>

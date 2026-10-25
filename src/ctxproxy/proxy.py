@@ -314,7 +314,12 @@ def _apply_transforms(
     )
     try:
         guard = getattr(request.app.state, "guard", None)
-        disabled = guard.quarantined_for(ctx.session_id) if isinstance(guard, Guard) else set()
+        if isinstance(guard, Guard):
+            guard.observe_request(ctx.session_id)
+            guard.observe_expand_health(ctx.session_id)
+            disabled = guard.quarantined_for(ctx.session_id)
+        else:
+            disabled = set()
         cache_state = getattr(request.app.state, "cache_serve", None)
         transforms = build_transforms(
             config,

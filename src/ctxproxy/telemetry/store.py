@@ -22,7 +22,7 @@ from ctxproxy.config import data_dir
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 _SCHEMA = """
 PRAGMA journal_mode=WAL;
@@ -89,6 +89,9 @@ CREATE TABLE IF NOT EXISTS blobs(
 
 CREATE TABLE IF NOT EXISTS captures(
   request_id TEXT NOT NULL, transform_id TEXT, location TEXT, before_hash TEXT, after_hash TEXT);
+
+CREATE TABLE IF NOT EXISTS recommendation_state(
+  recommendation_id TEXT PRIMARY KEY, dismissed_until REAL NOT NULL, updated_ts REAL NOT NULL);
 """
 
 _REQUEST_COLUMNS = (
@@ -279,6 +282,28 @@ class Store:
             conn.row_factory = sqlite3.Row
             rows = conn.execute(query, params).fetchall()
         return [dict(row) for row in rows]
+
+    def dismiss_recommendation(
+        self, recommendation_id: str, *, days: int = 30, now: float | None = None
+    ) -> None:
+        current = time.time() if now is None else now
+        until = current + max(1, days) * 86_400
+        with sqlite3.connect(self.path) as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO recommendation_state("
+                "recommendation_id, dismissed_until, updated_ts) VALUES(?, ?, ?)",
+                (recommendation_id, until, current),
+            )
+            conn.commit()
+
+    def suppressed_recommendations(self, now: float | None = None) -> set[str]:
+        current = time.time() if now is None else now
+        with sqlite3.connect(self.path) as conn:
+            rows = conn.execute(
+                "SELECT recommendation_id FROM recommendation_state WHERE dismissed_until > ?",
+                (current,),
+            ).fetchall()
+        return {str(row[0]) for row in rows}
 
     def set_waste_status(self, finding_id: str, status: str) -> bool:
         if status not in {"new", "ack", "fixed", "skipped"}:

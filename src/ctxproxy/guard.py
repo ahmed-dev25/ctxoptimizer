@@ -22,6 +22,7 @@ class Guard:
         )
         self._drift: dict[tuple[str, str], int] = defaultdict(int)
         self._quarantined: dict[tuple[str, str], str] = {}
+        self._recovery: dict[tuple[str, str], int] = defaultdict(int)
         self._store: object | None = None
 
     def bind_store(self, store: object) -> None:
@@ -61,10 +62,41 @@ class Guard:
                 self._quarantined[key] = "our_fault_drift"
                 self._record(session_id, transform_id, "our_fault_drift")
 
+    def observe_request(self, session_id: str) -> None:
+        """Count successful requests and optionally auto-re-enable."""
+        if not self.config.guard.enabled or self.config.guard.auto_reenable <= 0:
+            return
+        for key in list(self._quarantined):
+            if key[0] != session_id:
+                continue
+            self._recovery[key] += 1
+            if self._recovery[key] >= self.config.guard.auto_reenable:
+                self.enable(*key)
+
+    def observe_expand_health(self, session_id: str) -> None:
+        """Quarantine omission transforms when expand errors are too high."""
+        if not self.config.guard.enabled or self._store is None:
+            return
+        from ctxproxy.telemetry.expand import expand_stats
+
+        path = getattr(self._store, "path", None)
+        stats = expand_stats(db_path=path) if path is not None else expand_stats()
+        if stats["total"] < 10:
+            return
+        errors = int(stats["errors"])
+        if errors / max(int(stats["total"]), 1) <= self.config.guard.expand_error_rate:
+            return
+        for transform_id in ("cache_serve", "stale_result_elision"):
+            key = (session_id, transform_id)
+            if key not in self._quarantined:
+                self._quarantined[key] = "expand_errors"
+                self._record(session_id, transform_id, "expand_errors")
+
     def enable(self, session_id: str, transform_id: str) -> None:
         self._quarantined.pop((session_id, transform_id), None)
         self._fallbacks.pop((session_id, transform_id), None)
         self._drift.pop((session_id, transform_id), None)
+        self._recovery.pop((session_id, transform_id), None)
         record = getattr(self._store, "record_guard_event", None)
         if callable(record):
             record(session_id, transform_id, "enabled", {"cleared": True}, cleared_ts=time.time())

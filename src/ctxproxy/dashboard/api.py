@@ -243,6 +243,26 @@ async def waste_status(request: Request) -> Response:
     return JSONResponse({"api_version": API_VERSION, "finding_id": finding_id, "status": status})
 
 
+async def dismiss_recommendation(request: Request) -> Response:
+    store = getattr(request.app.state, "store", None)
+    if store is None:
+        return JSONResponse({"error": "store unavailable"}, status_code=503)
+    recommendation_id = request.path_params["recommendation_id"]
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    days = int(body.get("days", 30)) if isinstance(body, dict) else 30
+    store.dismiss_recommendation(recommendation_id, days=max(1, min(days, 365)))
+    return JSONResponse(
+        {
+            "api_version": API_VERSION,
+            "recommendation_id": recommendation_id,
+            "dismissed_days": max(1, min(days, 365)),
+        }
+    )
+
+
 async def apply_recommendation(request: Request) -> Response:
     recommendation_id = request.path_params["recommendation_id"]
     patches: dict[str, dict[str, Any]] = {
@@ -338,6 +358,8 @@ async def recommendations_api(request: Request) -> Response:
         volatile_normalizer_enabled=config.transforms.volatile_normalizer.enabled,
         transforms_enabled=True,
     )
+    suppressed = store.suppressed_recommendations() if store is not None else set()
+    items = [item for item in items if item["id"] not in suppressed]
     return JSONResponse({"api_version": API_VERSION, "recommendations": items})
 
 
@@ -486,6 +508,7 @@ __all__ = [
     "API_VERSION",
     "admin_config",
     "apply_recommendation",
+    "dismiss_recommendation",
     "drift",
     "expand_usage",
     "export",
