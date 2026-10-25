@@ -87,8 +87,8 @@ def parse_manifest(
 
 def _verify_signature(payload: dict[str, Any], signature: str, public_key: str) -> None:
     try:
-        from nacl.exceptions import BadSignatureError  # type: ignore[import-not-found]
-        from nacl.signing import VerifyKey  # type: ignore[import-not-found]
+        from nacl.exceptions import BadSignatureError
+        from nacl.signing import VerifyKey
     except ImportError as exc:
         raise UpdateError("install the [license] extra to verify updates") from exc
     message = {key: value for key, value in payload.items() if key != "signature"}
