@@ -5,6 +5,11 @@ binaries or OS code-signing credentials.
 
 ## One-time PyPI setup
 
+1. Create a PyPI account and enable 2FA.
+2. Open **Account settings → Publishing** and add a **pending trusted
+   publisher** (the project does not exist yet). Use the values below.
+3. On GitHub, create the `pypi` environment restricted to `v*` tags.
+
 The PyPI project must have a **pending trusted publisher** configured before
 the first workflow run:
 
