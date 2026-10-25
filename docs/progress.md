@@ -3,18 +3,14 @@
 **Last updated:** 2026-10-26
 **Milestone:** P0–P15 — ctxoptimizer release
 **Branch:** `main`
-**Overall:** renamed to ctxoptimizer; `v0.4.1` tagged; PyPI publish blocked by `invalid-publisher` (trusted publisher does not match the workflow claims)
+**Overall:** `ctxoptimizer 0.4.1` published to PyPI and GitHub; ready for website spec
 
 ## Resume here
 
-- **Last completed:** P15 rename to ctxoptimizer (`405af37`); `v0.4.1` tagged
-  (`77d2c4f`).
-- **Last merge:** `9ab4301` (P15)
-- **Next task:** fix the PyPI trusted-publisher configuration, rerun release
-  run `40221549438`, verify the PyPI upload/attestations, then start the website
-  spec.
-- **Blocked:** PyPI trusted publisher returns `invalid-publisher` for
-  `ahmed-dev25/ctxoptimizer`, workflow `release.yml`, environment `pypi`.
+- **Last completed:** `ctxoptimizer 0.4.1` release (`77d2c4f`, PyPI + GitHub).
+- **Last merge:** `e072bdf` (P15 release workflow fix)
+- **Next task:** start the website spec.
+- **Blocked:** none
 - **Active branch:** none ? working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
@@ -95,11 +91,12 @@
 | P14 | Wheel-only PyPI release | done | `feat/p14-pypi-release` | `99e7fef` | `df33877` | ruff, format, mypy (62), pytest (278), coverage 81.69%; release build run `40219261674` | version `0.4.1`; removed PyInstaller binaries, binary CI and code-signing path; release workflow uses PyPI Trusted Publishing + PEP 740 attestations and publishes wheel/sdist plus checksums |
 | P14-1 | PyPI workflow verification | done | `main` | `668637b` | — | release build/attestation run `40219423578`; CI run `40219421757` | verified wheel/sdist build and GitHub build provenance; PyPI upload still needs owner trusted-publisher setup |
 | P15 | Rename to ctxoptimizer | done | `feat/p15-rename-ctxoptimizer` | `405af37` | `9ab4301` | ruff, format, mypy (62), pytest (278), coverage 81.69% | renamed package/CLI/repo/docs/PyPI metadata; GitHub repo is now `ahmed-dev25/ctxoptimizer` |
-| P15-1 | PyPI publish | blocked | — | `77d2c4f` | — | release run `40221549438` | `invalid-publisher`: trusted publisher config does not match repo/workflow/environment |
+| P15-1 | PyPI publish | done | ? | `77d2c4f` | ? | release run `40221549438` | PyPI trusted publishing succeeded after publisher fix; wheel/sdist + PEP 740 attestations published |
+| P15-2 | Release workflow fix | done | `fix/p15-release-gh` | `ac8a178` | `e072bdf` | release job sets `GH_REPO`; PyPI retries skip existing files | GitHub release v0.4.1 published after the original job failed |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
 | Release | `v0.4.0` | released | — | `c37913a` | — | release run `40217381725`; historical | wheel and sdist only after binary assets were removed; superseded by wheel-only distribution |
-| Release | `v0.4.1` | blocked | — | `77d2c4f` | — | release run `40221549438`; PyPI `invalid-publisher` | ctxoptimizer wheel/sdist tagged; fix trusted publisher and rerun |
+| Release | `v0.4.1` | released | ? | `77d2c4f` | ? | PyPI release + GitHub release; CI `40222019476` | wheel, sdist, `SHA256SUMS`; PyPI Trusted Publishing + PEP 740 attestations |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -306,9 +303,9 @@ Rows are in execution order; see `docs/plan.md` §4.
   paths, environment variables, repository URL, docs and PyPI metadata are now
   `ctxoptimizer`. GitHub repository renamed to `ahmed-dev25/ctxoptimizer`.
 
-- 2026-10-26 — `v0.4.1` release build and GitHub attestation passed; PyPI
-  publish failed with `invalid-publisher`. The tag remains at `77d2c4f`; fix
-  the trusted-publisher configuration and rerun run `40221549438`.
+- 2026-10-26 ? `ctxoptimizer 0.4.1` published to PyPI and GitHub. PyPI
+  Trusted Publishing and attestations verified; release workflow fixed to set
+  `GH_REPO` and to tolerate existing PyPI files on rerun.
 
 - 2026-10-25 — History audit: scanned 96 commits / 494 text blobs for provider
   keys, tokens, private keys, credential assignments, URLs and sensitive
@@ -324,11 +321,11 @@ Rows are in execution order; see `docs/plan.md` §4.
 - `origin` is `git@github.com:ahmed-dev25/ctxoptimizer.git`; CI runs on `main`.
 - No live provider captures exist yet. P1-3 may use documented fixtures with a
   `meta.json` source (ADR 0005); captures replace them when available.
-- The repository is public. `v0.4.0` is tagged and released; `v0.4.1` is
-  prepared for wheel-only PyPI distribution but is not tagged yet.
-- PyPI trusted publisher must match:
+- The repository is public. `v0.4.1` is tagged and released on PyPI and GitHub;
+  `v0.4.0` remains historical under the old name.
+- PyPI trusted publisher is configured for
   `ahmed-dev25/ctxoptimizer`, workflow `release.yml`, environment `pypi`,
-  project `ctxoptimizer`. Current publish run failed with `invalid-publisher`.
+  project `ctxoptimizer`. PyPI 0.4.1 is live and attested.
 - Secret scanning, push protection, Dependabot alerts/updates, CodeQL default
   setup and basic `main` protection are enabled.
 - Run `uv sync --extra dev` after cloning; `uv.lock` is committed.

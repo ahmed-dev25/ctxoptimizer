@@ -87,4 +87,5 @@ The trusted/pending publisher must match **all** of these fields. Common causes:
 - the publisher belongs to a different PyPI project.
 
 After fixing the publisher, rerun the failed GitHub Actions release run.
+`v0.4.1` was published successfully after correcting the publisher.
 
