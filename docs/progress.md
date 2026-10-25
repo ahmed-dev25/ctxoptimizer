@@ -3,11 +3,11 @@
 **Last updated:** 2026-10-25
 **Milestone:** P0–P11 — MIT open-source release
 **Branch:** `main`
-**Overall:** P11 merged; gates pass; ready to tag `v0.4.0`
+**Overall:** P11 merged; history audit clean; old release/tag removed; ready to tag `v0.4.0`
 
 ## Resume here
 
-- **Last completed:** P11 MIT relicense (`7ee05d9`).
+- **Last completed:** P11 MIT relicense (`7ee05d9`) and history secret audit.
 - **Last merge:** `123d8ee` (P11)
 - **Next task:** tag `v0.4.0`, publish release assets/manifest, make the
   repository public.
@@ -87,7 +87,8 @@
 | P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (292), coverage 80.64% | signed-manifest test, dev update extra |
 | P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
 | P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates retained |
-| Release | `v0.3.0-alpha` | tagged | — | — | — | — | pre-release; superseded by `v0.4.0` |
+| Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
+| Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
 | Release | `v0.4.0` | pending | — | `123d8ee` | — | ruff, format, mypy, pytest (292), coverage 81.64% | MIT release; tag and publish; repository still private |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
@@ -270,15 +271,22 @@ Rows are in execution order; see `docs/plan.md` §4.
   module, CLI, config and EULA; active mode is unconditional; version 0.4.0;
   signed updates remain.
 
+- 2026-10-25 — History audit: scanned 96 commits / 494 text blobs for provider
+  keys, tokens, private keys, credential assignments, URLs and sensitive
+  filenames. Only fake credential fixtures in tests were found. Removed the
+  superseded `v0.3.0-alpha` GitHub release and tag.
+
 ## Handoff notes
 
 - `git` is installed at `C:\Program Files\Git\cmd\git.exe` but is not on the
   running OpenCode process PATH. Invoke it by full path until OpenCode restarts.
 - The system git config sets `core.autocrlf=true`; this repo overrides it to
   `false` and normalizes via `.gitattributes`.
-- No remote is configured yet, so `.github/workflows/ci.yml` is dormant.
+- `origin` is `git@github.com:ahmed-dev25/ctxproxy.git`; CI runs on `main`.
 - No live provider captures exist yet. P1-3 may use documented fixtures with a
   `meta.json` source (ADR 0005); captures replace them when available.
+- The repository is still private. Tag `v0.4.0` and publish release assets only
+  after the update signing keypair/manifest and fresh-machine checks are ready.
 - Run `uv sync --extra dev` after cloning; `uv.lock` is committed.
 - Ruff formats Python code blocks inside Markdown. `SPEC.md` is excluded in
   `pyproject.toml`; do not remove that exclusion.
