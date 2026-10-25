@@ -114,6 +114,7 @@ Updates are delivered as signed manifests + SHA-256 verified artifacts. See
 
 - [`SPEC.md`](SPEC.md) — authoritative specification
 - [`docs/client-setup.md`](docs/client-setup.md) — per-client recipes
+- [`docs/how-to-use.md`](docs/how-to-use.md) — complete install/run/update guide
 - [`docs/provider-notes.md`](docs/provider-notes.md) — dated provider behavior
 - [`docs/architecture.md`](docs/architecture.md) — component overview
 - [`docs/privacy.md`](docs/privacy.md) — data handling and purge

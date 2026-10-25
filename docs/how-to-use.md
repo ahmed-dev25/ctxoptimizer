@@ -1,0 +1,439 @@
+# How to use ctxproxy
+
+This is the end-to-end guide for installing, configuring and running ctxproxy.
+
+## 1. What ctxproxy does
+
+ctxproxy sits between an AI coding client and its provider:
+
+```text
+client -> http://127.0.0.1:8787 -> provider
+```
+
+It records real usage/cost, detects cache drift and waste, optionally applies
+deterministic payload reductions, and serves a local dashboard.
+
+It does **not** translate between providers. The client must already speak the
+provider's protocol; only its base URL changes.
+
+## 2. Requirements
+
+- Windows, macOS or Linux.
+- Python **3.11+** for the Python installation path (the one-file binary does
+  not need Python).
+- An API key for the provider/client you use. ctxproxy forwards the client's own
+  credentials and does not store them.
+
+## 3. Install
+
+### Option A — one-file binary (recommended for most users)
+
+1. Download the release binary for your OS.
+2. Put it somewhere on `PATH`, or run it by full path.
+3. On Windows, SmartScreen may warn because release binaries are currently
+   unsigned. Use “More info → Run anyway” only for a binary you trust.
+
+```powershell
+ctxproxy --version
+```
+
+### Option B — Python tool install
+
+From a published wheel:
+
+```powershell
+uv tool install "ctxproxy[license]"
+# or
+pipx install "ctxproxy[license]"
+```
+
+From a local wheel:
+
+```powershell
+uv tool install --force .\ctxproxy-0.3.0-py3-none-any.whl --with pynacl
+```
+
+From a checkout:
+
+```powershell
+uv sync --extra dev
+uv run ctxproxy --version
+```
+
+`[license]` / `--with pynacl` is needed for signed-update and license
+verification.
+
+### Option C — development install
+
+```powershell
+git clone git@github.com:ahmed-dev25/ctxproxy.git
+cd ctxproxy
+uv sync --extra dev
+uv run ctxproxy run
+```
+
+## 4. Verify the installation
+
+```powershell
+ctxproxy --version
+# 0.3.0
+```
+
+If the command is not found on Windows:
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.local\bin;$env:PATH"
+ctxproxy --version
+```
+
+Close and reopen terminals after PATH changes. If you use Git Bash/WSL, use the
+Windows executable path or add the Windows bin directory to that shell.
+
+## 5. First run
+
+```powershell
+ctxproxy run
+```
+
+The banner prints:
+
+```text
+ctxproxy 0.3.0 listening on http://127.0.0.1:8787 (shadow)
+dashboard: http://127.0.0.1:8787/_ctxproxy/?token=...
+```
+
+Keep this terminal open. Stop with `Ctrl+C`.
+
+Default mode is **shadow**: ctxproxy measures and simulates but forwards the
+client's bytes unchanged.
+
+### Dashboard
+
+Open the printed URL once. The token is stored as an `HttpOnly; SameSite=Strict`
+cookie. The dashboard is protected by a Host allowlist, admin token and CSRF.
+
+### Config and data locations
+
+Windows (actual paths):
+
+```text
+Config: %LOCALAPPDATA%\ctxproxy\ctxproxy\config.toml
+Data:   %LOCALAPPDATA%\ctxproxy\ctxproxy\
+DB:     %LOCALAPPDATA%\ctxproxy\ctxproxy\ctxproxy.db
+Blobs:  %LOCALAPPDATA%\ctxproxy\ctxproxy\blobs\
+```
+
+Linux/macOS:
+
+```text
+Config: ~/.config/ctxproxy/config.toml
+Data:   ~/.local/share/ctxproxy/
+```
+
+`ctxproxy run` creates the default config on first run.
+
+## 6. Configure upstreams
+
+Default upstreams:
+
+```toml
+[upstreams]
+anthropic = "https://api.anthropic.com"
+openai = "https://api.openai.com"
+gemini = "https://generativelanguage.googleapis.com"
+ollama = "http://127.0.0.1:11434"
+```
+
+Add named gateways:
+
+```toml
+[upstreams]
+deepseek = "https://api.deepseek.com"
+deepseek-anthropic = { url = "https://api.deepseek.com/anthropic", kind = "anthropic", cache_hints = false }
+openrouter = { url = "https://openrouter.ai/api", kind = "openai", usage = "openrouter", cost_source = "provider" }
+gemini-openai = { url = "https://generativelanguage.googleapis.com/v1beta/openai", kind = "openai", usage = "gemini-openai" }
+ollama-openai = { url = "http://127.0.0.1:11434/v1", kind = "openai" }
+```
+
+Named upstream URL:
+
+```text
+http://127.0.0.1:8787/u/<name>
+```
+
+The proxy resolves only names configured in your file.
+
+## 7. Point a client at the proxy
+
+Use `ctxproxy env --shell powershell` (or `bash`, `zsh`, `fish`) to print
+ready-to-paste exports.
+
+### OpenAI SDK / Chat Completions / Aider / Cline / Continue
+
+```powershell
+$env:OPENAI_BASE_URL = "http://127.0.0.1:8787/v1"
+```
+
+### Anthropic SDK / Claude Code
+
+```powershell
+$env:ANTHROPIC_BASE_URL = "http://127.0.0.1:8787"
+```
+
+### OpenCode
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ctxproxy-deepseek": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "DeepSeek via ctxproxy",
+      "options": { "baseURL": "http://127.0.0.1:8787/u/deepseek" },
+      "models": { "deepseek-flash": { "name": "DeepSeek Flash" } }
+    }
+  }
+}
+```
+
+### DeepSeek
+
+- OpenAI surface: `http://127.0.0.1:8787/u/deepseek`
+- Claude Code surface: `ANTHROPIC_BASE_URL=http://127.0.0.1:8787/u/deepseek-anthropic`
+
+### OpenRouter
+
+```powershell
+$env:OPENAI_BASE_URL = "http://127.0.0.1:8787/u/openrouter"
+```
+
+### Native Gemini
+
+Use a named Gemini upstream and point the Gemini client at:
+
+```text
+http://127.0.0.1:8787/u/gemini
+```
+
+The native `generateContent`/`streamGenerateContent` paths are forwarded as-is.
+
+### Native Ollama
+
+Point the Ollama client at:
+
+```text
+http://127.0.0.1:8787/u/ollama
+```
+
+`/api/chat` and `/api/generate` are supported, including NDJSON usage.
+
+## 8. Choose a mode
+
+| Mode | Behavior |
+|---|---|
+| `passthrough` | Forward unchanged; no transforms. |
+| `shadow` | Run/measure/simulate transforms; forward original bytes. |
+| `active` | Apply enabled transforms; retry original on 400/422. |
+
+Start with `shadow`:
+
+```powershell
+ctxproxy run --mode shadow
+```
+
+Switch at runtime (requires a proxy started by `ctxproxy run`):
+
+```powershell
+ctxproxy mode active
+ctxproxy mode shadow
+```
+
+Or per request:
+
+```text
+x-ctxproxy-mode: active
+x-ctxproxy-bypass: 1
+```
+
+## 9. Verify traffic and cost
+
+```powershell
+ctxproxy status
+ctxproxy stats
+ctxproxy stats --json
+ctxproxy stats --since 24h --project demo
+ctxproxy export --format json --since 7d --out requests.json
+ctxproxy export --format csv --since 7d --out requests.csv
+```
+
+The dashboard pages:
+
+- **Overview** — spend, simulated baseline, waste, cache ratio, projects/models.
+- **Live** — SSE-updated sessions, burn rate and recent requests.
+- **Sessions / Requests** — turn-by-turn usage, timing, transform reports and diff viewer.
+- **Waste** — W1–W8 findings, status controls and recommendations.
+- **Transforms** — enable/disable, stats, quarantine history, expand usage and
+  stale-elision break-even.
+- **Pricing** — row editor + validated JSON override, unpriced models.
+- **Settings** — mode, privacy/capture, license, config hash.
+- **Doctor** — local checks.
+
+## 10. Active mode safety
+
+- Every transform runs in a journal; exceptions revert that transform.
+- A no-regression guard discards changes that do not save enough tokens.
+- A 400/422 retry sends the original bytes once and records `fallback_used`.
+- The guard quarantines a transform per session after repeated fallbacks,
+  low savings, expand errors or our-fault drift.
+- `ctxproxy guard status`; `ctxproxy guard enable <transform>`; `ctxproxy guard disable <transform>`.
+- `stale_result_elision` and `cache_serve` are opt-in. Use the break-even
+  estimator before enabling them.
+
+Check the dashboard **Transforms** page after switching to active.
+
+## 11. MCP `ctxproxy_expand`
+
+If a transform omits content, an MCP-capable agent can retrieve the original:
+
+```powershell
+ctxproxy mcp snippet --client claude-code
+ctxproxy mcp run
+```
+
+Example registration:
+
+```json
+{
+  "mcpServers": {
+    "ctxproxy": {
+      "command": "ctxproxy",
+      "args": ["mcp", "run"]
+    }
+  }
+}
+```
+
+Blobs are local, content-addressed and require capture not to be `off`.
+
+## 12. Capture, privacy and purge
+
+Payload capture is controlled by:
+
+```toml
+[telemetry]
+capture_payloads = "changed_blocks" # off | changed_blocks | full
+retention_days = 14
+redact_secrets = true
+```
+
+- `off` stores nothing.
+- `changed_blocks` stores the before/after of changed blocks.
+- `full` stores request/final-request/response fixtures.
+
+Captured text is redacted before storage. See `docs/privacy.md`.
+
+Wipe everything:
+
+```powershell
+ctxproxy purge --all
+```
+
+## 13. Updates
+
+```powershell
+ctxproxy update --check
+ctxproxy update --yes
+```
+
+The update command verifies an Ed25519 signature and SHA-256 before installing.
+Set the production manifest URL/public key:
+
+```toml
+[update]
+manifest_url = "https://example.com/ctxproxy/manifest.json"
+public_key = "base64-ed25519-public-key"
+```
+
+Never use `--allow-unsigned` for a paid release. See `docs/updating.md`.
+
+## 14. License
+
+```powershell
+ctxproxy license status
+ctxproxy license install .\license.json
+```
+
+This open build has `LICENSE_ENFORCEMENT = "off"`, so active mode is not
+blocked. A paid build can enable enforcement and fall back to shadow mode for
+invalid/expired licenses. See `LICENSE`, `EULA.md` and ADR 0008.
+
+## 15. Run at login
+
+```powershell
+ctxproxy service install --dry-run
+ctxproxy service install
+ctxproxy service uninstall
+```
+
+Supported: launchd (macOS), systemd `--user` (Linux), Windows scheduled task.
+
+## 16. Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `ctxproxy: command not found` | Add `%USERPROFILE%\.local\bin` (Windows) or `~/.local/bin` to PATH; restart the shell. |
+| Dashboard returns 401 | Open the URL with the per-run `?token=...` printed by `ctxproxy run`. |
+| Dashboard returns 403 | Host header is not allowed; use `127.0.0.1`/`localhost` or configure `allow_remote`. |
+| Port 8787 in use | `ctxproxy run --port 8788` and update client base URLs. |
+| Upstream 401/403 | The client's provider key is wrong or missing; ctxproxy forwards it unchanged. |
+| Upstream 429 | Provider rate limit; ctxproxy passes it through verbatim. |
+| Transform fallbacks | Check Transforms page; guard may quarantine; inspect request detail. |
+| No cache hits | Check Waste/drift; look for changing system prompt/tools/history. |
+| `ctxproxy status` fails | Proxy not running, wrong port, or firewall; try the printed URL. |
+| Update says unsigned | Set `update.public_key`; use `--allow-unsigned` only for local tests. |
+| Windows SmartScreen | Binary is unsigned; only bypass for a trusted release. |
+
+Diagnostics:
+
+```powershell
+ctxproxy doctor --offline
+ctxproxy doctor
+```
+
+## 17. Uninstall
+
+```powershell
+ctxproxy service uninstall
+ctxproxy purge --all
+uv tool uninstall ctxproxy
+```
+
+Remove the config directory manually if you want a completely clean uninstall:
+
+```text
+%LOCALAPPDATA%\ctxproxy\ctxproxy\
+```
+
+## 18. Quick command reference
+
+```text
+ctxproxy run [--host --port --mode --config]
+ctxproxy status
+ctxproxy mode passthrough|shadow|active
+ctxproxy env --shell bash|zsh|fish|powershell
+ctxproxy doctor [--offline]
+ctxproxy stats [--since --project --json]
+ctxproxy export --format json|csv [--since --out]
+ctxproxy waste [--summary --json]
+ctxproxy recommend [--json]
+ctxproxy guard status|enable|disable <transform>
+ctxproxy replay <request.json>
+ctxproxy bench
+ctxproxy capture --out <dir>
+ctxproxy update --check|--yes
+ctxproxy purge --all
+ctxproxy license install|status
+ctxproxy mcp run
+ctxproxy mcp snippet --client claude-code
+ctxproxy service install|uninstall
+```

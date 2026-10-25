@@ -99,14 +99,15 @@ endpoint setting.
 gemini-openai = { url = "https://generativelanguage.googleapis.com/v1beta/openai", kind = "openai", usage = "gemini-openai" }
 ```
 
-Base URL: `http://127.0.0.1:8787/u/gemini-openai`. Native Gemini fidelity lands in
-P6.
+Base URL: `http://127.0.0.1:8787/u/gemini-openai`. Native Gemini
+`generateContent`/`streamGenerateContent` is supported via `/u/gemini`.
 
 ## Ollama
 
 For the OpenAI-compatible surface, add
 `ollama-openai = { url = "http://127.0.0.1:11434/v1", kind = "openai" }` and use
-`http://127.0.0.1:8787/u/ollama-openai`. Native `/api/chat` lands in P6.
+`http://127.0.0.1:8787/u/ollama-openai`. Native `/api/chat` and `/api/generate`
+are supported via `/u/ollama`.
 
 ## First-run privacy
 
