@@ -2,17 +2,17 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P12 — MIT open-source release
-**Branch:** `feat/p12-package-updates`
-**Overall:** P12 implemented; built-in self-update removed; gates pass; ready to merge and tag `v0.4.0`
+**Branch:** `main`
+**Overall:** P12 merged; built-in self-update removed; gates pass; ready to tag `v0.4.0`
 
 ## Resume here
 
 - **Last completed:** P12 package-manager updates (`3505114`).
-- **Last merge:** `123d8ee` (P11)
-- **Next task:** merge P12, tag `v0.4.0`, publish release assets, make the
-  repository public.
+- **Last merge:** `e776e6e` (P12)
+- **Next task:** tag `v0.4.0`, publish release assets, make the repository
+  public.
 - **Blocked:** none
-- **Active branch:** `feat/p12-package-updates`
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -87,10 +87,10 @@
 | P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (292), coverage 80.64% | signed-manifest test, dev update extra |
 | P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
 | P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates later removed in P12 |
-| P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | pending | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxproxy update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
+| P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | `e776e6e` | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxproxy update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
-| Release | `v0.4.0` | pending | — | `3505114` | — | ruff, format, mypy, pytest (278), coverage 81.69% | MIT release; tag and publish; repository still private |
+| Release | `v0.4.0` | pending | — | `e776e6e` | — | ruff, format, mypy, pytest (278), coverage 81.69% | MIT release; tag and publish; repository still private |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
