@@ -3,7 +3,7 @@
 Command: `uv run pytest -q`
 
 ```text
-278 passed, 1 warning in 20.02s
+278 passed, 1 warning in 28.03s
 ```
 
 Warnings: Starlette `TestClient` deprecation for `httpx` (upstream package;
@@ -17,7 +17,7 @@ Other gates:
 | `uv run ruff format --check .` | pass |
 | `uv run mypy --strict src` | pass (62 source files) |
 | `uv build --wheel` | pass |
-| `ctxproxy --version` | `0.4.0` |
+| `ctxproxy --version` | `0.4.1` |
 
 ## Coverage map
 
@@ -42,4 +42,3 @@ Other gates:
 - Full dashboard charting is intentionally lightweight (server-rendered tables
   + simple bars); no external chart/CDN assets.
 - CI coverage is enforced at 80% overall (currently 81.7%).
-- PyInstaller binaries are built in CI but are not signed/notarized here.

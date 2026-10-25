@@ -54,8 +54,8 @@ The dashboard pages use the same service layer; there is no SPA build step.
 
 ## Packaging
 
-- Primary: wheel + `uv tool install` / `pipx`.
-- Optional: PyInstaller one-file builds via CI (see `.github/workflows/ci.yml`);
-  macOS notarization and Windows signing are release-time tasks.
+- Primary and only distribution: wheel/sdist via PyPI and `uv tool install` / `pipx`.
+- No standalone PyInstaller binaries or OS code-signing step; PyPI Trusted
+  Publishing and PEP 740 attestations cover package provenance.
 - Autostart: `ctxproxy service install` writes a launchd plist, systemd --user
   unit, or Windows scheduled task.

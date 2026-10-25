@@ -19,27 +19,21 @@ provider's protocol; only its base URL changes.
 ## 2. Requirements
 
 - Windows, macOS or Linux.
-- Python **3.11+** for the Python installation path (the one-file binary does
-  not need Python).
+- Python **3.11+**.
 - An API key for the provider/client you use. ctxproxy forwards the client's own
   credentials and does not store them.
 
 ## 3. Install
 
-### Option A — one-file binary (recommended for most users)
-
-1. Download the release binary for your OS.
-2. Put it somewhere on `PATH`, or run it by full path.
-3. On Windows, SmartScreen may warn because release binaries are currently
-   unsigned. Use “More info → Run anyway” only for a binary you trust.
+### PyPI (recommended)
 
 ```powershell
-ctxproxy --version
+uv tool install ctxproxy
+# or
+pipx install ctxproxy
 ```
 
-### Option B — Python tool install
-
-From GitHub while the PyPI package is pending:
+If PyPI does not have the release yet, install from GitHub:
 
 ```powershell
 uv tool install "git+https://github.com/ahmed-dev25/ctxproxy.git"
@@ -50,32 +44,25 @@ pipx install "git+https://github.com/ahmed-dev25/ctxproxy.git"
 This requires Git on `PATH`. From a local wheel:
 
 ```powershell
-uv tool install --force .\ctxproxy-0.4.0-py3-none-any.whl
+uv tool install --force .\ctxproxy-0.4.1-py3-none-any.whl
 ```
 
 From a checkout:
 
 ```powershell
+git clone https://github.com/ahmed-dev25/ctxproxy.git
+cd ctxproxy
 uv sync --extra dev
 uv run ctxproxy --version
 ```
 
 No optional signature extra is required; ctxproxy has no built-in self-update.
 
-### Option C — development install
-
-```powershell
-git clone git@github.com:ahmed-dev25/ctxproxy.git
-cd ctxproxy
-uv sync --extra dev
-uv run ctxproxy run
-```
-
 ## 4. Verify the installation
 
 ```powershell
 ctxproxy --version
-# 0.4.0
+# 0.4.1
 ```
 
 If the command is not found on Windows:
@@ -97,7 +84,7 @@ ctxproxy run
 The banner prints:
 
 ```text
-ctxproxy 0.4.0 listening on http://127.0.0.1:8787 (shadow)
+ctxproxy 0.4.1 listening on http://127.0.0.1:8787 (shadow)
 dashboard: http://127.0.0.1:8787/_ctxproxy/?token=...
 ```
 
@@ -379,7 +366,6 @@ Supported: launchd (macOS), systemd `--user` (Linux), Windows scheduled task.
 | Transform fallbacks | Check Transforms page; guard may quarantine; inspect request detail. |
 | No cache hits | Check Waste/drift; look for changing system prompt/tools/history. |
 | `ctxproxy status` fails | Proxy not running, wrong port, or firewall; try the printed URL. |
-| Windows SmartScreen | Binary is unsigned; only bypass for a trusted release. |
 
 Diagnostics:
 

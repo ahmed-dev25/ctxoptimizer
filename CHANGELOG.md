@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1 — 2026-10-25
+
+- Distribution is now wheel/sdist only, published to PyPI with Trusted
+  Publishing and PEP 740 attestations.
+- Removed standalone PyInstaller binaries and the associated OS code-signing
+  path.
+- Release workflow publishes GitHub release checksums for the wheel/sdist and
+  attests build provenance.
+- CI no longer builds one-file binaries.
+
 ## 0.4.0 — 2026-10-25
 
 - Relicensed ctxproxy under the **MIT License**.

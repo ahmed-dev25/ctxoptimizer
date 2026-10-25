@@ -16,6 +16,7 @@ new one rather than rewriting history.
 | [0008](0008-signed-updates.md) | Signed self-updates | superseded by 0010 | 2026-10-25 |
 | [0009](0009-mit-license.md) | MIT open-source license | accepted | 2026-10-25 |
 | [0010](0010-package-manager-updates.md) | Updates through package managers | accepted | 2026-10-25 |
+| [0011](0011-wheel-only-pypi.md) | Wheel-only distribution on PyPI | accepted | 2026-10-25 |
 
 ## Template
 

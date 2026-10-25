@@ -14,7 +14,7 @@ from ctxproxy.cli import app
 
 
 def test_version_is_declared() -> None:
-    assert __version__ == "0.4.0"
+    assert __version__ == "0.4.1"
 
 
 def test_cli_reports_version() -> None:

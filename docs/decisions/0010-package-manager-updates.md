@@ -20,8 +20,8 @@ command.
   extra, manifest schema and `tools/make_update_manifest.py`.
 - Document upgrades with `uv tool upgrade ctxproxy` or
   `pipx upgrade ctxproxy`.
-- Publish wheels, sdists and `SHA256SUMS`; keep PyInstaller binaries unsigned
-  until the owner obtains code-signing certificates.
+- Publish wheels, sdists and `SHA256SUMS`; PyInstaller binaries remained
+  unsigned until ADR 0011 removed them from the distribution.
 - Trust for package installs comes from the package index/GitHub release channel
   and TLS. There is no phone-home update check.
 
@@ -33,4 +33,4 @@ command.
   prompt.
 - Package-index account security and GitHub release permissions become the
   primary update trust boundary.
-- OS code-signing/notarization remains a separate release-hardening task.
+- ADR 0011 later removes standalone binaries and OS code-signing entirely.
