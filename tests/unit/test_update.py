@@ -189,3 +189,21 @@ def test_frozen_binary_replacement(monkeypatch, tmp_path: Path) -> None:
     assert "replaced" in message
     assert executable.read_bytes() == b"new"
     assert (tmp_path / "ctxproxy.exe.old").exists()
+
+
+def test_signed_manifest_roundtrip() -> None:
+    pytest.importorskip("nacl.signing")
+    import base64
+
+    from nacl.signing import SigningKey
+
+    key = SigningKey.generate()
+    payload = _manifest("https://example.com/x.whl", "a" * 64)
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    payload["signature"] = base64.b64encode(key.sign(canonical).signature).decode()
+    public = base64.b64encode(bytes(key.verify_key)).decode()
+    manifest = parse_manifest(payload, public_key=public)
+    assert manifest.version == "9.9.9"
+    payload["sha256"] = "b" * 64
+    with pytest.raises(UpdateError, match="signature"):
+        parse_manifest(payload, public_key=public)

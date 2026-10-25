@@ -82,9 +82,9 @@
 | P6-5 | W7/W8 | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | W7 opt-in heuristic, W8 default on |
 | P7 | Packaging/service/licensing | done | `feat/p5-p7-complete` | `e63ba16` | `67b4ff3` | ruff, format, mypy, pytest (252) | wheel + PyInstaller CI, service install/uninstall, Ed25519 verify (enforcement off), docs/changelog/licenses |
 | P8 | Hardening pass | done | `feat/p8-hardening` | `22814b6` | `279ea97` | ruff, format, mypy, pytest (266) | volatile normalizer, stream usage injection, expand counters, guard window, export reports, full capture fixtures, migration backup, redacted headers, golden/property tests |
-| P9 | Hardening pass 2 | done | `feat/p9-hardening` | `3a34064` | `0ba10a2` | ruff, format, mypy, pytest (287), coverage 80.12% | recommendation suppression, row pricing editor, guard auto-re-enable/expand health, release workflow/checklist |
-| P9-1 | Low-savings guard | done | `feat/p9-1-savings` | `58410ee` | `6173b3b` | ruff, format, mypy, pytest (287), coverage 80.12% | min_savings_to_stay over the guard window |
-| P10 | Commercial release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (287), coverage 80.12% | proprietary LICENSE/EULA/NOTICE, signed self-update, version `0.3.0`, release tooling |
+| P9 | Hardening pass 2 | done | `feat/p9-hardening` | `3a34064` | `0ba10a2` | ruff, format, mypy, pytest (288), coverage 80.20% | recommendation suppression, row pricing editor, guard auto-re-enable/expand health, release workflow/checklist |
+| P9-1 | Low-savings guard | done | `feat/p9-1-savings` | `58410ee` | `6173b3b` | ruff, format, mypy, pytest (288), coverage 80.20% | min_savings_to_stay over the guard window |
+| P10 | Commercial release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (288), coverage 80.20% | proprietary LICENSE/EULA/NOTICE, signed self-update, version `0.3.0`, release tooling |
 | Release | `v0.3.0-alpha` | tagged | — | — | — | — | pre-release; live captures/signing/fresh-machine checks pending |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
@@ -117,9 +117,9 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P6 | pass | pass (58 files) | 232 passed | reported, not enforced | `6c265cf` |
 | 2026-10-25 | P5/P6-4/P7 | pass | pass (63 files) | 252 passed | reported, not enforced | `e63ba16` |
 | 2026-10-25 | P8 hardening | pass | pass (63 files) | 266 passed | 79% reported, not enforced | `22814b6` |
-| 2026-10-25 | P9 hardening | pass | pass (63 files) | 287 passed | 80.12% enforced (CI) | `3a34064` |
-| 2026-10-25 | P9-1 savings | pass | pass (63 files) | 287 passed | 80.12% enforced (CI) | `58410ee` |
-| 2026-10-25 | P10 release | pass | pass (64 files) | 287 passed | 80.12% enforced (CI) | `ff54faa` |
+| 2026-10-25 | P9 hardening | pass | pass (63 files) | 288 passed | 80.20% enforced (CI) | `3a34064` |
+| 2026-10-25 | P9-1 savings | pass | pass (63 files) | 288 passed | 80.20% enforced (CI) | `58410ee` |
+| 2026-10-25 | P10 release | pass | pass (64 files) | 288 passed | 80.20% enforced (CI) | `ff54faa` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog

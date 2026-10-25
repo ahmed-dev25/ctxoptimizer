@@ -103,8 +103,8 @@ def verify_license_file(path: Path | str) -> LicenseStatus:
     message = {key: value for key, value in payload.items() if key != "sig"}
     canonical = json.dumps(message, sort_keys=True, separators=(",", ":")).encode("utf-8")
     try:
-        from nacl.exceptions import BadSignatureError  # type: ignore[import-not-found]
-        from nacl.signing import VerifyKey  # type: ignore[import-not-found]
+        from nacl.exceptions import BadSignatureError
+        from nacl.signing import VerifyKey
 
         VerifyKey(public_key).verify(canonical, base64.b64decode(signature))
     except ImportError:
