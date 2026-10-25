@@ -35,6 +35,18 @@ def test_config_has_no_license_section() -> None:
     assert find_spec("ctxproxy.licensing") is None
 
 
+def test_update_command_is_removed() -> None:
+    result = CliRunner().invoke(app, ["update"])
+    assert result.exit_code != 0
+
+
+def test_config_has_no_update_section() -> None:
+    from ctxproxy.config import Config
+
+    assert "update" not in Config.model_fields
+    assert find_spec("ctxproxy.update") is None
+
+
 def test_every_module_imports() -> None:
     modules = list(pkgutil.walk_packages(ctxproxy.__path__, prefix="ctxproxy."))
     assert modules, "expected submodules to exist"

@@ -40,12 +40,10 @@ decision or external credentials.
 ## 5. Packaging
 
 - [ ] PyInstaller binary runs on each OS (CI artifacts).
-- [ ] Generate and publish a signed `manifest.json` for the artifact.
-- [ ] Verify `ctxproxy update --check` and a `--dry-run` install against the
-      published manifest.
+- [ ] Publish wheel/sdist and `SHA256SUMS` (release workflow).
+- [ ] Confirm `uv tool upgrade ctxproxy` / `pipx upgrade ctxproxy` behavior.
 - [ ] macOS codesign + notarization (**owner certificate**).
 - [ ] Windows code signing (**owner certificate**).
-- [ ] Publish wheel/sdist and checksums (release workflow).
 - [ ] Fresh-machine install test on Windows, macOS and Linux.
 
 ## 6. Product/legal (owner)

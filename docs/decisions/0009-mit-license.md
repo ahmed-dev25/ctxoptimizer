@@ -17,7 +17,8 @@ proprietary license added friction without a realistic revenue path.
   trademarks.
 - The paid-license module, activation checks, license CLI, license config and
   EULA are removed.
-- Signed self-updates remain as a supply-chain security feature.
+- Signed self-updates remained at the time; ADR 0010 later removed the built-in
+  updater in favour of package-manager upgrades.
 - The repository is intended to be public; the source link is included in the
   README and website.
 
