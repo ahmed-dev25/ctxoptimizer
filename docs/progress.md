@@ -94,7 +94,7 @@
 | P14-1 | PyPI workflow verification | done | `main` | `668637b` | — | release build/attestation run `40219423578`; CI run `40219421757` | verified wheel/sdist build and GitHub build provenance; PyPI upload still needs owner trusted-publisher setup |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
-| Release | `v0.4.0` | released | — | `c37913a` | — | release run `40217381725`; local wheel/binary smoke | wheel, sdist, Linux/macOS/Windows unsigned binaries, `SHA256SUMS`; superseded by wheel-only distribution |
+| Release | `v0.4.0` | released | - | `c37913a` | - | release run `40217381725`; historical | wheel and sdist only after binary assets were removed; superseded by wheel-only distribution |
 | Release | `v0.4.1` | pending | - | `668637b` | - | ruff, format, mypy, pytest (278), coverage 81.69% | wheel/sdist only; PyPI trusted publisher setup required before tagging |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
@@ -295,8 +295,9 @@ Rows are in execution order; see `docs/plan.md` §4.
 - 2026-10-25 — P14 wheel-only PyPI release: version 0.4.1; removed standalone
   binaries, PyInstaller CI and OS code-signing steps; release workflow now uses
   PyPI Trusted Publishing with PEP 740 attestations, build provenance, and a
-  GitHub release with wheel/sdist plus checksums. PyPI trusted-publisher setup
-  is the remaining owner action.
+  GitHub release with wheel/sdist plus checksums. Also removed binary assets
+  from the historical `v0.4.0` release. PyPI trusted-publisher setup is the
+  remaining owner action.
 
 - 2026-10-25 — History audit: scanned 96 commits / 494 text blobs for provider
   keys, tokens, private keys, credential assignments, URLs and sensitive
