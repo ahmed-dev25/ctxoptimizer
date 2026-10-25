@@ -10,8 +10,8 @@ decision or external credentials.
 - [ ] `uv run mypy --strict src`
 - [ ] `uv run pytest -q --cov --cov-fail-under=80`
 - [ ] `uv build` (wheel + sdist)
-- [ ] `uv run ctxproxy --version`
-- [ ] Install the wheel in a clean venv and run `ctxproxy --version`.
+- [ ] `uv run ctxoptimizer --version`
+- [ ] Install the wheel in a clean venv and run `ctxoptimizer --version`.
 
 ## 2. Live/provider contract (owner keys)
 
@@ -33,7 +33,7 @@ decision or external credentials.
 
 - [ ] Dashboard works only with the per-run token; bad Host is rejected.
 - [ ] CSRF required on mutations; no CORS headers.
-- [ ] `ctxproxy purge --all` removes DB and blobs.
+- [ ] `ctxoptimizer purge --all` removes DB and blobs.
 - [ ] Capture is off/limited unless intentionally enabled.
 - [ ] No credentials in logs, DB, blobs or fixtures.
 
@@ -41,12 +41,12 @@ decision or external credentials.
 
 - [ ] Build wheel/sdist and run the clean-venv install smoke.
 - [ ] Configure the PyPI trusted publisher:
-      owner `ahmed-dev25`, repo `ctxproxy`, workflow `release.yml`,
-      environment `pypi`, project `ctxproxy`.
+      owner `ahmed-dev25`, repo `ctxoptimizer`, workflow `release.yml`,
+      environment `pypi`, project `ctxoptimizer`.
 - [ ] Create the GitHub `pypi` environment restricted to `v*` tags.
 - [ ] Publish with Trusted Publishing; confirm PEP 740 attestations on PyPI.
 - [ ] Publish wheel/sdist and `SHA256SUMS` as GitHub release assets.
-- [ ] Confirm `uv tool upgrade ctxproxy` / `pipx upgrade ctxproxy` behavior.
+- [ ] Confirm `uv tool upgrade ctxoptimizer` / `pipx upgrade ctxoptimizer` behavior.
 - [ ] Fresh-machine install test on Windows, macOS and Linux.
 - [x] No standalone binaries or OS code signing in this release path.
 

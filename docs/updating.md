@@ -1,14 +1,14 @@
-# Updating ctxproxy
+# Updating ctxoptimizer
 
-ctxproxy does **not** ship a built-in self-update command. Updates are handled
+ctxoptimizer does **not** ship a built-in self-update command. Updates are handled
 by the package manager or installation method you used.
 
 ## uv / pipx
 
 ```powershell
-uv tool upgrade ctxproxy
+uv tool upgrade ctxoptimizer
 # or
-pipx upgrade ctxproxy
+pipx upgrade ctxoptimizer
 ```
 
 ## Local wheel
@@ -17,7 +17,7 @@ Download the new wheel from PyPI or the official GitHub release, verify its
 attestation/checksum, then reinstall it:
 
 ```powershell
-uv tool install --force .\ctxproxy-<version>-py3-none-any.whl
+uv tool install --force .\ctxoptimizer-<version>-py3-none-any.whl
 ```
 
 ## From a checkout
@@ -25,7 +25,7 @@ uv tool install --force .\ctxproxy-<version>-py3-none-any.whl
 ```powershell
 git pull
 uv sync --extra dev
-uv run ctxproxy --version
+uv run ctxoptimizer --version
 ```
 
 ## Release artifacts

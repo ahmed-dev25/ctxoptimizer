@@ -6,14 +6,14 @@ translate protocols: use the surface the provider already speaks.
 Start the proxy first:
 
 ```powershell
-uv run ctxproxy run
-# or: uv tool install ctxproxy && ctxproxy run
+uv run ctxoptimizer run
+# or: uv tool install ctxoptimizer && ctxoptimizer run
 ```
 
 Print ready-to-paste exports:
 
 ```powershell
-ctxproxy env --shell powershell   # bash | zsh | fish | powershell
+ctxoptimizer env --shell powershell   # bash | zsh | fish | powershell
 ```
 
 ## Claude Code (Anthropic surface)
@@ -39,9 +39,9 @@ project) and choose its model with `/models`:
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "ctxproxy-deepseek": {
+    "ctxoptimizer-deepseek": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "DeepSeek via ctxproxy",
+      "name": "DeepSeek via ctxoptimizer",
       "options": { "baseURL": "http://127.0.0.1:8787/u/deepseek" },
       "models": { "deepseek-flash": { "name": "DeepSeek Flash" } }
     }
@@ -55,7 +55,7 @@ ends at `/u/<name>/v1` (for example `/u/openai/v1`).
 ## DeepSeek
 
 Add the upstream to your config (first-run config lives at
-`%LOCALAPPDATA%\ctxproxy\config.toml` on Windows, `~/.config/ctxproxy/config.toml`
+`%LOCALAPPDATA%\ctxoptimizer\config.toml` on Windows, `~/.config/ctxoptimizer/config.toml`
 on Linux/macOS):
 
 ```toml

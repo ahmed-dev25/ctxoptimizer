@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from ctxproxy.config import Config
-from ctxproxy.ids import new_ulid
-from ctxproxy.models import (
+from ctxoptimizer.config import Config
+from ctxoptimizer.ids import new_ulid
+from ctxoptimizer.models import (
     Endpoint,
     Mode,
     Provider,
@@ -31,7 +31,7 @@ def test_request_context_holds_config_snapshot() -> None:
         stream=True,
         mode=Mode.SHADOW,
         session_id="session-1",
-        project="ctxproxy",
+        project="ctxoptimizer",
         client_name="claude-code",
         config=config,
         config_hash=config.config_hash,

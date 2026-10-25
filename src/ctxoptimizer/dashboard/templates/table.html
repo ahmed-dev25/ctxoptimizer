@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxoptimizer — {{ title }}</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    h1 { margin: 0 0 4px; font-size: 1.5rem; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px;
+          font-size: .88rem; }
+    nav a { color: #60a5fa; text-decoration: none; }
+    table { width: 100%; border-collapse: collapse; font-size: .87rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .72rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    td { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/_ctxoptimizer/">Overview</a>
+    <a href="/_ctxoptimizer/live">Live</a>
+    <a href="/_ctxoptimizer/sessions">Sessions</a>
+    <a href="/_ctxoptimizer/requests">Requests</a>
+    <a href="/_ctxoptimizer/waste">Waste</a>
+    <a href="/_ctxoptimizer/transforms">Transforms</a>
+    <a href="/_ctxoptimizer/pricing">Pricing</a>
+    <a href="/_ctxoptimizer/settings">Settings</a>
+    <a href="/_ctxoptimizer/doctor">Doctor</a>
+  </nav>
+  <h1>{{ title }}</h1>
+  <p class="muted">{{ subtitle }} · v{{ version }} · mode {{ mode }}</p>
+  <table>
+    <thead>
+      <tr>{% for key, label in columns %}<th>{{ label }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        {% for key, label in columns %}
+        <td>{{ row[key] if row[key] is not none else "—" }}</td>
+        {% endfor %}
+      </tr>
+      {% else %}
+      <tr><td colspan="{{ columns|length }}" class="muted">No data yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxoptimizer</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    h1 { margin: 0 0 4px; font-size: 1.6rem; }
+    h2 { margin: 28px 0 10px; font-size: 1.1rem; color: #93c5fd; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
+    nav a, a { color: #60a5fa; text-decoration: none; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+             gap: 12px; margin-top: 18px; }
+    .card { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
+            padding: 14px 16px; }
+    .label { color: #9aa7b4; font-size: .78rem; text-transform: uppercase;
+             letter-spacing: .5px; }
+    .value { font-size: 1.4rem; margin-top: 4px; font-family: Consolas, monospace; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .75rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    .est { color: #fcd34d; font-weight: 600; }
+    code { color: #a5d6ff; }
+    .bar { height: 10px; background: #1f6feb; border-radius: 4px; min-width: 2px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/_ctxoptimizer/">Overview</a>
+    <a href="/_ctxoptimizer/live">Live</a>
+    <a href="/_ctxoptimizer/sessions">Sessions</a>
+    <a href="/_ctxoptimizer/requests">Requests</a>
+    <a href="/_ctxoptimizer/waste">Waste</a>
+    <a href="/_ctxoptimizer/transforms">Transforms</a>
+    <a href="/_ctxoptimizer/pricing">Pricing</a>
+    <a href="/_ctxoptimizer/settings">Settings</a>
+    <a href="/_ctxoptimizer/doctor">Doctor</a>
+  </nav>
+  <h1>ctxoptimizer</h1>
+  <p class="muted">v{{ version }} · mode {{ mode }} · local only</p>
+  {% if privacy %}
+  <p class="muted">Privacy: payload capture is enabled ({{ capture }}); captured text stays local.
+    Use Settings or <code>ctxoptimizer purge --all</code> to manage it.</p>
+  {% endif %}
+  <p class="muted">
+    Period:
+    <a href="?period=today">today</a> ·
+    <a href="?period=7d">7d</a> ·
+    <a href="?period=30d">30d</a> ·
+    <a href="?period=all">all</a>
+    (current: {{ period }})
+  </p>
+
+  <div class="cards">
+    <div class="card"><div class="label">Requests</div><div class="value">{{ summary["requests"] }}</div></div>
+    <div class="card"><div class="label">Actual spend</div><div class="value">${{ "%.6f"|format(summary["cost_usd"]) }}</div></div>
+    <div class="card"><div class="label">Baseline <span class="est">sim.</span></div><div class="value">${{ "%.6f"|format(summary["baseline_usd"]) }}</div></div>
+    <div class="card"><div class="label">Savings <span class="est">sim.</span></div><div class="value">${{ "%.6f"|format([summary["baseline_usd"] - summary["cost_usd"], 0]|max) }}</div></div>
+    <div class="card"><div class="label">Waste <span class="est">est.</span></div><div class="value">${{ "%.6f"|format(waste["cost_usd"]) }}</div></div>
+    <div class="card"><div class="label">Fresh input</div><div class="value">{{ summary["fresh_input"] }}</div></div>
+    <div class="card"><div class="label">Cache read</div><div class="value">{{ summary["cache_read"] }}</div></div>
+    <div class="card"><div class="label">Cache hit ratio</div><div class="value">{% set total = summary["fresh_input"] + summary["cache_read"] %}{% if total %}{{ "%.1f%%"|format(100 * summary["cache_read"] / total) }}{% else %}—{% endif %}</div></div>
+    <div class="card"><div class="label">Tokens removed <span class="est">est.</span></div><div class="value">{{ summary["tokens_removed"] }}</div></div>
+    <div class="card"><div class="label">Output</div><div class="value">{{ summary["output_tokens"] }}</div></div>
+  </div>
+
+  {% if points %}
+  <h2>Spend over time <span class="est">sim.</span></h2>
+  {% if spend_line %}
+  <svg viewBox="0 0 600 80" width="100%" height="100" preserveAspectRatio="none"
+       style="background:#161b22;border:1px solid #2d3644;border-radius:10px;">
+    <polyline fill="none" stroke="#60a5fa" stroke-width="2" points="{{ spend_line }}"/>
+  </svg>
+  {% endif %}
+  <table>
+    <thead><tr><th>Bucket</th><th>Cost (USD)</th><th></th></tr></thead>
+    <tbody>
+      {% for point in points %}
+      <tr><td>{{ point["bucket"] }}</td><td>${{ "%.6f"|format(point["value"] or 0) }}</td>
+          <td><div class="bar" style="width: {{ ((point["value"] or 0) * 400)|round(0) }}px"></div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if waste_points %}
+  <h2>Waste over time <span class="est">est.</span></h2>
+  {% if waste_line %}
+  <svg viewBox="0 0 600 80" width="100%" height="100" preserveAspectRatio="none"
+       style="background:#161b22;border:1px solid #2d3644;border-radius:10px;">
+    <polyline fill="none" stroke="#fcd34d" stroke-width="2" points="{{ waste_line }}"/>
+  </svg>
+  {% endif %}
+  <table>
+    <thead><tr><th>Bucket</th><th>Findings</th><th>Est. tokens</th><th>Est. USD</th></tr></thead>
+    <tbody>
+      {% for point in waste_points %}
+      <tr><td>{{ point["bucket"] }}</td><td>{{ point["findings"] }}</td>
+          <td>{{ point["tokens"] }}</td><td>${{ "%.6f"|format(point["cost_usd"] or 0) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <h2>Recent requests</h2>
+  <table>
+    <thead>
+      <tr><th>Time</th><th>Client</th><th>Provider</th><th>Model</th>
+          <th>Fresh</th><th>Cache read</th><th>Output</th><th>Cost</th><th>Outcome</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td><a href="/_ctxoptimizer/requests/{{ row["request_id"] }}">{{ row["ts"]|round(0) }}</a></td>
+        <td>{{ row["client"] or "—" }}</td>
+        <td>{{ row["provider"] }}</td>
+        <td>{{ row["model"] or "—" }}</td>
+        <td>{{ row["fresh_input"] if row["fresh_input"] is not none else "—" }}</td>
+        <td>{{ row["cache_read"] if row["cache_read"] is not none else "—" }}</td>
+        <td>{{ row["output_tokens"] if row["output_tokens"] is not none else "—" }}</td>
+        <td>${{ "%.6f"|format(row["cost_actual_usd"] or 0) }}</td>
+        <td>{{ row["outcome"] or "—" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="muted">No requests recorded yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Per project</h2>
+  <table>
+    <thead><tr><th>Project</th><th>Requests</th><th>Cost</th><th>Fresh</th><th>Cache read</th><th>Output</th></tr></thead>
+    <tbody>
+      {% for row in projects %}
+      <tr><td>{{ row["name"] or "—" }}</td><td>{{ row["requests"] }}</td>
+          <td>${{ "%.6f"|format(row["cost_usd"]) }}</td><td>{{ row["fresh_input"] }}</td>
+          <td>{{ row["cache_read"] }}</td><td>{{ row["output_tokens"] }}</td></tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No project data yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Per model</h2>
+  <table>
+    <thead><tr><th>Model</th><th>Requests</th><th>Cost</th><th>Fresh</th><th>Cache read</th><th>Output</th></tr></thead>
+    <tbody>
+      {% for row in models %}
+      <tr><td>{{ row["name"] or "—" }}</td><td>{{ row["requests"] }}</td>
+          <td>${{ "%.6f"|format(row["cost_usd"]) }}</td><td>{{ row["fresh_input"] }}</td>
+          <td>{{ row["cache_read"] }}</td><td>{{ row["output_tokens"] }}</td></tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No model data yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="muted" style="margin-top:18px;">
+    Metadata only; prompts are not shown. API:
+    <a href="/_ctxoptimizer/api/summary">summary</a> ·
+    <a href="/_ctxoptimizer/api/requests">requests</a> ·
+    <a href="/_ctxoptimizer/api/timeseries">timeseries</a>.
+  </p>
+</body>
+</html>

@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from ctxproxy.config import (
+from ctxoptimizer.config import (
     Config,
     compute_config_hash,
     data_dir,
@@ -45,7 +45,7 @@ def test_precedence_cli_over_env_over_file(tmp_path: Path) -> None:
         '[server]\nport = 9001\n\n[mode]\ndefault = "active"\n',
         encoding="utf-8",
     )
-    env = {"CTXPROXY_PORT": "9002", "CTXPROXY_MODE": "passthrough"}
+    env = {"CTXOPTIMIZER_PORT": "9002", "CTXOPTIMIZER_MODE": "passthrough"}
     config = load_config(
         path=config_file,
         env=env,
@@ -58,7 +58,7 @@ def test_precedence_cli_over_env_over_file(tmp_path: Path) -> None:
 def test_env_overrides_file(tmp_path: Path) -> None:
     config_file = tmp_path / "config.toml"
     config_file.write_text("[server]\nport = 9001\n", encoding="utf-8")
-    config = load_config(path=config_file, env={"CTXPROXY_PORT": "9002"})
+    config = load_config(path=config_file, env={"CTXOPTIMIZER_PORT": "9002"})
     assert config.server.port == 9002
 
 
@@ -79,7 +79,7 @@ def test_env_upstream_override(tmp_path: Path) -> None:
     config_file.write_text("", encoding="utf-8")
     config = load_config(
         path=config_file,
-        env={"CTXPROXY_UPSTREAM_OPENROUTER": "https://openrouter.ai/api"},
+        env={"CTXOPTIMIZER_UPSTREAM_OPENROUTER": "https://openrouter.ai/api"},
     )
     assert config.upstreams["openrouter"] == "https://openrouter.ai/api"
 
@@ -87,7 +87,7 @@ def test_env_upstream_override(tmp_path: Path) -> None:
 def test_resolve_config_path_prefers_explicit(tmp_path: Path) -> None:
     explicit = tmp_path / "a.toml"
     from_env = tmp_path / "b.toml"
-    env = {"CTXPROXY_CONFIG": str(from_env)}
+    env = {"CTXOPTIMIZER_CONFIG": str(from_env)}
     assert resolve_config_path(explicit, env) == explicit
     assert resolve_config_path(None, env) == from_env
 
@@ -161,7 +161,7 @@ def test_ensure_config_file_creates_and_is_idempotent(tmp_path: Path) -> None:
 
 
 def test_data_dir_env_override(tmp_path: Path) -> None:
-    assert data_dir({"CTXPROXY_DATA_DIR": str(tmp_path)}) == tmp_path
+    assert data_dir({"CTXOPTIMIZER_DATA_DIR": str(tmp_path)}) == tmp_path
 
 
 def test_unknown_config_keys_are_logged(tmp_path: Path, caplog) -> None:

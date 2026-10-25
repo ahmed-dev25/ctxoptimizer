@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 import tomllib
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
-from ctxproxy.pipeline import run_pipeline
-from ctxproxy.providers import adapter_for
-from ctxproxy.transforms import build_transforms
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext
+from ctxoptimizer.pipeline import run_pipeline
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.transforms import build_transforms
 
 
 def _run(payload: dict, config_text: str) -> dict:

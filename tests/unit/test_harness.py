@@ -109,6 +109,6 @@ def test_golden_runner_compares_and_updates(
 
 
 def test_db_and_data_fixtures(db_path: Path, data_dir: Path) -> None:
-    assert db_path.name == "ctxproxy.db"
+    assert db_path.name == "ctxoptimizer.db"
     assert db_path.parent.is_dir()
     assert data_dir.is_dir()

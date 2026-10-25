@@ -12,10 +12,10 @@
 
 ## 0.4.0 — 2026-10-25
 
-- Relicensed ctxproxy under the **MIT License**.
+- Relicensed ctxoptimizer under the **MIT License**.
 - Removed activation checks, license CLI, license config and EULA.
 - Removed the built-in self-update command and signing manifest; upgrade with
-  `uv tool upgrade ctxproxy` or `pipx upgrade ctxproxy`.
+  `uv tool upgrade ctxoptimizer` or `pipx upgrade ctxoptimizer`.
 - Source is intended to be public; see `NOTICE` for attribution/trademarks.
 
 ## 0.3.0-alpha — 2026-10-25
@@ -26,7 +26,7 @@
 - CI coverage gate at 80% overall.
 - Release workflow (wheel/sdist, checksums, unsigned binaries) and release
   checklist.
-- Signed self-update (`ctxproxy update --check/update`) with Ed25519 + SHA-256
+- Signed self-update (`ctxoptimizer update --check/update`) with Ed25519 + SHA-256
   verification.
 - `volatile_normalizer` implemented and registered (opt-in).
 - `openai_hints.inject_stream_usage` implemented (opt-in, api.openai.com only).
@@ -52,7 +52,7 @@ Initial alpha.
 - Drift detection, waste W1–W8, recommendations, auto-quarantine guard.
 - Dashboard: Overview, Live SSE, Sessions, Requests + diff, Waste controls,
   Transforms toggles/stats, Pricing editor, Settings, Doctor.
-- MCP `ctxproxy_expand`; blob capture and purge.
+- MCP `ctxoptimizer_expand`; blob capture and purge.
 - Admin security: Host allowlist, per-run token, CSRF, no CORS.
 - Ed25519 offline license verification (enforcement off in this build).
-- `ctxproxy service install/uninstall`, wheel + optional PyInstaller CI.
+- `ctxoptimizer service install/uninstall`, wheel + optional PyInstaller CI.

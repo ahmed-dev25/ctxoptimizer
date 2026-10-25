@@ -5,13 +5,13 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from ctxproxy.analysis.drift import DriftEvent
-from ctxproxy.models import TransformReport, WasteFinding
-from ctxproxy.telemetry.store import Store
+from ctxoptimizer.analysis.drift import DriftEvent
+from ctxoptimizer.models import TransformReport, WasteFinding
+from ctxoptimizer.telemetry.store import Store
 
 
 def test_store_persists_request_bundle(tmp_path: Path) -> None:
-    store = Store(tmp_path / "ctxproxy.db")
+    store = Store(tmp_path / "ctxoptimizer.db")
     finding = WasteFinding(
         finding_id="f1",
         ts=time.time(),
@@ -77,14 +77,14 @@ def test_store_persists_request_bundle(tmp_path: Path) -> None:
 def test_migration_backs_up_and_adds_columns(tmp_path: Path) -> None:
     import sqlite3
 
-    path = tmp_path / "ctxproxy.db"
+    path = tmp_path / "ctxoptimizer.db"
     with sqlite3.connect(path) as conn:
         conn.execute("CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL)")
         conn.execute("INSERT INTO meta VALUES('schema_version', '1')")
         conn.commit()
     store = Store(path)
     store.close()
-    assert (tmp_path / "ctxproxy.db.bak-1").exists()
+    assert (tmp_path / "ctxoptimizer.db.bak-1").exists()
     with sqlite3.connect(path) as conn:
         request_columns = {row[1] for row in conn.execute("PRAGMA table_info(requests)")}
         report_columns = {row[1] for row in conn.execute("PRAGMA table_info(transform_reports)")}

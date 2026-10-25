@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ctxproxy.proxy import _safe_headers
+from ctxoptimizer.proxy import _safe_headers
 
 
 def test_safe_headers_redacts_secrets_but_keeps_context() -> None:

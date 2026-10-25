@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ctxproxy.config import Config
-from ctxproxy.dashboard.service import (
+from ctxoptimizer.config import Config
+from ctxoptimizer.dashboard.service import (
     config_view,
     deep_merge,
     findings_from_rows,
@@ -13,7 +13,7 @@ from ctxproxy.dashboard.service import (
     rows_to_csv,
     write_pricing,
 )
-from ctxproxy.doctor import run_checks
+from ctxoptimizer.doctor import run_checks
 
 
 def test_deep_merge_and_config_view_redacts_token() -> None:
@@ -62,7 +62,7 @@ def test_findings_from_rows_and_pricing_write(tmp_path: Path) -> None:
 
 
 def test_doctor_checks_are_structured(tmp_path: Path) -> None:
-    config = Config.model_validate({"telemetry": {"db_path": str(tmp_path / "ctxproxy.db")}})
+    config = Config.model_validate({"telemetry": {"db_path": str(tmp_path / "ctxoptimizer.db")}})
     checks = run_checks(config, offline=True)
     names = {check.name for check in checks}
     assert {"bind host", "database writable", "pricing"} <= names

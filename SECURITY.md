@@ -10,7 +10,7 @@ Do **not** open a public issue for a vulnerability, leaked credential, or
 privacy-sensitive report.
 
 Use GitHub's private vulnerability reporting:
-<https://github.com/ahmed-dev25/ctxproxy/security/advisories/new>
+<https://github.com/ahmed-dev25/ctxoptimizer/security/advisories/new>
 
 Please include:
 

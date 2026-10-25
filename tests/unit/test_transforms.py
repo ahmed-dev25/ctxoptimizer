@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
-from ctxproxy.providers import adapter_for
-from ctxproxy.transforms import (
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.transforms import (
     ansi,
     build_transforms,
     dedupe_lines,
@@ -15,8 +15,8 @@ from ctxproxy.transforms import (
     truncate,
     whitespace,
 )
-from ctxproxy.transforms.backref import DuplicateBackref
-from ctxproxy.transforms.base import TextTransform
+from ctxoptimizer.transforms.backref import DuplicateBackref
+from ctxoptimizer.transforms.base import TextTransform
 
 
 def test_ansi_strip() -> None:
@@ -30,7 +30,7 @@ def test_progress_collapse() -> None:
     bars = [f"{'#' * 20} {index}%" for index in range(4)]
     raw = "\n".join(["start", *bars, "error: boom", "done"])
     out = progress.clean(raw)
-    assert "[ctxproxy: 4 progress updates collapsed]" in out
+    assert "[ctxoptimizer: 4 progress updates collapsed]" in out
     assert "error: boom" in out
     assert out.rstrip().endswith("done")
     assert progress.clean(out) == out
@@ -50,7 +50,7 @@ def test_whitespace_trim() -> None:
 def test_exact_dedupe() -> None:
     raw = "\n".join(["same"] * 5)
     out = dedupe_lines.clean(raw, min_repeat=3)
-    assert "[ctxproxy: line repeated 4 more times]" in out
+    assert "[ctxoptimizer: line repeated 4 more times]" in out
     assert dedupe_lines.clean(out, min_repeat=3) == out
 
 
@@ -97,7 +97,7 @@ def test_truncate_keeps_signals_and_summary() -> None:
     assert "line 98" in out
     assert "ERROR: boom" in out
     assert "1 failed, 99 passed" in out
-    assert "[ctxproxy:" in out and "omitted; ref=" in out
+    assert "[ctxoptimizer:" in out and "omitted; ref=" in out
     assert len(out.encode("utf-8")) <= 450
     assert truncate.clean(out, config.transforms.smart_truncate) == out
 
@@ -158,7 +158,7 @@ def test_duplicate_backref_changes_only_later_copy() -> None:
     assert report.changed is True
     first, second = payload["messages"][2]["content"]
     assert first["content"].startswith("identical output")
-    assert second["content"].startswith("[ctxproxy: output identical")
+    assert second["content"].startswith("[ctxoptimizer: output identical")
     assert "t1" in second["content"]
     assert DuplicateBackref().apply(_ctx(config), payload, adapter, config).changed is False
 

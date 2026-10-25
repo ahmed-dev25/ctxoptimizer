@@ -6,13 +6,13 @@
 
 ## Context
 
-ctxproxy is a small local developer tool in a crowded market. The goal is
+ctxoptimizer is a small local developer tool in a crowded market. The goal is
 adoption, sharing and community value, not selling the core binary. A
 proprietary license added friction without a realistic revenue path.
 
 ## Decision
 
-- ctxproxy is licensed under the **MIT License**.
+- ctxoptimizer is licensed under the **MIT License**.
 - `LICENSE` is the canonical license; `NOTICE` covers attribution and provider
   trademarks.
 - The paid-license module, activation checks, license CLI, license config and

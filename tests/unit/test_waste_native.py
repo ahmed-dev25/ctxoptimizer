@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from ctxproxy.analysis.edits import edit_observations
-from ctxproxy.analysis.recommend import recommendations
-from ctxproxy.analysis.segments import Segment
-from ctxproxy.analysis.state import AnalysisState
-from ctxproxy.analysis.waste import EditObservation, churn_edits
-from ctxproxy.models import Provider, WasteFinding
+from ctxoptimizer.analysis.edits import edit_observations
+from ctxoptimizer.analysis.recommend import recommendations
+from ctxoptimizer.analysis.segments import Segment
+from ctxoptimizer.analysis.state import AnalysisState
+from ctxoptimizer.analysis.waste import EditObservation, churn_edits
+from ctxoptimizer.models import Provider, WasteFinding
 
 
 def _segment(kind: str, tokens: int) -> Segment:

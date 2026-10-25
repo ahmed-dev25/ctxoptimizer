@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ctxproxy.models import Endpoint, Provider
-from ctxproxy.providers import adapter_for
+from ctxoptimizer.models import Endpoint, Provider
+from ctxoptimizer.providers import adapter_for
 
 
 def _gemini_payload() -> dict[str, Any]:

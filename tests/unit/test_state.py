@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from hashlib import sha256
 
-from ctxproxy.analysis.segments import Segment
-from ctxproxy.analysis.state import AnalysisState, observations_from_texts
-from ctxproxy.analysis.waste import HashObservation
+from ctxoptimizer.analysis.segments import Segment
+from ctxoptimizer.analysis.state import AnalysisState, observations_from_texts
+from ctxoptimizer.analysis.waste import HashObservation
 
 
 def _seg(value: str, tokens: int) -> Segment:

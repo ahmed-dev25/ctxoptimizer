@@ -80,7 +80,7 @@ jobs:
         run: uv pip install --python .wheel-smoke/bin/python dist/*.whl
 
       - name: Version smoke
-        run: .wheel-smoke/bin/ctxproxy --version
+        run: .wheel-smoke/bin/ctxoptimizer --version
 
       - name: Import smoke
-        run: .wheel-smoke/bin/python -c "from ctxproxy.server import create_app; print('ok')"
+        run: .wheel-smoke/bin/python -c "from ctxoptimizer.server import create_app; print('ok')"

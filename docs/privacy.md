@@ -1,15 +1,15 @@
 # Privacy
 
-ctxproxy is local-first. It makes network connections only to the upstreams in
+ctxoptimizer is local-first. It makes network connections only to the upstreams in
 your config; there is no analytics, update check, or phone-home.
 
 ## What is stored
 
 | Store | Contents | Default |
 |---|---|---|
-| SQLite (`ctxproxy.db`) | request metadata, usage, cost, transform reports, drift, findings, quarantine events | enabled |
+| SQLite (`ctxoptimizer.db`) | request metadata, usage, cost, transform reports, drift, findings, quarantine events | enabled |
 | Blob directory | original bytes for changed/omitted blocks, and optional full request bodies | only when `capture_payloads != "off"` |
-| License file | not used; ctxproxy is MIT open source | — |
+| License file | not used; ctxoptimizer is MIT open source | — |
 | Logs | request IDs, provider/model, status, latency; never authorization or API keys | stderr |
 
 `capture_payloads` values:
@@ -23,7 +23,7 @@ is best-effort; do not enable full capture on machines you do not trust.
 
 ## Retention and purge
 
-`telemetry.retention_days` defaults to 14. `ctxproxy purge --all` deletes
+`telemetry.retention_days` defaults to 14. `ctxoptimizer purge --all` deletes
 requests, sessions, reports, drift, findings, captures and blobs. The dashboard
 Settings page shows whether capture is on.
 

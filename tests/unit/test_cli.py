@@ -9,9 +9,9 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from ctxproxy.cli import app
-from ctxproxy.telemetry.blobs import BlobStore
-from ctxproxy.telemetry.store import Store
+from ctxoptimizer.cli import app
+from ctxoptimizer.telemetry.blobs import BlobStore
+from ctxoptimizer.telemetry.store import Store
 
 runner = CliRunner()
 
@@ -85,7 +85,7 @@ def test_env_rejects_unknown_shell() -> None:
 
 
 def test_doctor_offline(tmp_path: Path) -> None:
-    db_path = tmp_path / "ctxproxy.db"
+    db_path = tmp_path / "ctxoptimizer.db"
     config = _config(tmp_path, db_path=db_path)
     result = runner.invoke(app, ["doctor", "--offline", "--config", str(config)])
     assert result.exit_code == 0
@@ -96,7 +96,7 @@ def test_doctor_offline(tmp_path: Path) -> None:
 
 
 def test_stats_reads_store(tmp_path: Path) -> None:
-    db_path = tmp_path / "ctxproxy.db"
+    db_path = tmp_path / "ctxoptimizer.db"
     _make_db(db_path)
     config = _config(tmp_path, db_path=db_path)
     result = runner.invoke(app, ["stats", "--config", str(config)])
@@ -106,7 +106,7 @@ def test_stats_reads_store(tmp_path: Path) -> None:
 
 
 def test_stats_json_and_project_filter(tmp_path: Path) -> None:
-    db_path = tmp_path / "ctxproxy.db"
+    db_path = tmp_path / "ctxoptimizer.db"
     _make_db(db_path)
     config = _config(tmp_path, db_path=db_path)
     result = runner.invoke(app, ["stats", "--config", str(config), "--json", "--project", "demo"])
@@ -152,8 +152,8 @@ def test_replay_offline(tmp_path: Path) -> None:
 
 
 def test_capture_exports_redacted_blocks(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("CTXPROXY_DATA_DIR", str(tmp_path))
-    db_path = tmp_path / "ctxproxy.db"
+    monkeypatch.setenv("CTXOPTIMIZER_DATA_DIR", str(tmp_path))
+    db_path = tmp_path / "ctxoptimizer.db"
     blobs = BlobStore(tmp_path / "blobs")
     before = blobs.put(b"OPENAI_API_KEY=sk-secret-value-1234567890")
     after = blobs.put(b"OPENAI_API_KEY=[REDACTED]")
@@ -198,7 +198,7 @@ def test_capture_exports_redacted_blocks(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_export_json(tmp_path: Path) -> None:
-    db_path = tmp_path / "ctxproxy.db"
+    db_path = tmp_path / "ctxoptimizer.db"
     _make_db(db_path)
     config = _config(tmp_path, db_path=db_path)
     result = runner.invoke(app, ["export", "--format", "json", "--config", str(config)])
@@ -209,7 +209,7 @@ def test_export_json(tmp_path: Path) -> None:
 
 
 def test_export_csv(tmp_path: Path) -> None:
-    db_path = tmp_path / "ctxproxy.db"
+    db_path = tmp_path / "ctxoptimizer.db"
     _make_db(db_path)
     config = _config(tmp_path, db_path=db_path)
     result = runner.invoke(app, ["export", "--format", "csv", "--config", str(config)])
@@ -219,7 +219,7 @@ def test_export_csv(tmp_path: Path) -> None:
 
 
 def test_purge_all(tmp_path: Path) -> None:
-    db_path = tmp_path / "ctxproxy.db"
+    db_path = tmp_path / "ctxoptimizer.db"
     _make_db(db_path)
     config = _config(tmp_path, db_path=db_path)
     result = runner.invoke(app, ["purge", "--all", "--config", str(config)])

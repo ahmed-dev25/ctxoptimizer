@@ -9,23 +9,23 @@ from pathlib import Path
 
 from starlette.testclient import TestClient
 
-from ctxproxy.config import Config
-from ctxproxy.models import WasteFinding
-from ctxproxy.server import create_app
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import WasteFinding
+from ctxoptimizer.server import create_app
 
 
 @contextmanager
 def _client(tmp_path: Path) -> Iterator[tuple[TestClient, object]]:
     config = Config.model_validate(
         {
-            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
+            "telemetry": {"db_path": str(tmp_path / "ctxoptimizer.db")},
             "pricing": {"file": str(tmp_path / "pricing.json")},
         }
     )
     app = create_app(config)
     headers = {
-        "x-ctxproxy-admin-token": app.state.admin_token,
-        "x-ctxproxy-csrf": app.state.csrf_token,
+        "x-ctxoptimizer-admin-token": app.state.admin_token,
+        "x-ctxoptimizer-csrf": app.state.csrf_token,
     }
     with TestClient(app, base_url="http://127.0.0.1", headers=headers) as client:
         yield client, app
@@ -33,17 +33,17 @@ def _client(tmp_path: Path) -> Iterator[tuple[TestClient, object]]:
 
 def test_config_get_and_validated_patch(tmp_path: Path) -> None:
     with _client(tmp_path) as (client, _app):
-        current = client.get("/_ctxproxy/api/config").json()["config"]
+        current = client.get("/_ctxoptimizer/api/config").json()["config"]
         assert current["server"]["admin_token"] == ""
         response = client.post(
-            "/_ctxproxy/api/config",
+            "/_ctxoptimizer/api/config",
             json={"mode": {"default": "active"}},
         )
         assert response.status_code == 200
         assert response.json()["config"]["mode"]["default"] == "active"
-        bad = client.post("/_ctxproxy/api/config", json={"mode": {"default": "nope"}})
+        bad = client.post("/_ctxoptimizer/api/config", json={"mode": {"default": "nope"}})
         assert bad.status_code == 400
-        mode = client.post("/_ctxproxy/api/mode", json={"mode": "shadow"})
+        mode = client.post("/_ctxoptimizer/api/mode", json={"mode": "shadow"})
         assert mode.json()["mode"] == "shadow"
 
 
@@ -52,28 +52,28 @@ def test_mutating_admin_requires_csrf(tmp_path: Path) -> None:
     with TestClient(
         app,
         base_url="http://127.0.0.1",
-        headers={"x-ctxproxy-admin-token": app.state.admin_token},
+        headers={"x-ctxoptimizer-admin-token": app.state.admin_token},
     ) as client:
-        response = client.post("/_ctxproxy/api/mode", json={"mode": "active"})
+        response = client.post("/_ctxoptimizer/api/mode", json={"mode": "active"})
     assert response.status_code == 403
 
 
 def test_new_pages_and_timeseries(tmp_path: Path) -> None:
     with _client(tmp_path) as (client, _app):
         for path in (
-            "/_ctxproxy/doctor",
-            "/_ctxproxy/sessions/unknown",
-            "/_ctxproxy/api/transforms/stats",
-            "/_ctxproxy/api/drift",
-            "/_ctxproxy/api/timeseries?metric=cost&bucket=day",
-            "/_ctxproxy/api/stale-elision/estimate?elided_tokens=8192"
+            "/_ctxoptimizer/doctor",
+            "/_ctxoptimizer/sessions/unknown",
+            "/_ctxoptimizer/api/transforms/stats",
+            "/_ctxoptimizer/api/drift",
+            "/_ctxoptimizer/api/timeseries?metric=cost&bucket=day",
+            "/_ctxoptimizer/api/stale-elision/estimate?elided_tokens=8192"
             "&input_per_mtok=3&cache_read_per_mtok=0.3",
         ):
             response = client.get(path)
             assert response.status_code == 200, path
-        assert client.get("/_ctxproxy/doctor").text.count("bind host") == 1
+        assert client.get("/_ctxoptimizer/doctor").text.count("bind host") == 1
         estimate = client.get(
-            "/_ctxproxy/api/stale-elision/estimate?elided_tokens=8192"
+            "/_ctxoptimizer/api/stale-elision/estimate?elided_tokens=8192"
             "&input_per_mtok=3&cache_read_per_mtok=0.3"
         ).json()
         assert estimate["label"] == "sim."
@@ -81,7 +81,7 @@ def test_new_pages_and_timeseries(tmp_path: Path) -> None:
 
 def test_live_sse_emits_a_snapshot(tmp_path: Path) -> None:
     with _client(tmp_path) as (client, _app):
-        with client.stream("GET", "/_ctxproxy/api/live") as response:
+        with client.stream("GET", "/_ctxoptimizer/api/live") as response:
             assert response.status_code == 200
             line = next(response.iter_lines())
     assert line.startswith("data: ")
@@ -110,8 +110,8 @@ def test_request_diff_uses_captured_blobs(tmp_path: Path) -> None:
             }
         )
         app.state.store.flush()
-        page = client.get("/_ctxproxy/requests/r-diff")
-        diff = client.get("/_ctxproxy/api/requests/r-diff/diff").json()
+        page = client.get("/_ctxoptimizer/requests/r-diff")
+        diff = client.get("/_ctxoptimizer/api/requests/r-diff/diff").json()
     assert page.status_code == 200
     assert "before block" in page.text and "after block" in page.text
     assert diff["blocks"][0]["before"] == "before block"
@@ -121,7 +121,7 @@ def test_request_diff_uses_captured_blobs(tmp_path: Path) -> None:
 def test_recommendation_dismissal_is_persisted(tmp_path: Path) -> None:
     with _client(tmp_path) as (client, app):
         response = client.post(
-            "/_ctxproxy/api/recommend/enable_cache_serve/dismiss",
+            "/_ctxoptimizer/api/recommend/enable_cache_serve/dismiss",
             json={"days": 30},
         )
         assert response.status_code == 200
@@ -146,14 +146,14 @@ def test_waste_status_memory_and_pricing_put(tmp_path: Path) -> None:
             est_cost_usd=None,
         )
         app.state.analysis._findings.append(finding)
-        response = client.post("/_ctxproxy/api/waste/f1/status", json={"status": "ack"})
+        response = client.post("/_ctxoptimizer/api/waste/f1/status", json={"status": "ack"})
         assert response.status_code == 200
         assert app.state.analysis.findings()[0].status == "ack"
 
         pricing = client.put(
-            "/_ctxproxy/api/pricing",
+            "/_ctxoptimizer/api/pricing",
             json={"models": [{"provider": "test", "match": "m", "input": 1, "output": 2}]},
         )
         assert pricing.status_code == 200
-        models = client.get("/_ctxproxy/api/pricing").json()["models"]
+        models = client.get("/_ctxoptimizer/api/pricing").json()["models"]
         assert any(model["provider"] == "test" for model in models)

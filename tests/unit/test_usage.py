@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from ctxproxy.models import Endpoint, Provider
-from ctxproxy.profiles import BUILTIN_PROFILES
-from ctxproxy.telemetry.sse import SSEDecoder, SSEFrameError
-from ctxproxy.telemetry.usage import new_usage_parser, parse_usage_body
+from ctxoptimizer.models import Endpoint, Provider
+from ctxoptimizer.profiles import BUILTIN_PROFILES
+from ctxoptimizer.telemetry.sse import SSEDecoder, SSEFrameError
+from ctxoptimizer.telemetry.usage import new_usage_parser, parse_usage_body
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
 

@@ -1,10 +1,10 @@
-# How to use ctxproxy
+# How to use ctxoptimizer
 
-This is the end-to-end guide for installing, configuring and running ctxproxy.
+This is the end-to-end guide for installing, configuring and running ctxoptimizer.
 
-## 1. What ctxproxy does
+## 1. What ctxoptimizer does
 
-ctxproxy sits between an AI coding client and its provider:
+ctxoptimizer sits between an AI coding client and its provider:
 
 ```text
 client -> http://127.0.0.1:8787 -> provider
@@ -20,7 +20,7 @@ provider's protocol; only its base URL changes.
 
 - Windows, macOS or Linux.
 - Python **3.11+**.
-- An API key for the provider/client you use. ctxproxy forwards the client's own
+- An API key for the provider/client you use. ctxoptimizer forwards the client's own
   credentials and does not store them.
 
 ## 3. Install
@@ -28,40 +28,40 @@ provider's protocol; only its base URL changes.
 ### PyPI (recommended)
 
 ```powershell
-uv tool install ctxproxy
+uv tool install ctxoptimizer
 # or
-pipx install ctxproxy
+pipx install ctxoptimizer
 ```
 
 If PyPI does not have the release yet, install from GitHub:
 
 ```powershell
-uv tool install "git+https://github.com/ahmed-dev25/ctxproxy.git"
+uv tool install "git+https://github.com/ahmed-dev25/ctxoptimizer.git"
 # or
-pipx install "git+https://github.com/ahmed-dev25/ctxproxy.git"
+pipx install "git+https://github.com/ahmed-dev25/ctxoptimizer.git"
 ```
 
 This requires Git on `PATH`. From a local wheel:
 
 ```powershell
-uv tool install --force .\ctxproxy-0.4.1-py3-none-any.whl
+uv tool install --force .\ctxoptimizer-0.4.1-py3-none-any.whl
 ```
 
 From a checkout:
 
 ```powershell
-git clone https://github.com/ahmed-dev25/ctxproxy.git
-cd ctxproxy
+git clone https://github.com/ahmed-dev25/ctxoptimizer.git
+cd ctxoptimizer
 uv sync --extra dev
-uv run ctxproxy --version
+uv run ctxoptimizer --version
 ```
 
-No optional signature extra is required; ctxproxy has no built-in self-update.
+No optional signature extra is required; ctxoptimizer has no built-in self-update.
 
 ## 4. Verify the installation
 
 ```powershell
-ctxproxy --version
+ctxoptimizer --version
 # 0.4.1
 ```
 
@@ -69,7 +69,7 @@ If the command is not found on Windows:
 
 ```powershell
 $env:PATH = "$env:USERPROFILE\.local\bin;$env:PATH"
-ctxproxy --version
+ctxoptimizer --version
 ```
 
 Close and reopen terminals after PATH changes. If you use Git Bash/WSL, use the
@@ -78,19 +78,19 @@ Windows executable path or add the Windows bin directory to that shell.
 ## 5. First run
 
 ```powershell
-ctxproxy run
+ctxoptimizer run
 ```
 
 The banner prints:
 
 ```text
-ctxproxy 0.4.1 listening on http://127.0.0.1:8787 (shadow)
-dashboard: http://127.0.0.1:8787/_ctxproxy/?token=...
+ctxoptimizer 0.4.1 listening on http://127.0.0.1:8787 (shadow)
+dashboard: http://127.0.0.1:8787/_ctxoptimizer/?token=...
 ```
 
 Keep this terminal open. Stop with `Ctrl+C`.
 
-Default mode is **shadow**: ctxproxy measures and simulates but forwards the
+Default mode is **shadow**: ctxoptimizer measures and simulates but forwards the
 client's bytes unchanged.
 
 ### Dashboard
@@ -103,20 +103,20 @@ cookie. The dashboard is protected by a Host allowlist, admin token and CSRF.
 Windows (actual paths):
 
 ```text
-Config: %LOCALAPPDATA%\ctxproxy\ctxproxy\config.toml
-Data:   %LOCALAPPDATA%\ctxproxy\ctxproxy\
-DB:     %LOCALAPPDATA%\ctxproxy\ctxproxy\ctxproxy.db
-Blobs:  %LOCALAPPDATA%\ctxproxy\ctxproxy\blobs\
+Config: %LOCALAPPDATA%\ctxoptimizer\ctxoptimizer\config.toml
+Data:   %LOCALAPPDATA%\ctxoptimizer\ctxoptimizer\
+DB:     %LOCALAPPDATA%\ctxoptimizer\ctxoptimizer\ctxoptimizer.db
+Blobs:  %LOCALAPPDATA%\ctxoptimizer\ctxoptimizer\blobs\
 ```
 
 Linux/macOS:
 
 ```text
-Config: ~/.config/ctxproxy/config.toml
-Data:   ~/.local/share/ctxproxy/
+Config: ~/.config/ctxoptimizer/config.toml
+Data:   ~/.local/share/ctxoptimizer/
 ```
 
-`ctxproxy run` creates the default config on first run.
+`ctxoptimizer run` creates the default config on first run.
 
 ## 6. Configure upstreams
 
@@ -151,7 +151,7 @@ The proxy resolves only names configured in your file.
 
 ## 7. Point a client at the proxy
 
-Use `ctxproxy env --shell powershell` (or `bash`, `zsh`, `fish`) to print
+Use `ctxoptimizer env --shell powershell` (or `bash`, `zsh`, `fish`) to print
 ready-to-paste exports.
 
 ### OpenAI SDK / Chat Completions / Aider / Cline / Continue
@@ -172,9 +172,9 @@ $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:8787"
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "ctxproxy-deepseek": {
+    "ctxoptimizer-deepseek": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "DeepSeek via ctxproxy",
+      "name": "DeepSeek via ctxoptimizer",
       "options": { "baseURL": "http://127.0.0.1:8787/u/deepseek" },
       "models": { "deepseek-flash": { "name": "DeepSeek Flash" } }
     }
@@ -224,32 +224,32 @@ http://127.0.0.1:8787/u/ollama
 Start with `shadow`:
 
 ```powershell
-ctxproxy run --mode shadow
+ctxoptimizer run --mode shadow
 ```
 
-Switch at runtime (requires a proxy started by `ctxproxy run`):
+Switch at runtime (requires a proxy started by `ctxoptimizer run`):
 
 ```powershell
-ctxproxy mode active
-ctxproxy mode shadow
+ctxoptimizer mode active
+ctxoptimizer mode shadow
 ```
 
 Or per request:
 
 ```text
-x-ctxproxy-mode: active
-x-ctxproxy-bypass: 1
+x-ctxoptimizer-mode: active
+x-ctxoptimizer-bypass: 1
 ```
 
 ## 9. Verify traffic and cost
 
 ```powershell
-ctxproxy status
-ctxproxy stats
-ctxproxy stats --json
-ctxproxy stats --since 24h --project demo
-ctxproxy export --format json --since 7d --out requests.json
-ctxproxy export --format csv --since 7d --out requests.csv
+ctxoptimizer status
+ctxoptimizer stats
+ctxoptimizer stats --json
+ctxoptimizer stats --since 24h --project demo
+ctxoptimizer export --format json --since 7d --out requests.json
+ctxoptimizer export --format csv --since 7d --out requests.csv
 ```
 
 The dashboard pages:
@@ -271,19 +271,19 @@ The dashboard pages:
 - A 400/422 retry sends the original bytes once and records `fallback_used`.
 - The guard quarantines a transform per session after repeated fallbacks,
   low savings, expand errors or our-fault drift.
-- `ctxproxy guard status`; `ctxproxy guard enable <transform>`; `ctxproxy guard disable <transform>`.
+- `ctxoptimizer guard status`; `ctxoptimizer guard enable <transform>`; `ctxoptimizer guard disable <transform>`.
 - `stale_result_elision` and `cache_serve` are opt-in. Use the break-even
   estimator before enabling them.
 
 Check the dashboard **Transforms** page after switching to active.
 
-## 11. MCP `ctxproxy_expand`
+## 11. MCP `ctxoptimizer_expand`
 
 If a transform omits content, an MCP-capable agent can retrieve the original:
 
 ```powershell
-ctxproxy mcp snippet --client claude-code
-ctxproxy mcp run
+ctxoptimizer mcp snippet --client claude-code
+ctxoptimizer mcp run
 ```
 
 Example registration:
@@ -291,8 +291,8 @@ Example registration:
 ```json
 {
   "mcpServers": {
-    "ctxproxy": {
-      "command": "ctxproxy",
+    "ctxoptimizer": {
+      "command": "ctxoptimizer",
       "args": ["mcp", "run"]
     }
   }
@@ -321,17 +321,17 @@ Captured text is redacted before storage. See `docs/privacy.md`.
 Wipe everything:
 
 ```powershell
-ctxproxy purge --all
+ctxoptimizer purge --all
 ```
 
 ## 13. Updating
 
-Use the package manager that installed ctxproxy:
+Use the package manager that installed ctxoptimizer:
 
 ```powershell
-uv tool upgrade ctxproxy
+uv tool upgrade ctxoptimizer
 # or
-pipx upgrade ctxproxy
+pipx upgrade ctxoptimizer
 ```
 
 There is no built-in self-update command. Updates come from the package index or
@@ -340,15 +340,15 @@ official source. See `docs/updating.md`.
 
 ## 14. License
 
-ctxproxy is free and open-source software licensed under the **MIT License**.
+ctxoptimizer is free and open-source software licensed under the **MIT License**.
 See `LICENSE` and `NOTICE`.
 
 ## 15. Run at login
 
 ```powershell
-ctxproxy service install --dry-run
-ctxproxy service install
-ctxproxy service uninstall
+ctxoptimizer service install --dry-run
+ctxoptimizer service install
+ctxoptimizer service uninstall
 ```
 
 Supported: launchd (macOS), systemd `--user` (Linux), Windows scheduled task.
@@ -357,55 +357,55 @@ Supported: launchd (macOS), systemd `--user` (Linux), Windows scheduled task.
 
 | Symptom | Fix |
 |---|---|
-| `ctxproxy: command not found` | Add `%USERPROFILE%\.local\bin` (Windows) or `~/.local/bin` to PATH; restart the shell. |
-| Dashboard returns 401 | Open the URL with the per-run `?token=...` printed by `ctxproxy run`. |
+| `ctxoptimizer: command not found` | Add `%USERPROFILE%\.local\bin` (Windows) or `~/.local/bin` to PATH; restart the shell. |
+| Dashboard returns 401 | Open the URL with the per-run `?token=...` printed by `ctxoptimizer run`. |
 | Dashboard returns 403 | Host header is not allowed; use `127.0.0.1`/`localhost` or configure `allow_remote`. |
-| Port 8787 in use | `ctxproxy run --port 8788` and update client base URLs. |
-| Upstream 401/403 | The client's provider key is wrong or missing; ctxproxy forwards it unchanged. |
-| Upstream 429 | Provider rate limit; ctxproxy passes it through verbatim. |
+| Port 8787 in use | `ctxoptimizer run --port 8788` and update client base URLs. |
+| Upstream 401/403 | The client's provider key is wrong or missing; ctxoptimizer forwards it unchanged. |
+| Upstream 429 | Provider rate limit; ctxoptimizer passes it through verbatim. |
 | Transform fallbacks | Check Transforms page; guard may quarantine; inspect request detail. |
 | No cache hits | Check Waste/drift; look for changing system prompt/tools/history. |
-| `ctxproxy status` fails | Proxy not running, wrong port, or firewall; try the printed URL. |
+| `ctxoptimizer status` fails | Proxy not running, wrong port, or firewall; try the printed URL. |
 
 Diagnostics:
 
 ```powershell
-ctxproxy doctor --offline
-ctxproxy doctor
+ctxoptimizer doctor --offline
+ctxoptimizer doctor
 ```
 
 ## 17. Uninstall
 
 ```powershell
-ctxproxy service uninstall
-ctxproxy purge --all
-uv tool uninstall ctxproxy
+ctxoptimizer service uninstall
+ctxoptimizer purge --all
+uv tool uninstall ctxoptimizer
 ```
 
 Remove the config directory manually if you want a completely clean uninstall:
 
 ```text
-%LOCALAPPDATA%\ctxproxy\ctxproxy\
+%LOCALAPPDATA%\ctxoptimizer\ctxoptimizer\
 ```
 
 ## 18. Quick command reference
 
 ```text
-ctxproxy run [--host --port --mode --config]
-ctxproxy status
-ctxproxy mode passthrough|shadow|active
-ctxproxy env --shell bash|zsh|fish|powershell
-ctxproxy doctor [--offline]
-ctxproxy stats [--since --project --json]
-ctxproxy export --format json|csv [--since --out]
-ctxproxy waste [--summary --json]
-ctxproxy recommend [--json]
-ctxproxy guard status|enable|disable <transform>
-ctxproxy replay <request.json>
-ctxproxy bench
-ctxproxy capture --out <dir>
-ctxproxy purge --all
-ctxproxy mcp run
-ctxproxy mcp snippet --client claude-code
-ctxproxy service install|uninstall
+ctxoptimizer run [--host --port --mode --config]
+ctxoptimizer status
+ctxoptimizer mode passthrough|shadow|active
+ctxoptimizer env --shell bash|zsh|fish|powershell
+ctxoptimizer doctor [--offline]
+ctxoptimizer stats [--since --project --json]
+ctxoptimizer export --format json|csv [--since --out]
+ctxoptimizer waste [--summary --json]
+ctxoptimizer recommend [--json]
+ctxoptimizer guard status|enable|disable <transform>
+ctxoptimizer replay <request.json>
+ctxoptimizer bench
+ctxoptimizer capture --out <dir>
+ctxoptimizer purge --all
+ctxoptimizer mcp run
+ctxoptimizer mcp snippet --client claude-code
+ctxoptimizer service install|uninstall
 ```

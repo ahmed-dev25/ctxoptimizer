@@ -7,12 +7,12 @@ import copy
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
-from ctxproxy.pipeline import run_pipeline
-from ctxproxy.providers import adapter_for
-from ctxproxy.transforms import ansi, build_transforms, dedupe_lines, progress, whitespace
-from ctxproxy.transforms.volatile import normalize_system, normalize_user_env
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext
+from ctxoptimizer.pipeline import run_pipeline
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.transforms import ansi, build_transforms, dedupe_lines, progress, whitespace
+from ctxoptimizer.transforms.volatile import normalize_system, normalize_user_env
 
 _ALPHABET = "abcXYZ0123 \n\t\r\x1b[]=#-.%:/"
 _TEXT = st.text(alphabet=_ALPHABET, max_size=600)

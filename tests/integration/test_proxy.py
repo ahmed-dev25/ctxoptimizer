@@ -15,10 +15,10 @@ import httpx
 import pytest
 import uvicorn
 
-from ctxproxy.config import Config
-from ctxproxy.models import Provider
-from ctxproxy.proxy import error_response
-from ctxproxy.server import create_app
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Provider
+from ctxoptimizer.proxy import error_response
+from ctxoptimizer.server import create_app
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
 
@@ -56,7 +56,7 @@ def proxy(fake_upstream, tmp_path: Path) -> Iterator[str]:
                 "anthropic": fake_upstream.base_url,
                 "openai": fake_upstream.base_url,
             },
-            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
+            "telemetry": {"db_path": str(tmp_path / "ctxoptimizer.db")},
         }
     )
     with running_proxy(config) as url:
@@ -71,14 +71,14 @@ def test_non_streaming_passthrough_and_header_hygiene(proxy, fake_upstream) -> N
             content=b'{"x":1}',
             headers={
                 "authorization": "Bearer test-token",
-                "x-ctxproxy-session": "session-1",
+                "x-ctxoptimizer-session": "session-1",
                 "connection": "x-remove-me",
                 "x-remove-me": "1",
             },
         )
     assert response.status_code == 200
     assert response.content == b'{"ok": true}'
-    assert response.headers["x-ctxproxy-request-id"]
+    assert response.headers["x-ctxoptimizer-request-id"]
     recorded = fake_upstream.requests[-1]
     assert recorded.method == "POST"
     assert recorded.path == "/v1/chat/completions"
@@ -86,7 +86,7 @@ def test_non_streaming_passthrough_and_header_hygiene(proxy, fake_upstream) -> N
     assert recorded.body == b'{"x":1}'
     assert recorded.headers["authorization"] == "Bearer test-token"
     assert recorded.headers["accept-encoding"] == "identity"
-    assert "x-ctxproxy-session" not in recorded.headers
+    assert "x-ctxoptimizer-session" not in recorded.headers
     assert "x-remove-me" not in recorded.headers
 
 
@@ -144,7 +144,7 @@ def test_client_disconnect_closes_upstream_stream(proxy, fake_upstream) -> None:
 def test_health_reports_counters(proxy) -> None:
     with httpx.Client(timeout=10) as client:
         client.post(f"{proxy}/v1/chat/completions", content=b"{}")
-        body = client.get(f"{proxy}/_ctxproxy/health").json()
+        body = client.get(f"{proxy}/_ctxoptimizer/health").json()
     assert body["requests"] >= 1
     assert body["completed"] >= 1
     assert body["upstream_errors"] == 0
@@ -154,7 +154,7 @@ def test_deepseek_usage_and_cost_are_recorded(fake_upstream, tmp_path: Path) -> 
     config = Config.model_validate(
         {
             "upstreams": {"deepseek": fake_upstream.base_url},
-            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
+            "telemetry": {"db_path": str(tmp_path / "ctxoptimizer.db")},
         }
     )
     payload = (FIXTURES / "deepseek" / "chat_stream_usage.sse").read_bytes()
@@ -166,7 +166,7 @@ def test_deepseek_usage_and_cost_are_recorded(fake_upstream, tmp_path: Path) -> 
                 content=b'{"model":"deepseek-flash","stream":true}',
             )
             assert response.status_code == 200
-            body = client.get(f"{url}/_ctxproxy/health").json()
+            body = client.get(f"{url}/_ctxoptimizer/health").json()
     assert body["last_model"] == "deepseek-flash"
     assert body["last_usage_source"] == "provider"
     assert body["last_priced"] is True
@@ -178,7 +178,7 @@ def test_non_stream_json_usage_is_parsed(fake_upstream, tmp_path: Path) -> None:
     config = Config.model_validate(
         {
             "upstreams": {"openai": fake_upstream.base_url},
-            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
+            "telemetry": {"db_path": str(tmp_path / "ctxoptimizer.db")},
         }
     )
     fake_upstream.json(
@@ -198,15 +198,15 @@ def test_non_stream_json_usage_is_parsed(fake_upstream, tmp_path: Path) -> None:
                 content=b'{"model":"gpt-6.1-sol"}',
             )
             assert response.status_code == 200
-            body = client.get(f"{url}/_ctxproxy/health").json()
+            body = client.get(f"{url}/_ctxoptimizer/health").json()
     assert body["last_usage_source"] == "provider"
 
 
 def test_full_capture_stores_request_and_response(
     fake_upstream, tmp_path: Path, monkeypatch
 ) -> None:
-    monkeypatch.setenv("CTXPROXY_DATA_DIR", str(tmp_path / "data"))
-    db_path = tmp_path / "ctxproxy.db"
+    monkeypatch.setenv("CTXOPTIMIZER_DATA_DIR", str(tmp_path / "data"))
+    db_path = tmp_path / "ctxoptimizer.db"
     config = Config.model_validate(
         {
             "upstreams": {"openai": fake_upstream.base_url},
@@ -227,7 +227,7 @@ def test_full_capture_stores_request_and_response(
 
 
 def test_proxy_persists_request_to_sqlite(fake_upstream, tmp_path: Path) -> None:
-    db_path = tmp_path / "ctxproxy.db"
+    db_path = tmp_path / "ctxoptimizer.db"
     config = Config.model_validate(
         {
             "upstreams": {"openai": fake_upstream.base_url},
@@ -244,7 +244,7 @@ def test_proxy_persists_request_to_sqlite(fake_upstream, tmp_path: Path) -> None
             assert response.status_code == 200
             deadline = time.monotonic() + 3
             while time.monotonic() < deadline:
-                if client.get(f"{url}/_ctxproxy/health").json()["stored_requests"] >= 1:
+                if client.get(f"{url}/_ctxoptimizer/health").json()["stored_requests"] >= 1:
                     break
                 time.sleep(0.02)
     with sqlite3.connect(db_path) as conn:
@@ -284,7 +284,7 @@ def _mode_config(fake_upstream, tmp_path: Path, mode: str) -> Config:
             "mode": {"default": mode},
             "upstreams": {"anthropic": fake_upstream.base_url},
             "telemetry": {
-                "db_path": str(tmp_path / "ctxproxy.db"),
+                "db_path": str(tmp_path / "ctxoptimizer.db"),
                 "capture_payloads": "off",
             },
         }
@@ -297,7 +297,7 @@ def test_active_mode_transforms_request(fake_upstream, tmp_path: Path) -> None:
     with running_proxy(config) as url:
         with httpx.Client(timeout=10) as client:
             response = client.post(f"{url}/v1/messages", content=_active_payload())
-            health = client.get(f"{url}/_ctxproxy/health").json()
+            health = client.get(f"{url}/_ctxoptimizer/health").json()
     assert response.status_code == 200
     recorded = fake_upstream.requests[-1].body
     assert _ESC_JSON not in recorded
@@ -312,7 +312,7 @@ def test_shadow_mode_forwards_original(fake_upstream, tmp_path: Path) -> None:
     with running_proxy(config) as url:
         with httpx.Client(timeout=10) as client:
             response = client.post(f"{url}/v1/messages", content=_active_payload())
-            health = client.get(f"{url}/_ctxproxy/health").json()
+            health = client.get(f"{url}/_ctxoptimizer/health").json()
     assert response.status_code == 200
     assert _ESC_JSON in fake_upstream.requests[-1].body
     assert health["last_mutated"] is False
@@ -324,7 +324,7 @@ def test_mutated_request_retries_with_original_on_400(fake_upstream, tmp_path: P
     with running_proxy(config) as url:
         with httpx.Client(timeout=10) as client:
             response = client.post(f"{url}/v1/messages", content=_active_payload())
-            health = client.get(f"{url}/_ctxproxy/health").json()
+            health = client.get(f"{url}/_ctxoptimizer/health").json()
     assert response.status_code == 200
     assert len(fake_upstream.requests) == 2
     first, second = fake_upstream.requests
@@ -334,16 +334,16 @@ def test_mutated_request_retries_with_original_on_400(fake_upstream, tmp_path: P
 
 
 def test_changed_blocks_are_stored(fake_upstream, tmp_path: Path, monkeypatch) -> None:
-    from ctxproxy.telemetry.blobs import BlobStore
+    from ctxoptimizer.telemetry.blobs import BlobStore
 
-    monkeypatch.setenv("CTXPROXY_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("CTXOPTIMIZER_DATA_DIR", str(tmp_path / "data"))
     fake_upstream.json({"ok": True})
     config = Config.model_validate(
         {
             "mode": {"default": "active"},
             "upstreams": {"anthropic": fake_upstream.base_url},
             "telemetry": {
-                "db_path": str(tmp_path / "ctxproxy.db"),
+                "db_path": str(tmp_path / "ctxoptimizer.db"),
                 "capture_payloads": "changed_blocks",
             },
         }
@@ -362,7 +362,7 @@ def test_connect_failure_returns_provider_shaped_502(tmp_path: Path) -> None:
                 "anthropic": "http://127.0.0.1:1",
                 "openai": "http://127.0.0.1:1",
             },
-            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
+            "telemetry": {"db_path": str(tmp_path / "ctxoptimizer.db")},
         }
     )
     with running_proxy(config) as url:
@@ -381,11 +381,11 @@ def test_connect_failure_returns_provider_shaped_502(tmp_path: Path) -> None:
         (Provider.ANTHROPIC, 502, ("type", "error")),
         (Provider.OPENAI, 504, ("code", "upstream_timeout")),
         (Provider.GEMINI, 502, ("status", "UNAVAILABLE")),
-        (Provider.OLLAMA, 502, ("error", "ctxproxy: upstream unreachable")),
+        (Provider.OLLAMA, 502, ("error", "ctxoptimizer: upstream unreachable")),
     ],
 )
 def test_error_shapes(provider: Provider, status: int, expected: tuple[str, str]) -> None:
-    response = error_response(provider, status, "ctxproxy: upstream unreachable")
+    response = error_response(provider, status, "ctxoptimizer: upstream unreachable")
     payload = json.loads(response.body)
     if provider is Provider.ANTHROPIC:
         assert payload[expected[0]] == expected[1]

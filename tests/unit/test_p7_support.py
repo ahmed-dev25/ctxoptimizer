@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from ctxproxy.analysis.break_even import estimate_stale_elision
-from ctxproxy.service import install_service, service_plan, uninstall_service
+from ctxoptimizer.analysis.break_even import estimate_stale_elision
+from ctxoptimizer.service import install_service, service_plan, uninstall_service
 
 
 def test_break_even_estimator_is_labelled_and_conservative() -> None:
@@ -44,11 +44,11 @@ def test_service_plan_shapes(tmp_path: Path) -> None:
     assert "ONLOGON" in windows.commands[0]
 
     mac = service_plan(platform="darwin", home=tmp_path)
-    assert mac.path.name == "com.ctxproxy.plist"
+    assert mac.path.name == "com.ctxoptimizer.plist"
     assert "launchctl" in mac.commands[0]
 
     linux = service_plan(platform="linux", home=tmp_path, config_path="cfg.toml")
-    assert linux.path.name == "ctxproxy.service"
+    assert linux.path.name == "ctxoptimizer.service"
     assert "ExecStart=" in linux.content
     assert "cfg.toml" in linux.content
     assert "systemctl" in linux.commands[0]
@@ -64,7 +64,7 @@ def test_service_dry_run_does_not_write(tmp_path: Path) -> None:
 def test_service_install_writes_and_runs(monkeypatch, tmp_path: Path) -> None:
     calls = []
     monkeypatch.setattr(
-        "ctxproxy.service.subprocess.run",
+        "ctxoptimizer.service.subprocess.run",
         lambda command, check: calls.append(command),
     )
     plan = install_service(platform="linux", home=tmp_path, dry_run=False)
@@ -75,10 +75,10 @@ def test_service_install_writes_and_runs(monkeypatch, tmp_path: Path) -> None:
 
 
 def test_service_default_platform(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setattr("ctxproxy.service.os.name", "nt")
+    monkeypatch.setattr("ctxoptimizer.service.os.name", "nt")
     assert service_plan(home=tmp_path).platform == "windows"
-    monkeypatch.setattr("ctxproxy.service.os.name", "posix")
-    monkeypatch.setattr("ctxproxy.service.sys.platform", "darwin")
+    monkeypatch.setattr("ctxoptimizer.service.os.name", "posix")
+    monkeypatch.setattr("ctxoptimizer.service.sys.platform", "darwin")
     assert service_plan(home=tmp_path).platform == "darwin"
-    monkeypatch.setattr("ctxproxy.service.sys.platform", "linux")
+    monkeypatch.setattr("ctxoptimizer.service.sys.platform", "linux")
     assert service_plan(home=tmp_path).platform == "linux"

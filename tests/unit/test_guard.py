@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from ctxproxy.config import Config
-from ctxproxy.guard import Guard
-from ctxproxy.transforms import build_transforms
+from ctxoptimizer.config import Config
+from ctxoptimizer.guard import Guard
+from ctxoptimizer.transforms import build_transforms
 
 
 def test_fallback_quarantine_and_enable() -> None:
@@ -46,10 +46,10 @@ def test_auto_reenable_after_n_requests() -> None:
 
 
 def test_expand_error_rate_quarantines_omission_transforms(tmp_path) -> None:
-    from ctxproxy.telemetry.expand import record_expand
-    from ctxproxy.telemetry.store import Store
+    from ctxoptimizer.telemetry.expand import record_expand
+    from ctxoptimizer.telemetry.store import Store
 
-    store = Store(tmp_path / "ctxproxy.db")
+    store = Store(tmp_path / "ctxoptimizer.db")
     for _ in range(10):
         record_expand("ref", False, db_path=store.path)
     guard = Guard(Config())

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve ctxproxy.
+Thanks for helping improve ctxoptimizer.
 
 ## Before opening a pull request
 
@@ -18,7 +18,7 @@ Requirements: Python 3.11+ and `uv`.
 
 ```powershell
 uv sync --extra dev
-uv run ctxproxy run
+uv run ctxoptimizer run
 uv run pytest -q
 ```
 

@@ -1,4 +1,4 @@
-# ctxproxy
+# ctxoptimizer
 
 A local, deterministic cost optimizer for AI coding agents. It sits between your
 agent and the LLM provider, measures real token usage and spend, explains why
@@ -15,30 +15,30 @@ prompt caching missed, and applies cache-safe payload reductions.
 ## Install
 
 ```powershell
-uv tool install ctxproxy
-# or: pipx install ctxproxy
-ctxproxy run
+uv tool install ctxoptimizer
+# or: pipx install ctxoptimizer
+ctxoptimizer run
 ```
 
 If PyPI does not have the release yet, install from GitHub:
 
 ```powershell
-uv tool install "git+https://github.com/ahmed-dev25/ctxproxy.git"
-# or: pipx install "git+https://github.com/ahmed-dev25/ctxproxy.git"
-ctxproxy run
+uv tool install "git+https://github.com/ahmed-dev25/ctxoptimizer.git"
+# or: pipx install "git+https://github.com/ahmed-dev25/ctxoptimizer.git"
+ctxoptimizer run
 ```
 
 From a checkout:
 
 ```powershell
 uv sync --extra dev
-uv run ctxproxy run
+uv run ctxoptimizer run
 ```
 
 The startup banner prints the dashboard URL with a per-run admin token:
 
 ```text
-dashboard: http://127.0.0.1:8787/_ctxproxy/?token=...
+dashboard: http://127.0.0.1:8787/_ctxoptimizer/?token=...
 ```
 
 Open that URL once; the token is stored as an `HttpOnly; SameSite=Strict`
@@ -47,9 +47,9 @@ cookie. The dashboard is also protected by a Host allowlist and CSRF checks.
 ## Quickstart
 
 ```powershell
-ctxproxy env --shell powershell   # bash | zsh | fish | powershell
-ctxproxy status                   # health + counters
-ctxproxy stats                    # recorded usage and cost
+ctxoptimizer env --shell powershell   # bash | zsh | fish | powershell
+ctxoptimizer status                   # health + counters
+ctxoptimizer stats                    # recorded usage and cost
 ```
 
 Point a client at the printed base URL. See
@@ -58,8 +58,8 @@ DeepSeek, OpenRouter, Gemini, Ollama, Codex and the other supported clients.
 
 Default mode is `shadow`: everything is measured and simulated, while the
 client's bytes are forwarded unchanged. Switch to `active` from the dashboard
-(Settings), with `ctxproxy run --mode active`, or with
-`x-ctxproxy-mode: active` per request.
+(Settings), with `ctxoptimizer run --mode active`, or with
+`x-ctxoptimizer-mode: active` per request.
 
 ## What it does
 
@@ -75,7 +75,7 @@ client's bytes are forwarded unchanged. Switch to `active` from the dashboard
   `cache_control` hints and OpenAI `prompt_cache_key`.
 - Auto-quarantines a transform per session when fallback/drift guard counters
   trip; the dashboard shows the history and lets you re-enable it.
-- Provides `ctxproxy_expand` over MCP so an agent can retrieve any omitted
+- Provides `ctxoptimizer_expand` over MCP so an agent can retrieve any omitted
   original from the local blob store.
 - Serves a local dashboard: Overview, Live (SSE), Sessions, Requests + diff
   viewer, Waste Opportunities with status controls, Transforms with hot
@@ -85,14 +85,14 @@ client's bytes are forwarded unchanged. Switch to `active` from the dashboard
 
 Payload capture defaults to `changed_blocks`; set it to `off` to store nothing.
 Captured text stays in the per-user data directory, is redacted, and is bounded
-by retention. `ctxproxy purge --all` wipes telemetry, blobs and findings. See
+by retention. `ctxoptimizer purge --all` wipes telemetry, blobs and findings. See
 [`docs/privacy.md`](docs/privacy.md).
 
 ## Service
 
 ```powershell
-ctxproxy service install        # launchd / systemd --user / Windows scheduled task
-ctxproxy service install --dry-run
+ctxoptimizer service install        # launchd / systemd --user / Windows scheduled task
+ctxoptimizer service install --dry-run
 ```
 
 ## Contributing
@@ -103,17 +103,17 @@ issue for a security problem.
 
 ## License
 
-ctxproxy is free and open-source software licensed under the **MIT License**.
+ctxoptimizer is free and open-source software licensed under the **MIT License**.
 See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
 ## Updating
 
-Use the package manager that installed ctxproxy:
+Use the package manager that installed ctxoptimizer:
 
 ```powershell
-uv tool upgrade ctxproxy
+uv tool upgrade ctxoptimizer
 # or
-pipx upgrade ctxproxy
+pipx upgrade ctxoptimizer
 ```
 
 There is no built-in self-update command. PyPI releases are published with

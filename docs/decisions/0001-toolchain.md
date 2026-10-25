@@ -14,7 +14,7 @@ runs Python 3.14.7 with uv 0.13.1. The system-wide git config sets
 ## Decision
 
 1. Keep `uv_build` and the src layout; set the entry point to
-   `ctxproxy.cli:app`.
+   `ctxoptimizer.cli:app`.
 2. `requires-python = ">=3.11"`; develop on 3.14; CI tests 3.11 and 3.14 (the
    two ends of the supported range) on Linux, macOS and Windows.
 3. Set repo-local `core.autocrlf=false` and normalize via `.gitattributes`:

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
-from ctxproxy.providers import adapter_for
-from ctxproxy.transforms.anthropic_cache import AnthropicCache
-from ctxproxy.transforms.openai_hints import OpenAIHints
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.transforms.anthropic_cache import AnthropicCache
+from ctxoptimizer.transforms.openai_hints import OpenAIHints
 
 
 def _ctx(

@@ -1,19 +1,20 @@
-# ctxproxy — Progress
+# ctxoptimizer — Progress
 
 **Last updated:** 2026-10-25
-**Milestone:** P0–P14 — MIT open-source PyPI release
-**Branch:** `main`
-**Overall:** wheel/PyPI-only distribution merged; wheel/sdist build + attestation verified; PyPI trusted-publisher setup is owner-blocked
+**Milestone:** P0–P15 — ctxoptimizer release
+**Branch:** `feat/p15-rename-ctxoptimizer`
+**Overall:** repository renamed to ctxoptimizer; code, CLI, docs and package metadata updated; PyPI trusted-publisher setup remains owner-blocked
 
 ## Resume here
 
-- **Last completed:** P14 wheel-only PyPI distribution (`99e7fef`).
+- **Last completed:** P15 rename to ctxoptimizer (`405af37`).
 - **Last merge:** `df33877` (P14)
-- **Next task:** configure the PyPI trusted publisher, tag `v0.4.1`, verify the
-  PyPI upload/attestations, then start the website spec.
-- **Blocked:** PyPI project/trusted-publisher creation requires the owner's PyPI
-  account; the `ctxproxy` name must be available.
-- **Active branch:** none — working tree is on `main`
+- **Next task:** configure the PyPI trusted publisher for repository
+  `ctxoptimizer`, tag `v0.4.1`, verify the PyPI upload/attestations, then start
+  the website spec.
+- **Blocked:** PyPI trusted-publisher configuration requires the owner's PyPI
+  account; the GitHub `pypi` environment is already created.
+- **Active branch:** `feat/p15-rename-ctxoptimizer`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -31,10 +32,10 @@
   `reasoning=106`, `cost=$0.004039`, `ttfb=1175 ms`, `total=2797 ms`.
 - **Session totals:** 3 requests, `$0.005393`, 4,630 fresh input,
   605,312 cache read, 310 output.
-- **CLI verified:** `ctxproxy status`, `ctxproxy stats`, `ctxproxy export
+- **CLI verified:** `ctxoptimizer status`, `ctxoptimizer stats`, `ctxoptimizer export
   --format json`.
 - **Notes:** DeepSeek peak rates were used; off-peak is half. `session_id` is
-  `unknown` because OpenCode did not send `x-ctxproxy-session`; P2 derives
+  `unknown` because OpenCode did not send `x-ctxoptimizer-session`; P2 derives
   sessions from content. No prompt content was stored (`capture_payloads=off`).
   The credential store was never read, and the temporary OpenCode config was
   removed.
@@ -43,7 +44,7 @@
 
 | ID | Task | Status | Branch | Commits | Merge | Gates | Notes |
 |---|---|---|---|---|---|---|---|
-| P0-1 | Toolchain + skeleton | done | `feat/p0-1-toolchain` | `c7c34c7` | `afdae28` | ruff, format, mypy, pytest (4) | `uv build` and `ctxproxy --version` verified |
+| P0-1 | Toolchain + skeleton | done | `feat/p0-1-toolchain` | `c7c34c7` | `afdae28` | ruff, format, mypy, pytest (4) | `uv build` and `ctxoptimizer --version` verified |
 | P0-2 | Config | done | `feat/p0-2-config` | `116adab` | `c37f4f7` | ruff, format, mypy, pytest (22) | default template round-trips to model defaults; wheel ships it |
 | P0-3 | Models, logging, ULID | done | `feat/p0-3-models-logging` | `7428195` | `eea33ec` | ruff, format, mypy, pytest (38) | SEC-2 sanitizer + monotonic stdlib ULID |
 | P0-4 | Test infrastructure | done | `feat/p0-4-test-infra` | `b24a59c` | `b509c9f` | ruff, format, mypy, pytest (45) | recording uvicorn fake upstream, SSE replay, golden runner |
@@ -88,14 +89,15 @@
 | P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (292), coverage 80.64% | signed-manifest test, dev update extra |
 | P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
 | P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates later removed in P12 |
-| P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | `e776e6e` | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxproxy update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
+| P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | `e776e6e` | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxoptimizer update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
 | P13 | Release hardening | done | `feat/p13-release-hardening` | `986f54d` | `9afe91b` | ruff, format, mypy, pytest (278) | added SECURITY/CONTRIBUTING/CoC/templates/Dependabot; enabled secret scanning, push protection, Dependabot updates, CodeQL and branch protection; release workflow publishes wheel, sdist and unsigned OS binaries with checksums; Git install documented until PyPI |
 | P14 | Wheel-only PyPI release | done | `feat/p14-pypi-release` | `99e7fef` | `df33877` | ruff, format, mypy (62), pytest (278), coverage 81.69%; release build run `40219261674` | version `0.4.1`; removed PyInstaller binaries, binary CI and code-signing path; release workflow uses PyPI Trusted Publishing + PEP 740 attestations and publishes wheel/sdist plus checksums |
 | P14-1 | PyPI workflow verification | done | `main` | `668637b` | — | release build/attestation run `40219423578`; CI run `40219421757` | verified wheel/sdist build and GitHub build provenance; PyPI upload still needs owner trusted-publisher setup |
+| P15 | Rename to ctxoptimizer | done | `feat/p15-rename-ctxoptimizer` | `405af37` | pending | ruff, format, mypy (62), pytest (278), coverage 81.69% | renamed package/CLI/repo/docs/PyPI metadata; GitHub repo is now `ahmed-dev25/ctxoptimizer` |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
-| Release | `v0.4.0` | released | - | `c37913a` | - | release run `40217381725`; historical | wheel and sdist only after binary assets were removed; superseded by wheel-only distribution |
-| Release | `v0.4.1` | pending | - | `668637b` | - | ruff, format, mypy, pytest (278), coverage 81.69% | wheel/sdist only; PyPI trusted publisher setup required before tagging |
+| Release | `v0.4.0` | released | — | `c37913a` | — | release run `40217381725`; historical | wheel and sdist only after binary assets were removed; superseded by wheel-only distribution |
+| Release | `v0.4.1` | pending | — | `405af37` | — | ruff, format, mypy, pytest (278), coverage 81.69% | ctxoptimizer wheel/sdist only; PyPI trusted publisher setup required before tagging |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -144,7 +146,7 @@ Rows are in execution order; see `docs/plan.md` §4.
   `.gitignore`, `.gitattributes`, `docs/` tree, ADRs 0001-0004, `AGENTS.md`,
   README. Architecture HTML moved to `docs/architecture.html`.
 - 2026-10-24 — P0-1: `pyproject.toml` with runtime/dev dependencies and the
-  `ctxproxy.cli:app` entry point, ruff/mypy/pytest/coverage config, typed module
+  `ctxoptimizer.cli:app` entry point, ruff/mypy/pytest/coverage config, typed module
   tree for the full SPEC layout, CI workflow (dormant), smoke tests.
   Added `pytest-cov` (needed for the §20.2 coverage gate; not in the §6 list)
   and excluded `SPEC.md` from ruff because ruff 0.17 reformats Python code
@@ -174,7 +176,7 @@ Rows are in execution order; see `docs/plan.md` §4.
   `docs/open-questions.md`.
 - 2026-10-24 — P1-1: pure routing layer (§8.2 table, `/p/`, `/u/`, mode and
   bypass headers, client UA detection), Starlette ingress with injectable
-  forwarder, `/_ctxproxy/health`, absolute-form target rejection, named-upstream
+  forwarder, `/_ctxoptimizer/health`, absolute-form target rejection, named-upstream
   resolution and query preservation.
 - 2026-10-24 — P1-7: per-upstream profiles (`usage`, `cache_policy`,
   `cost_source`, `cache_hints`, `inject_stream_usage`) with built-ins for
@@ -182,7 +184,7 @@ Rows are in execution order; see `docs/plan.md` §4.
   gemini-openai/ollama-openai; string and table entries resolve through one
   registry; routing carries the profile.
 - 2026-10-25 — P1-2: forwarding core with shared httpx client, hop-by-hop and
-  `x-ctxproxy-*` stripping, `Accept-Encoding: identity`, byte-true streaming via
+  `x-ctxoptimizer-*` stripping, `Accept-Encoding: identity`, byte-true streaming via
   `aiter_raw`, side-channel null usage parser, client-disconnect closure,
   provider-shaped 502/504, verbatim upstream status/headers/body, request ids and
   runtime counters.
@@ -209,7 +211,7 @@ Rows are in execution order; see `docs/plan.md` §4.
   (JSON/CSV, `--since`), and `purge`; `docs/client-setup.md` with recipes for
   Claude Code, OpenCode, DeepSeek, OpenRouter, Codex, Aider, Gemini-compat and
   Ollama-compat.
-- 2026-10-25 — Live smoke test: OpenCode 2.0.31 -> ctxproxy `/u/deepseek` ->
+- 2026-10-25 — Live smoke test: OpenCode 2.0.31 -> ctxoptimizer `/u/deepseek` ->
   DeepSeek `deepseek-flash`. 3 requests, provider usage, 99.2% cache hit,
   `$0.005393` total, CLI status/stats/export verified. Temporary OpenCode config
   removed; no prompts stored.
@@ -234,7 +236,7 @@ Rows are in execution order; see `docs/plan.md` §4.
   stair-step and OpenAI prompt_cache_key hints.
 - 2026-10-25 — P3-7/8/9: session-scoped auto-quarantine on fallback/our-fault
   drift, byte-true batch-anchored `cache_serve` with a bounded session map, and
-  the stdio MCP `ctxproxy_expand` server with blob retrieval and head/tail
+  the stdio MCP `ctxoptimizer_expand` server with blob retrieval and head/tail
   truncation.
 - 2026-10-25 — P4-3/P5: marker-quality metric (markers + coverage to the last
   client cache marker) exposed in health/last request; read-only dashboard
@@ -272,14 +274,14 @@ Rows are in execution order; see `docs/plan.md` §4.
   checklist; doctor/service helper tests.
 
 - 2026-10-25 — P10 release prep: release packaging, signed self-update
-  (`ctxproxy update --check/update`), manifest signer, version 0.3.0, release
+  (`ctxoptimizer update --check/update`), manifest signer, version 0.3.0, release
   workflow/checklist.
 
 - 2026-10-25 — P11 MIT relicense: MIT `LICENSE`/`NOTICE`; removed the license
   module, CLI, config and EULA; active mode is unconditional; version 0.4.0;
   signed updates remained until P12.
 
-- 2026-10-25 — P12 package-manager updates: removed `ctxproxy update`, the
+- 2026-10-25 — P12 package-manager updates: removed `ctxoptimizer update`, the
   update config/extra, PyNaCl dependency, manifest signer and signed-manifest
   documentation; upgrades use `uv tool upgrade` or `pipx upgrade`.
 
@@ -296,8 +298,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   binaries, PyInstaller CI and OS code-signing steps; release workflow now uses
   PyPI Trusted Publishing with PEP 740 attestations, build provenance, and a
   GitHub release with wheel/sdist plus checksums. Also removed binary assets
-  from the historical `v0.4.0` release. PyPI trusted-publisher setup is the
-  remaining owner action.
+  from the historical `v0.4.0` release.
+
+- 2026-10-25 — P15 rename: project, Python package, CLI, dashboard route, config
+  paths, environment variables, repository URL, docs and PyPI metadata are now
+  `ctxoptimizer`. GitHub repository renamed to `ahmed-dev25/ctxoptimizer`.
 
 - 2026-10-25 — History audit: scanned 96 commits / 494 text blobs for provider
   keys, tokens, private keys, credential assignments, URLs and sensitive
@@ -310,13 +315,13 @@ Rows are in execution order; see `docs/plan.md` §4.
   running OpenCode process PATH. Invoke it by full path until OpenCode restarts.
 - The system git config sets `core.autocrlf=true`; this repo overrides it to
   `false` and normalizes via `.gitattributes`.
-- `origin` is `git@github.com:ahmed-dev25/ctxproxy.git`; CI runs on `main`.
+- `origin` is `git@github.com:ahmed-dev25/ctxoptimizer.git`; CI runs on `main`.
 - No live provider captures exist yet. P1-3 may use documented fixtures with a
   `meta.json` source (ADR 0005); captures replace them when available.
 - The repository is public. `v0.4.0` is tagged and released; `v0.4.1` is
   prepared for wheel-only PyPI distribution but is not tagged yet.
-- PyPI setup is owner-blocked: configure trusted publisher `ahmed-dev25/ctxproxy`,
-  workflow `release.yml`, environment `pypi`, project `ctxproxy`; see
+- PyPI setup is owner-blocked: configure trusted publisher `ahmed-dev25/ctxoptimizer`,
+  workflow `release.yml`, environment `pypi`, project `ctxoptimizer`; see
   `docs/pypi-release.md`.
 - Secret scanning, push protection, Dependabot alerts/updates, CodeQL default
   setup and basic `main` protection are enabled.

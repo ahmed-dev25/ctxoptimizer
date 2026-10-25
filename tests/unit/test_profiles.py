@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from ctxproxy.config import Config
-from ctxproxy.profiles import BUILTIN_PROFILES, UnknownUpstream, resolve_upstream
+from ctxoptimizer.config import Config
+from ctxoptimizer.profiles import BUILTIN_PROFILES, UnknownUpstream, resolve_upstream
 
 
 def test_builtin_profiles_cover_the_default_upstreams() -> None:
