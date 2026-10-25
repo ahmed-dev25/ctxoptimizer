@@ -43,4 +43,3 @@ Other gates:
   + simple bars); no external chart/CDN assets.
 - CI coverage is enforced at 80% overall (currently 81.6%).
 - PyInstaller binaries are built in CI but are not signed/notarized here.
-- Coverage is reported and CI enforces 80% overall.
