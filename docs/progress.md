@@ -2,18 +2,18 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P14 — MIT open-source PyPI release
-**Branch:** `feat/p14-pypi-release`
-**Overall:** wheel/PyPI-only distribution implemented; `v0.4.1` prepared; PyPI trusted-publisher setup is owner-blocked
+**Branch:** `main`
+**Overall:** wheel/PyPI-only distribution merged; `v0.4.1` prepared; PyPI trusted-publisher setup is owner-blocked
 
 ## Resume here
 
 - **Last completed:** P14 wheel-only PyPI distribution (`99e7fef`).
-- **Last merge:** `9afe91b` (P13)
+- **Last merge:** `df33877` (P14)
 - **Next task:** configure the PyPI trusted publisher, tag `v0.4.1`, verify the
   PyPI upload/attestations, then start the website spec.
 - **Blocked:** PyPI project/trusted-publisher creation requires the owner's PyPI
   account; the `ctxproxy` name must be available.
-- **Active branch:** `feat/p14-pypi-release`
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -90,7 +90,7 @@
 | P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates later removed in P12 |
 | P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | `e776e6e` | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxproxy update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
 | P13 | Release hardening | done | `feat/p13-release-hardening` | `986f54d` | `9afe91b` | ruff, format, mypy, pytest (278) | added SECURITY/CONTRIBUTING/CoC/templates/Dependabot; enabled secret scanning, push protection, Dependabot updates, CodeQL and branch protection; release workflow publishes wheel, sdist and unsigned OS binaries with checksums; Git install documented until PyPI |
-| P14 | Wheel-only PyPI release | done | `feat/p14-pypi-release` | `99e7fef` | pending | ruff, format, mypy (62), pytest (278), coverage 81.69% | version `0.4.1`; removed PyInstaller binaries, binary CI and code-signing path; release workflow uses PyPI Trusted Publishing + PEP 740 attestations and publishes wheel/sdist plus checksums |
+| P14 | Wheel-only PyPI release | done | `feat/p14-pypi-release` | `99e7fef` | `df33877` | ruff, format, mypy (62), pytest (278), coverage 81.69% | version `0.4.1`; removed PyInstaller binaries, binary CI and code-signing path; release workflow uses PyPI Trusted Publishing + PEP 740 attestations and publishes wheel/sdist plus checksums |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
 | Release | `v0.4.0` | released | — | `c37913a` | — | release run `40217381725`; local wheel/binary smoke | wheel, sdist, Linux/macOS/Windows unsigned binaries, `SHA256SUMS`; superseded by wheel-only distribution |
