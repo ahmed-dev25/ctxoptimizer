@@ -2,19 +2,19 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P15 — ctxoptimizer release
-**Branch:** `feat/p15-rename-ctxoptimizer`
-**Overall:** repository renamed to ctxoptimizer; code, CLI, docs and package metadata updated; PyPI trusted-publisher setup remains owner-blocked
+**Branch:** `main`
+**Overall:** repository renamed to ctxoptimizer; code, CLI, docs and package metadata updated; `v0.4.1` ready to tag
 
 ## Resume here
 
 - **Last completed:** P15 rename to ctxoptimizer (`405af37`).
-- **Last merge:** `df33877` (P14)
+- **Last merge:** `9ab4301` (P15)
 - **Next task:** configure the PyPI trusted publisher for repository
   `ctxoptimizer`, tag `v0.4.1`, verify the PyPI upload/attestations, then start
   the website spec.
 - **Blocked:** PyPI trusted-publisher configuration requires the owner's PyPI
   account; the GitHub `pypi` environment is already created.
-- **Active branch:** `feat/p15-rename-ctxoptimizer`
+- **Active branch:** none ? working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -93,7 +93,7 @@
 | P13 | Release hardening | done | `feat/p13-release-hardening` | `986f54d` | `9afe91b` | ruff, format, mypy, pytest (278) | added SECURITY/CONTRIBUTING/CoC/templates/Dependabot; enabled secret scanning, push protection, Dependabot updates, CodeQL and branch protection; release workflow publishes wheel, sdist and unsigned OS binaries with checksums; Git install documented until PyPI |
 | P14 | Wheel-only PyPI release | done | `feat/p14-pypi-release` | `99e7fef` | `df33877` | ruff, format, mypy (62), pytest (278), coverage 81.69%; release build run `40219261674` | version `0.4.1`; removed PyInstaller binaries, binary CI and code-signing path; release workflow uses PyPI Trusted Publishing + PEP 740 attestations and publishes wheel/sdist plus checksums |
 | P14-1 | PyPI workflow verification | done | `main` | `668637b` | — | release build/attestation run `40219423578`; CI run `40219421757` | verified wheel/sdist build and GitHub build provenance; PyPI upload still needs owner trusted-publisher setup |
-| P15 | Rename to ctxoptimizer | done | `feat/p15-rename-ctxoptimizer` | `405af37` | pending | ruff, format, mypy (62), pytest (278), coverage 81.69% | renamed package/CLI/repo/docs/PyPI metadata; GitHub repo is now `ahmed-dev25/ctxoptimizer` |
+| P15 | Rename to ctxoptimizer | done | `feat/p15-rename-ctxoptimizer` | `405af37` | `9ab4301` | ruff, format, mypy (62), pytest (278), coverage 81.69% | renamed package/CLI/repo/docs/PyPI metadata; GitHub repo is now `ahmed-dev25/ctxoptimizer` |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
 | Release | `v0.4.0` | released | — | `c37913a` | — | release run `40217381725`; historical | wheel and sdist only after binary assets were removed; superseded by wheel-only distribution |
