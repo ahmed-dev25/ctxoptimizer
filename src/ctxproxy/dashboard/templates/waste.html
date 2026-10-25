@@ -45,6 +45,7 @@
     <b>{{ item["title"] }}</b> <span class="est">{{ item["label"] }}</span><br>
     <span class="muted">{{ item["evidence"] }} · {{ item["action"] }}</span><br>
     <button class="apply" data-id="{{ item['id'] }}">Apply / confirm</button>
+    <button class="dismiss" data-id="{{ item['id'] }}">Dismiss 30d</button>
   </div>
   {% else %}
   <p class="muted">No recommendations yet. Run some traffic through the proxy.</p>
@@ -107,6 +108,11 @@
         if (confirm("Apply this recommendation?")) {
           post("/_ctxproxy/api/recommend/" + button.dataset.id + "/apply", {});
         }
+      });
+    });
+    document.querySelectorAll("button.dismiss").forEach((button) => {
+      button.addEventListener("click", () => {
+        post("/_ctxproxy/api/recommend/" + button.dataset.id + "/dismiss", {days: 30});
       });
     });
   </script>

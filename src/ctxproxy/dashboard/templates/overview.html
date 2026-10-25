@@ -73,6 +73,12 @@
 
   {% if points %}
   <h2>Spend over time <span class="est">sim.</span></h2>
+  {% if spend_line %}
+  <svg viewBox="0 0 600 80" width="100%" height="100" preserveAspectRatio="none"
+       style="background:#161b22;border:1px solid #2d3644;border-radius:10px;">
+    <polyline fill="none" stroke="#60a5fa" stroke-width="2" points="{{ spend_line }}"/>
+  </svg>
+  {% endif %}
   <table>
     <thead><tr><th>Bucket</th><th>Cost (USD)</th><th></th></tr></thead>
     <tbody>
@@ -86,6 +92,12 @@
 
   {% if waste_points %}
   <h2>Waste over time <span class="est">est.</span></h2>
+  {% if waste_line %}
+  <svg viewBox="0 0 600 80" width="100%" height="100" preserveAspectRatio="none"
+       style="background:#161b22;border:1px solid #2d3644;border-radius:10px;">
+    <polyline fill="none" stroke="#fcd34d" stroke-width="2" points="{{ waste_line }}"/>
+  </svg>
+  {% endif %}
   <table>
     <thead><tr><th>Bucket</th><th>Findings</th><th>Est. tokens</th><th>Est. USD</th></tr></thead>
     <tbody>

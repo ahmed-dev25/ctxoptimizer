@@ -24,6 +24,7 @@ from ctxproxy.config import Config, data_dir
 from ctxproxy.dashboard.api import (
     admin_config,
     apply_recommendation,
+    dismiss_recommendation,
     drift,
     expand_usage,
     export,
@@ -215,6 +216,11 @@ def create_app(
             StarletteRoute(
                 "/_ctxproxy/api/recommend/{recommendation_id}/apply",
                 apply_recommendation,
+                methods=["POST"],
+            ),
+            StarletteRoute(
+                "/_ctxproxy/api/recommend/{recommendation_id}/dismiss",
+                dismiss_recommendation,
                 methods=["POST"],
             ),
             StarletteRoute("/_ctxproxy/waste", waste_view, methods=["GET"]),

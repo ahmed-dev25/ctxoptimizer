@@ -39,7 +39,7 @@ jobs:
         run: uv run mypy --strict src
 
       - name: Test
-        run: uv run pytest -q --cov --cov-report=term-missing
+        run: uv run pytest -q --cov --cov-report=term-missing --cov-fail-under=80
 
   audit:
     name: dependency audit (non-blocking)

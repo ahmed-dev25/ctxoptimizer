@@ -6,8 +6,12 @@ and requires no provider keys.
 
 from __future__ import annotations
 
+import argparse
+import json
 import statistics
+import sys
 import time
+from pathlib import Path
 
 from ctxproxy.config import Config
 from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
@@ -49,9 +53,15 @@ def _payload(size: int) -> dict[str, object]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--rounds", type=int, default=25)
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--baseline", type=str, default=None)
+    parser.add_argument("--tolerance", type=float, default=0.20)
+    args = parser.parse_args()
     config = Config.model_validate({"mode": {"default": "active"}})
     adapter = adapter_for(Provider.ANTHROPIC, Endpoint.MESSAGES)
-    rounds = 25
+    rounds = max(1, args.rounds)
     samples: list[float] = []
     for _ in range(rounds):
         payload = _payload(40)
@@ -76,9 +86,29 @@ def main() -> None:
     samples.sort()
     p50 = statistics.median(samples)
     p95 = samples[int(len(samples) * 0.95) - 1]
-    print(f"rounds={rounds} corpus_tool_results=40")
-    print(f"p50_ms={p50:.2f} p95_ms={p95:.2f} max_ms={max(samples):.2f}")
-    print("note: synthetic corpus; publish measured numbers with hardware details")
+    result = {
+        "rounds": rounds,
+        "corpus_tool_results": 40,
+        "p50_ms": round(p50, 2),
+        "p95_ms": round(p95, 2),
+        "max_ms": round(max(samples), 2),
+        "note": "synthetic corpus; publish measured numbers with hardware details",
+    }
+    if args.json:
+        print(json.dumps(result))
+    else:
+        print(f"rounds={rounds} corpus_tool_results=40")
+        print(f"p50_ms={p50:.2f} p95_ms={p95:.2f} max_ms={max(samples):.2f}")
+        print(result["note"])
+    if args.baseline:
+        baseline = json.loads(Path(args.baseline).read_text(encoding="utf-8"))
+        allowed = float(baseline["p95_ms"]) * (1 + args.tolerance)
+        if p95 > allowed:
+            print(
+                f"p95 regression: {p95:.2f}ms > {allowed:.2f}ms (baseline {baseline['p95_ms']}ms)",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

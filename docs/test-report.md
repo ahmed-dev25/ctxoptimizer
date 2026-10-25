@@ -3,7 +3,7 @@
 Command: `uv run pytest -q`
 
 ```text
-266 passed, 1 warning in 27.05s
+273 passed, 1 warning in 28.02s
 ```
 
 Warnings: Starlette `TestClient` deprecation for `httpx` (upstream package;
@@ -31,7 +31,7 @@ Other gates:
   `pairing-unknown-fields`).
 - Property invariants: pure-transform idempotence, pipeline determinism/
   idempotence, pairing/unknown fields/reasoning preservation.
-- Coverage measured at ~79% overall (not enforced).
+- Coverage measured at 80.3% overall (CI enforces `--cov-fail-under=80`).
 - Live contract tests (`-m live`) are opt-in and require real keys; they are not
   part of the default run.
 
@@ -41,6 +41,6 @@ Other gates:
   (see `docs/provider-notes.md` §11).
 - Full dashboard charting is intentionally lightweight (server-rendered tables
   + simple bars); no external chart/CDN assets.
-- CI coverage is not enforced (currently ~79% overall).
+- CI coverage is enforced at 80% overall (currently 80.1%).
 - PyInstaller binaries are built in CI but are not signed/notarized here.
-- Coverage is reported but not enforced by a threshold.
+- Coverage is reported and CI enforces 80% overall.

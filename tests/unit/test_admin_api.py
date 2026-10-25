@@ -118,6 +118,16 @@ def test_request_diff_uses_captured_blobs(tmp_path: Path) -> None:
     assert diff["blocks"][0]["after"] == "after block"
 
 
+def test_recommendation_dismissal_is_persisted(tmp_path: Path) -> None:
+    with _client(tmp_path) as (client, app):
+        response = client.post(
+            "/_ctxproxy/api/recommend/enable_cache_serve/dismiss",
+            json={"days": 30},
+        )
+        assert response.status_code == 200
+        assert "enable_cache_serve" in app.state.store.suppressed_recommendations()
+
+
 def test_waste_status_memory_and_pricing_put(tmp_path: Path) -> None:
     with _client(tmp_path) as (client, app):
         finding = WasteFinding(

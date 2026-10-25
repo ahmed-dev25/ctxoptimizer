@@ -1,18 +1,20 @@
 # ctxproxy — Progress
 
 **Last updated:** 2026-10-25
-**Milestone:** P0–P7 complete + P8 hardening
-**Branch:** `main`
-**Overall:** P8 hardening merged; remaining items are live captures, release signing/notarization and manual fresh-machine checks
+**Milestone:** P0–P9 — full spec + hardening
+**Branch:** `feat/p9-hardening`
+**Overall:** P9 hardening merged after review; external release checks remain
 
 ## Resume here
 
-- **Last completed:** P8 hardening (`22814b6`, merge `279ea97`).
+- **Last completed:** P9 hardening — recommendation suppression, row pricing
+  editor, guard auto-re-enable/expand health, coverage gate, release workflow
+  (awaiting merge).
 - **Last merge:** `279ea97` (P8)
-- **Next task:** run the live-capture and release checklist in
-  `docs/test-report.md` / `docs/open-questions.md`.
+- **Next task:** merge, then complete the owner-only release checklist in
+  `docs/release-checklist.md`.
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p9-hardening` — merge to `main` before release.
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -81,6 +83,7 @@
 | P6-5 | W7/W8 | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | W7 opt-in heuristic, W8 default on |
 | P7 | Packaging/service/licensing | done | `feat/p5-p7-complete` | `e63ba16` | `67b4ff3` | ruff, format, mypy, pytest (252) | wheel + PyInstaller CI, service install/uninstall, Ed25519 verify (enforcement off), docs/changelog/licenses |
 | P8 | Hardening pass | done | `feat/p8-hardening` | `22814b6` | `279ea97` | ruff, format, mypy, pytest (266) | volatile normalizer, stream usage injection, expand counters, guard window, export reports, full capture fixtures, migration backup, redacted headers, golden/property tests |
+| P9 | Hardening pass 2 | done | `feat/p9-hardening` | recorded at merge | — | ruff, format, mypy, pytest (273), coverage 80.3% | recommendation suppression, row pricing editor, guard auto-re-enable/expand health, release workflow/checklist |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -112,6 +115,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P6 | pass | pass (58 files) | 232 passed | reported, not enforced | `6c265cf` |
 | 2026-10-25 | P5/P6-4/P7 | pass | pass (63 files) | 252 passed | reported, not enforced | `e63ba16` |
 | 2026-10-25 | P8 hardening | pass | pass (63 files) | 266 passed | 79% reported, not enforced | `22814b6` |
+| 2026-10-25 | P9 hardening | pass | pass (63 files) | 273 passed | 80.1% enforced (CI) | recorded at merge |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -242,6 +246,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   (schema v2); redacted request headers; per-transform fallback incidents and
   waste-over-time; committed golden corpus and transform invariant property
   tests.
+
+- 2026-10-25 — P9 hardening: recommendation suppression (30-day dismissal),
+  per-row pricing editor with JSON fallback, guard auto-re-enable and
+  expand-error health, CI coverage gate at 80%, release workflow and release
+  checklist; doctor/service helper tests.
 
 ## Handoff notes
 

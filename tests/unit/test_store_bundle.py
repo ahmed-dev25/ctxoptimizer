@@ -69,6 +69,8 @@ def test_store_persists_request_bundle(tmp_path: Path) -> None:
     assert store.fetch_request("r1")["request_headers_json"] == '{"user-agent": "test"}'
     assert store.set_waste_status("f1", "ack") is True
     assert store.fetch_waste(status="ack")[0]["finding_id"] == "f1"
+    store.dismiss_recommendation("enable_cache_serve", days=30)
+    assert "enable_cache_serve" in store.suppressed_recommendations()
     store.close()
 
 
