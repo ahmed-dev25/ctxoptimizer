@@ -58,3 +58,12 @@ def test_expand_error_rate_quarantines_omission_transforms(tmp_path) -> None:
     assert guard.is_quarantined("s", "cache_serve") is True
     assert guard.is_quarantined("s", "stale_result_elision") is True
     store.close()
+
+
+def test_low_savings_quarantine_after_window() -> None:
+    config = Config.model_validate({"guard": {"fallback_window": 2, "min_savings_to_stay": 0.01}})
+    guard = Guard(config)
+    guard.observe_savings("s", "line_dedupe", 0.001)
+    assert guard.is_quarantined("s", "line_dedupe") is False
+    guard.observe_savings("s", "line_dedupe", 0.001)
+    assert guard.is_quarantined("s", "line_dedupe") is True
