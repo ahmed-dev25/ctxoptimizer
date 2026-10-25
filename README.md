@@ -14,11 +14,16 @@ prompt caching missed, and applies cache-safe payload reductions.
 
 ## Install
 
+Install from GitHub while the PyPI package is pending:
+
 ```powershell
-uv tool install ctxproxy
-# or: pipx install ctxproxy
+uv tool install "git+https://github.com/ahmed-dev25/ctxproxy.git"
+# or: pipx install "git+https://github.com/ahmed-dev25/ctxproxy.git"
 ctxproxy run
 ```
+
+This requires Git on `PATH`. Release wheels are also attached to each GitHub
+release for manual installation.
 
 From a checkout:
 
@@ -87,6 +92,12 @@ ctxproxy service install        # launchd / systemd --user / Windows scheduled t
 ctxproxy service install --dry-run
 ```
 
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development setup and gates. Report
+vulnerabilities privately via [`SECURITY.md`](SECURITY.md); do not open a public
+issue for a security problem.
+
 ## License
 
 ctxproxy is free and open-source software licensed under the **MIT License**.
@@ -102,8 +113,8 @@ uv tool upgrade ctxproxy
 pipx upgrade ctxproxy
 ```
 
-There is no built-in self-update command. Release integrity is provided by the
-package index/GitHub release channel and TLS. See
+There is no built-in self-update command. Source installs follow the GitHub
+repository; release-wheel installs must be replaced manually. See
 [`docs/updating.md`](docs/updating.md).
 
 ## Documentation
@@ -120,6 +131,8 @@ package index/GitHub release channel and TLS. See
 - [`docs/release-checklist.md`](docs/release-checklist.md) — release/signing checklist
 - [`docs/progress.md`](docs/progress.md) — build status and handoff notes
 - [`CHANGELOG.md`](CHANGELOG.md)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- [`SECURITY.md`](SECURITY.md)
 - [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)
 - [`docs/decisions/`](docs/decisions/) — architecture decision records
 - [`AGENTS.md`](AGENTS.md) — coding and git workflow rules

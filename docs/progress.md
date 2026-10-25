@@ -1,18 +1,19 @@
 # ctxproxy — Progress
 
 **Last updated:** 2026-10-25
-**Milestone:** P0–P12 — MIT open-source release
-**Branch:** `main`
-**Overall:** P12 merged; built-in self-update removed; gates pass; ready to tag `v0.4.0`
+**Milestone:** P0–P13 — MIT open-source release
+**Branch:** `feat/p13-release-hardening`
+**Overall:** repository public; P13 security docs/release assets implemented; ready to merge and tag `v0.4.0`
 
 ## Resume here
 
-- **Last completed:** P12 package-manager updates (`3505114`).
+- **Last completed:** P13 release hardening (`986f54d`).
 - **Last merge:** `e776e6e` (P12)
-- **Next task:** tag `v0.4.0`, publish release assets, make the repository
-  public.
-- **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Next task:** merge P13, tag `v0.4.0`, verify the public release, then start
+  the website spec.
+- **Blocked:** PyPI publication requires owner credentials; installs use Git
+  until the package name is published.
+- **Active branch:** `feat/p13-release-hardening`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -88,9 +89,10 @@
 | P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
 | P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates later removed in P12 |
 | P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | `e776e6e` | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxproxy update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
+| P13 | Release hardening | done | `feat/p13-release-hardening` | `986f54d` | pending | ruff, format, mypy, pytest (278) | added SECURITY/CONTRIBUTING/CoC/templates/Dependabot; enabled secret scanning, push protection, Dependabot updates, CodeQL and branch protection; release workflow publishes wheel, sdist and unsigned OS binaries with checksums; Git install documented until PyPI |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
-| Release | `v0.4.0` | pending | — | `e776e6e` | — | ruff, format, mypy, pytest (278), coverage 81.69% | MIT release; tag and publish; repository still private |
+| Release | `v0.4.0` | pending | — | `986f54d` | — | ruff, format, mypy, pytest (278), coverage 81.69% | MIT release; public repository; tag and publish |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -277,6 +279,11 @@ Rows are in execution order; see `docs/plan.md` §4.
   update config/extra, PyNaCl dependency, manifest signer and signed-manifest
   documentation; upgrades use `uv tool upgrade` or `pipx upgrade`.
 
+- 2026-10-25 — P13 release hardening: public repository; added
+  `SECURITY.md`, `CONTRIBUTING.md`, code of conduct, issue/PR templates and
+  Dependabot; release workflow now publishes wheel, sdist, per-OS unsigned
+  binaries and combined `SHA256SUMS`; Git install documented until PyPI.
+
 - 2026-10-25 — History audit: scanned 96 commits / 494 text blobs for provider
   keys, tokens, private keys, credential assignments, URLs and sensitive
   filenames. Only fake credential fixtures in tests were found. Removed the
@@ -291,9 +298,9 @@ Rows are in execution order; see `docs/plan.md` §4.
 - `origin` is `git@github.com:ahmed-dev25/ctxproxy.git`; CI runs on `main`.
 - No live provider captures exist yet. P1-3 may use documented fixtures with a
   `meta.json` source (ADR 0005); captures replace them when available.
-- The repository is still private. Tag `v0.4.0` and publish release assets only
-  after the fresh-machine checks and package-manager update instructions are
-  verified.
+- The repository is public. Tag `v0.4.0` and publish release assets only after
+  the fresh-machine checks and package-manager update instructions are verified.
+- PyPI publication is pending; the README uses a Git install until then.
 - Run `uv sync --extra dev` after cloning; `uv.lock` is committed.
 - Ruff formats Python code blocks inside Markdown. `SPEC.md` is excluded in
   `pyproject.toml`; do not remove that exclusion.

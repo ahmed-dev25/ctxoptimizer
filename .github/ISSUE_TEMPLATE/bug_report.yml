@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible bug in ctxproxy
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include API keys, prompts, private logs, or other sensitive data.
+        Security issues should follow SECURITY.md, not this form.
+  - type: input
+    id: version
+    attributes:
+      label: ctxproxy version
+      placeholder: "0.4.0"
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: OS / Python
+      placeholder: "Windows 11 / Python 3.12"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include the client, upstream type, and mode (shadow/active).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Redact credentials and prompt content.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Diagnostics
+      description: Paste redacted `ctxproxy doctor` output and relevant logs.
