@@ -39,7 +39,6 @@ jobs:
           path: dist/*
 
       - name: Attest build provenance
-        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@v4
         with:
           subject-path: "dist/*"
