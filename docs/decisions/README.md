@@ -15,6 +15,7 @@ new one rather than rewriting history.
 | [0005](0005-documented-fixtures.md) | Documented-shape fixtures are allowed when sourced | accepted | 2026-10-24 |
 | [0006](0006-provider-profiles.md) | Protocol-first support with named upstreams and profiles | accepted | 2026-10-24 |
 | [0007](0007-license-verification.md) | Ed25519 license verification, enforcement still off | accepted | 2026-10-25 |
+| [0008](0008-signed-updates.md) | Proprietary license and signed self-updates | accepted | 2026-10-25 |
 
 ## Template
 

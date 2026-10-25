@@ -93,6 +93,23 @@ This open build verifies Ed25519 licenses offline but ships with
 `LICENSE_ENFORCEMENT = "off"` (ADR 0002/0007), so active mode is never blocked.
 A paid build flips that single flag and embeds the public key.
 
+## License
+
+ctxproxy is commercial software licensed under the ctxproxy Commercial License
+v1.0. See [`LICENSE`](LICENSE), [`EULA.md`](EULA.md) and [`NOTICE`](NOTICE).
+One license is required per user; updates within the same major version are
+included. It is not open source.
+
+## Updates
+
+```powershell
+ctxproxy update --check
+ctxproxy update --yes
+```
+
+Updates are delivered as signed manifests + SHA-256 verified artifacts. See
+[`docs/updating.md`](docs/updating.md).
+
 ## Documentation
 
 - [`SPEC.md`](SPEC.md) — authoritative specification
@@ -102,6 +119,7 @@ A paid build flips that single flag and embeds the public key.
 - [`docs/privacy.md`](docs/privacy.md) — data handling and purge
 - [`docs/faq.md`](docs/faq.md) — cache, savings, troubleshooting
 - [`docs/test-report.md`](docs/test-report.md) — gates and test coverage summary
+- [`docs/updating.md`](docs/updating.md) — signed self-update and release artifacts
 - [`docs/release-checklist.md`](docs/release-checklist.md) — release/signing checklist
 - [`docs/progress.md`](docs/progress.md) — build status and handoff notes
 - [`CHANGELOG.md`](CHANGELOG.md)

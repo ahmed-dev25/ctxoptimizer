@@ -40,6 +40,9 @@ decision or external credentials.
 ## 5. Packaging
 
 - [ ] PyInstaller binary runs on each OS (CI artifacts).
+- [ ] Generate and publish a signed `manifest.json` for the artifact.
+- [ ] Verify `ctxproxy update --check` and a `--dry-run` install against the
+      published manifest.
 - [ ] macOS codesign + notarization (**owner certificate**).
 - [ ] Windows code signing (**owner certificate**).
 - [ ] Publish wheel/sdist and checksums (release workflow).
@@ -47,8 +50,10 @@ decision or external credentials.
 
 ## 6. Product/legal (owner)
 
-- [ ] Choose the project license and add `LICENSE`.
-- [ ] Decide whether license enforcement stays off or ships in a paid build.
+- [x] Choose the project license: proprietary commercial license (ADR 0008).
+- [ ] Have the short EULA reviewed for your jurisdiction/sales platform.
+- [ ] Decide whether paid builds enable license enforcement (open build keeps
+      it off).
 - [ ] Finalize pricing/current model IDs and peak/off-peak policy.
 - [ ] Confirm provider/trademark wording in README and metadata.
 - [ ] Review `THIRD_PARTY_LICENSES.md` against the built artifact.

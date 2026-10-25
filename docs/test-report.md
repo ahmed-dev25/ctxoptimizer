@@ -3,7 +3,7 @@
 Command: `uv run pytest -q`
 
 ```text
-274 passed, 1 warning in 32.92s
+287 passed, 1 warning in 33.15s
 ```
 
 Warnings: Starlette `TestClient` deprecation for `httpx` (upstream package;
@@ -17,7 +17,7 @@ Other gates:
 | `uv run ruff format --check .` | pass |
 | `uv run mypy --strict src` | pass (63 source files) |
 | `uv build --wheel` | pass |
-| `ctxproxy --version` | `0.1.0` |
+| `ctxproxy --version` | `0.3.0` |
 
 ## Coverage map
 
@@ -31,7 +31,7 @@ Other gates:
   `pairing-unknown-fields`).
 - Property invariants: pure-transform idempotence, pipeline determinism/
   idempotence, pairing/unknown fields/reasoning preservation.
-- Coverage measured at 80.3% overall (CI enforces `--cov-fail-under=80`).
+- Coverage measured at 80.12% overall (CI enforces `--cov-fail-under=80`).
 - Live contract tests (`-m live`) are opt-in and require real keys; they are not
   part of the default run.
 

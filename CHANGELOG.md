@@ -1,23 +1,23 @@
 # Changelog
 
-## Unreleased — P9 hardening
+## 0.3.0-alpha — 2026-10-25
 
 - Recommendation dismissal (30-day suppression) with dashboard controls.
 - Per-row pricing editor with validated JSON fallback.
-- Guard auto-re-enable and expand-error-rate quarantine.
+- Guard auto-re-enable, expand-error-rate and low-savings quarantine.
 - CI coverage gate at 80% overall.
 - Release workflow (wheel/sdist, checksums, unsigned binaries) and release
   checklist.
-
-## Unreleased — P8 hardening
-
+- Proprietary commercial license (`LICENSE`, `EULA.md`, `NOTICE`).
+- Signed self-update (`ctxproxy update --check/update`) with Ed25519 + SHA-256
+  verification.
 - `volatile_normalizer` implemented and registered (opt-in).
 - `openai_hints.inject_stream_usage` implemented (opt-in, api.openai.com only).
 - MCP expand logging/counters and dashboard expand usage.
 - Guard fallback counts use the configured moving window.
-- Export JSON now includes transform reports.
+- Export JSON includes transform reports.
 - Full capture mode writes request/final-request/response fixtures.
-- DB schema v2 with automatic pre-migration backup; redacted request headers;
+- DB schema v3 with automatic pre-migration backup; redacted request headers;
   per-transform fallback incidents; waste-over-time data.
 - Golden corpus and transform invariant property tests added.
 
