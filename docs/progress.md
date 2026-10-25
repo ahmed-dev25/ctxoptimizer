@@ -2,19 +2,18 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P9 — full spec + hardening
-**Branch:** `feat/p9-hardening`
-**Overall:** P9 hardening merged after review; external release checks remain
+**Branch:** `main`
+**Overall:** P9 hardening merged; external release checks remain
 
 ## Resume here
 
-- **Last completed:** P9 hardening — recommendation suppression, row pricing
-  editor, guard auto-re-enable/expand health, coverage gate, release workflow
-  (awaiting merge).
-- **Last merge:** `279ea97` (P8)
-- **Next task:** merge, then complete the owner-only release checklist in
-  `docs/release-checklist.md`.
+- **Last completed:** P9 hardening (`3a34064`, merge `0ba10a2`).
+- **Last merge:** `0ba10a2` (P9)
+- **Next task:** complete the owner-only release checklist in
+  `docs/release-checklist.md` (licensing choice, live captures, signing,
+  fresh-machine checks, remote/publish).
 - **Blocked:** none
-- **Active branch:** `feat/p9-hardening` — merge to `main` before release.
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -83,7 +82,7 @@
 | P6-5 | W7/W8 | done | `feat/p6-native` | `6c265cf` | `969d86b` | ruff, format, mypy, pytest (232) | W7 opt-in heuristic, W8 default on |
 | P7 | Packaging/service/licensing | done | `feat/p5-p7-complete` | `e63ba16` | `67b4ff3` | ruff, format, mypy, pytest (252) | wheel + PyInstaller CI, service install/uninstall, Ed25519 verify (enforcement off), docs/changelog/licenses |
 | P8 | Hardening pass | done | `feat/p8-hardening` | `22814b6` | `279ea97` | ruff, format, mypy, pytest (266) | volatile normalizer, stream usage injection, expand counters, guard window, export reports, full capture fixtures, migration backup, redacted headers, golden/property tests |
-| P9 | Hardening pass 2 | done | `feat/p9-hardening` | recorded at merge | — | ruff, format, mypy, pytest (273), coverage 80.3% | recommendation suppression, row pricing editor, guard auto-re-enable/expand health, release workflow/checklist |
+| P9 | Hardening pass 2 | done | `feat/p9-hardening` | `3a34064` | `0ba10a2` | ruff, format, mypy, pytest (273), coverage 80.3% | recommendation suppression, row pricing editor, guard auto-re-enable/expand health, release workflow/checklist |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -115,7 +114,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P6 | pass | pass (58 files) | 232 passed | reported, not enforced | `6c265cf` |
 | 2026-10-25 | P5/P6-4/P7 | pass | pass (63 files) | 252 passed | reported, not enforced | `e63ba16` |
 | 2026-10-25 | P8 hardening | pass | pass (63 files) | 266 passed | 79% reported, not enforced | `22814b6` |
-| 2026-10-25 | P9 hardening | pass | pass (63 files) | 273 passed | 80.1% enforced (CI) | recorded at merge |
+| 2026-10-25 | P9 hardening | pass | pass (63 files) | 273 passed | 80.3% enforced (CI) | `3a34064` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
