@@ -204,6 +204,7 @@ def install_artifact(path: Path, *, dry_run: bool = False) -> str:
             executable.rename(backup)
             shutil.move(str(path), str(executable))
         else:
+            shutil.copy2(executable, backup)
             os.replace(path, executable)
     except OSError as exc:
         raise UpdateError(f"binary replacement failed: {exc}") from exc

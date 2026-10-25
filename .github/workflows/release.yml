@@ -28,8 +28,9 @@ jobs:
 
       - name: Install smoke
         run: |
-          uv pip install --system dist/*.whl
-          ctxproxy --version
+          uv venv .release-smoke
+          uv pip install --python .release-smoke/bin/python dist/*.whl
+          .release-smoke/bin/ctxproxy --version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

@@ -67,6 +67,29 @@ def test_service_dry_run_does_not_write(tmp_path: Path) -> None:
     assert removed.path == plan.path
 
 
+def test_service_install_writes_and_runs(monkeypatch, tmp_path: Path) -> None:
+    calls = []
+    monkeypatch.setattr(
+        "ctxproxy.service.subprocess.run",
+        lambda command, check: calls.append(command),
+    )
+    plan = install_service(platform="linux", home=tmp_path, dry_run=False)
+    assert plan.path.exists()
+    assert calls
+    uninstall_service(platform="linux", home=tmp_path, dry_run=False)
+    assert not plan.path.exists()
+
+
+def test_service_default_platform(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr("ctxproxy.service.os.name", "nt")
+    assert service_plan(home=tmp_path).platform == "windows"
+    monkeypatch.setattr("ctxproxy.service.os.name", "posix")
+    monkeypatch.setattr("ctxproxy.service.sys.platform", "darwin")
+    assert service_plan(home=tmp_path).platform == "darwin"
+    monkeypatch.setattr("ctxproxy.service.sys.platform", "linux")
+    assert service_plan(home=tmp_path).platform == "linux"
+
+
 def test_license_status_default_and_invalid(tmp_path: Path) -> None:
     set_license_path(tmp_path / "license.json")
     status = license_status()
