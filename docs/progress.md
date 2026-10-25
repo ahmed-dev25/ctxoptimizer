@@ -2,18 +2,18 @@
 
 **Last updated:** 2026-10-25
 **Milestone:** P0–P10 — commercial release prep
-**Branch:** `feat/p10-release`
-**Overall:** P10 license/update/release work in progress; external release checks remain
+**Branch:** `main`
+**Overall:** P10 merged; release `v0.3.0-alpha` tagged; external checks remain
 
 ## Resume here
 
 - **Last completed:** P10 proprietary license, signed self-update, version
-  `0.3.0` and release tooling (awaiting merge/tag).
-- **Last merge:** `0ba10a2` (P9)
-- **Next task:** merge, tag `v0.3.0-alpha`, then complete
-  `docs/release-checklist.md`.
+  `0.3.0` (`ff54faa`, merge `f50a2cf`).
+- **Last merge:** `f50a2cf` (P10)
+- **Next task:** complete `docs/release-checklist.md`; tag/release is
+  `v0.3.0-alpha`.
 - **Blocked:** none
-- **Active branch:** `feat/p10-release` — merge to `main` before tagging.
+- **Active branch:** none — working tree is on `main`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -84,7 +84,8 @@
 | P8 | Hardening pass | done | `feat/p8-hardening` | `22814b6` | `279ea97` | ruff, format, mypy, pytest (266) | volatile normalizer, stream usage injection, expand counters, guard window, export reports, full capture fixtures, migration backup, redacted headers, golden/property tests |
 | P9 | Hardening pass 2 | done | `feat/p9-hardening` | `3a34064` | `0ba10a2` | ruff, format, mypy, pytest (287), coverage 80.12% | recommendation suppression, row pricing editor, guard auto-re-enable/expand health, release workflow/checklist |
 | P9-1 | Low-savings guard | done | `feat/p9-1-savings` | `58410ee` | `6173b3b` | ruff, format, mypy, pytest (287), coverage 80.12% | min_savings_to_stay over the guard window |
-| P10 | Commercial release prep | done | `feat/p10-release` | recorded at merge | — | ruff, format, mypy, pytest (287), coverage 80.12% | proprietary LICENSE/EULA/NOTICE, signed self-update, version 0.3.0, release tooling |
+| P10 | Commercial release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (287), coverage 80.12% | proprietary LICENSE/EULA/NOTICE, signed self-update, version `0.3.0`, release tooling |
+| Release | `v0.3.0-alpha` | tagged | — | — | — | — | pre-release; live captures/signing/fresh-machine checks pending |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -118,7 +119,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P8 hardening | pass | pass (63 files) | 266 passed | 79% reported, not enforced | `22814b6` |
 | 2026-10-25 | P9 hardening | pass | pass (63 files) | 287 passed | 80.12% enforced (CI) | `3a34064` |
 | 2026-10-25 | P9-1 savings | pass | pass (63 files) | 287 passed | 80.12% enforced (CI) | `58410ee` |
-| 2026-10-25 | P10 release | pass | pass (64 files) | 287 passed | 80.12% enforced (CI) | recorded at merge |
+| 2026-10-25 | P10 release | pass | pass (64 files) | 287 passed | 80.12% enforced (CI) | `ff54faa` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
