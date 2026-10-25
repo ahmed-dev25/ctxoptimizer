@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from ctxproxy.analysis.segments import block_hash, make_segment
-from ctxproxy.analysis.session import derive_session_id, key_fingerprint, project_from_payload
-from ctxproxy.analysis.tokens import Calibrator, estimate_tokens
-from ctxproxy.models import Endpoint, Provider
-from ctxproxy.providers import adapter_for
+from ctxoptimizer.analysis.segments import block_hash, make_segment
+from ctxoptimizer.analysis.session import derive_session_id, key_fingerprint, project_from_payload
+from ctxoptimizer.analysis.tokens import Calibrator, estimate_tokens
+from ctxoptimizer.models import Endpoint, Provider
+from ctxoptimizer.providers import adapter_for
 
 
 def _anthropic_payload() -> dict[str, Any]:

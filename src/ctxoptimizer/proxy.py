@@ -1,0 +1,665 @@
+"""Forwarding core: headers, streaming, transforms and error shaping (SPEC 9)."""
+
+from __future__ import annotations
+
+import json
+import time
+from collections.abc import AsyncIterator, Mapping
+from pathlib import Path
+from typing import Any
+
+import httpx
+import orjson
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response, StreamingResponse
+
+from ctxoptimizer.analysis.edits import edit_observations
+from ctxoptimizer.analysis.session import derive_session_id, project_from_payload
+from ctxoptimizer.analysis.state import AnalysisResult, AnalysisState, observations_from_texts
+from ctxoptimizer.config import Config
+from ctxoptimizer.guard import Guard
+from ctxoptimizer.ids import new_ulid
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext, Usage
+from ctxoptimizer.pipeline import PipelineResult, run_pipeline
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.routing import Route
+from ctxoptimizer.telemetry.pricing import (
+    PriceResult,
+    PricingTable,
+    load_pricing,
+    price_usage,
+)
+from ctxoptimizer.telemetry.redact import redact_bytes
+from ctxoptimizer.telemetry.usage import new_usage_parser, parse_usage_body
+from ctxoptimizer.transforms import build_transforms
+from ctxoptimizer.transforms.cache_serve import CacheServeState
+
+HOP_BY_HOP = frozenset(
+    {
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "proxy-connection",
+        "te",
+        "trailer",
+        "trailers",
+        "transfer-encoding",
+        "upgrade",
+    }
+)
+
+_REQUEST_STRIP = frozenset({"host", "content-length", "accept-encoding"})
+
+_TABLES: dict[str, PricingTable] = {}
+
+
+async def forward(request: Request, route: Route, config: Config) -> Response:
+    """Forward one request upstream, optionally applying deterministic transforms."""
+    started = time.perf_counter()
+    counters = request.app.state.counters
+    counters["requests"] += 1
+    request_id = new_ulid()
+    request.state.request_id = request_id
+
+    raw = await _request_content(request, config)
+    content: bytes | AsyncIterator[bytes] = raw
+    mutated = False
+    pipeline_result: PipelineResult | None = None
+    ctx: RequestContext | None = None
+    analysis: AnalysisResult | None = None
+    if (
+        isinstance(raw, bytes)
+        and route.endpoint is not Endpoint.PASSTHROUGH
+        and route.mode is not Mode.PASSTHROUGH
+    ):
+        content, mutated, pipeline_result, ctx, analysis = _apply_transforms(
+            request, route, config, request_id, raw
+        )
+
+    model = (ctx.model if ctx else None) or _extract_model(raw)
+    session_id = ctx.session_id if ctx else route.session_id
+    project = ctx.project if ctx else route.project
+    effective_mode = ctx.mode if ctx else route.mode
+    captures = _capture_blobs(request, config, raw, pipeline_result, content)
+
+    headers = _clean_request_headers(
+        request.headers, force_identity=config.http.force_identity_encoding
+    )
+    client: httpx.AsyncClient = request.app.state.client
+
+    try:
+        upstream = await client.send(
+            client.build_request(
+                request.method,
+                route.upstream_url(),
+                headers=headers,
+                content=content,
+            ),
+            stream=True,
+        )
+    except httpx.TimeoutException:
+        counters["upstream_errors"] += 1
+        return error_response(route.provider, 504, "ctxoptimizer: upstream timeout")
+    except httpx.HTTPError:
+        counters["upstream_errors"] += 1
+        return error_response(route.provider, 502, "ctxoptimizer: upstream unreachable")
+
+    fallback_used = False
+    fallback_error: str | None = None
+    if (
+        mutated
+        and isinstance(raw, bytes)
+        and upstream.status_code in config.pipeline.retry_original_on_status
+    ):
+        try:
+            fallback_error = redact_bytes((await upstream.aread())[:2048]).decode(
+                "utf-8", "replace"
+            )
+        except Exception:
+            fallback_error = None
+        await upstream.aclose()
+        fallback_used = True
+        try:
+            upstream = await client.send(
+                client.build_request(
+                    request.method,
+                    route.upstream_url(),
+                    headers=headers,
+                    content=raw,
+                ),
+                stream=True,
+            )
+        except httpx.TimeoutException:
+            counters["upstream_errors"] += 1
+            return error_response(route.provider, 504, "ctxoptimizer: upstream timeout")
+        except httpx.HTTPError:
+            counters["upstream_errors"] += 1
+            return error_response(route.provider, 502, "ctxoptimizer: upstream unreachable")
+
+    ttfb_ms = (time.perf_counter() - started) * 1000
+    parser = new_usage_parser(route.provider, route.endpoint, route.profile)
+    content_type = upstream.headers.get("content-type", "").lower()
+    incrementally_parsed = (
+        "text/event-stream" in content_type or "ndjson" in content_type or "jsonl" in content_type
+    )
+    body_buffer = bytearray()
+    response_buffer = bytearray()
+
+    async def body() -> AsyncIterator[bytes]:
+        outcome = "client_disconnect"
+        try:
+            async for chunk in upstream.aiter_raw():
+                try:
+                    parser.feed(chunk)
+                except Exception:
+                    parser.disable()
+                if not incrementally_parsed and len(body_buffer) < 4 * 1024 * 1024:
+                    body_buffer.extend(chunk)
+                if (
+                    config.telemetry.capture_payloads == "full"
+                    and len(response_buffer) < 8 * 1024 * 1024
+                ):
+                    response_buffer.extend(chunk)
+                yield chunk
+            outcome = "completed"
+        except Exception:
+            outcome = "upstream_error"
+            raise
+        finally:
+            await upstream.aclose()
+            total_ms = (time.perf_counter() - started) * 1000
+            counters[outcome] += 1
+            usage = parser.result()
+            if usage.source == "none" and body_buffer:
+                usage = parse_usage_body(
+                    route.provider, route.endpoint, route.profile, bytes(body_buffer)
+                )
+            if response_buffer:
+                blobs = getattr(request.app.state, "blobs", None)
+                if blobs is not None:
+                    captures.append(
+                        {
+                            "transform_id": None,
+                            "location": "response",
+                            "before_hash": blobs.put(redact_bytes(bytes(response_buffer))),
+                            "after_hash": None,
+                        }
+                    )
+            priced = _price(usage, route, config, model)
+            _observe_guard_savings(request, session_id, pipeline_result, priced, effective_mode)
+            baseline_cost = _baseline_price(analysis, route, config, model)
+            request.app.state.last_request = {
+                "request_id": request_id,
+                "upstream": route.upstream_name,
+                "provider": route.provider.value,
+                "endpoint": route.endpoint.value,
+                "model": model,
+                "status_code": upstream.status_code,
+                "outcome": outcome,
+                "mutated": mutated,
+                "fallback_used": fallback_used,
+                "ttfb_ms": round(ttfb_ms, 3),
+                "total_ms": round(total_ms, 3),
+                "usage": usage,
+                "cost_usd": priced.cost_usd,
+                "priced": priced.priced,
+                "price_source": priced.source,
+                "transform_ids": (
+                    [
+                        report.transform_id
+                        for report in pipeline_result.reports
+                        if report.changed and report.discarded_reason is None
+                    ]
+                    if pipeline_result
+                    else []
+                ),
+                "drift": analysis.drift.cause if analysis and analysis.drift else None,
+                "findings": len(analysis.findings) if analysis else 0,
+                "marker_quality": (
+                    {
+                        "markers": analysis.marker_quality.markers,
+                        "coverage": round(analysis.marker_quality.coverage, 4),
+                    }
+                    if analysis
+                    else None
+                ),
+            }
+            store = getattr(request.app.state, "store", None)
+            if store is not None:
+                store.record_request(
+                    _store_record(
+                        request_id=request_id,
+                        route=route,
+                        config=config,
+                        model=model,
+                        raw=raw,
+                        content=content,
+                        session_id=session_id,
+                        project=project,
+                        mode=effective_mode,
+                        mutated=mutated,
+                        fallback_used=fallback_used,
+                        status_code=upstream.status_code,
+                        outcome=outcome,
+                        ttfb_ms=ttfb_ms,
+                        total_ms=total_ms,
+                        usage=usage,
+                        priced=priced,
+                        pipeline_result=pipeline_result,
+                        analysis=analysis,
+                        captures=captures,
+                        baseline_cost=baseline_cost,
+                        error=fallback_error,
+                        headers=_safe_headers(request.headers),
+                    )
+                )
+            if fallback_used and pipeline_result is not None:
+                guard = getattr(request.app.state, "guard", None)
+                if isinstance(guard, Guard):
+                    guard.observe_fallback(
+                        session_id,
+                        [
+                            report.transform_id
+                            for report in pipeline_result.reports
+                            if report.changed and report.discarded_reason is None
+                        ],
+                    )
+
+    return StreamingResponse(
+        body(),
+        status_code=upstream.status_code,
+        headers=_clean_response_headers(upstream.headers, request_id),
+    )
+
+
+def _apply_transforms(
+    request: Request,
+    route: Route,
+    config: Config,
+    request_id: str,
+    raw: bytes,
+) -> tuple[bytes, bool, PipelineResult | None, RequestContext | None, AnalysisResult | None]:
+    if request.headers.get("content-encoding"):
+        return raw, False, None, None, None
+    try:
+        payload = orjson.loads(raw)
+    except (orjson.JSONDecodeError, TypeError):
+        return raw, False, None, None, None
+    if not isinstance(payload, dict):
+        return raw, False, None, None, None
+    adapter = adapter_for(route.provider, route.endpoint)
+    if not adapter.is_transformable(payload):
+        return raw, False, None, None, None
+    mode = route.mode
+    model = adapter.model_of(payload) or _extract_model(raw)
+    ctx = RequestContext(
+        request_id=request_id,
+        provider=route.provider,
+        endpoint=route.endpoint,
+        upstream_name=route.upstream_name,
+        model=model,
+        stream=adapter.is_stream(payload),
+        mode=mode,
+        session_id=(
+            route.session_id or derive_session_id(route.provider, request.headers, payload, adapter)
+        ),
+        project=route.project or project_from_payload(payload, adapter),
+        client_name=route.client_name,
+        config=config,
+        config_hash=config.config_hash,
+        started_monotonic=time.monotonic(),
+    )
+    try:
+        guard = getattr(request.app.state, "guard", None)
+        if isinstance(guard, Guard):
+            guard.observe_request(ctx.session_id)
+            guard.observe_expand_health(ctx.session_id)
+            disabled = guard.quarantined_for(ctx.session_id)
+        else:
+            disabled = set()
+        cache_state = getattr(request.app.state, "cache_serve", None)
+        transforms = build_transforms(
+            config,
+            disabled=disabled,
+            cache_serve_state=(cache_state if isinstance(cache_state, CacheServeState) else None),
+        )
+        result = run_pipeline(ctx, payload, adapter, transforms, config)
+    except Exception:
+        return raw, False, None, ctx, None
+    analysis = getattr(request.app.state, "analysis", None)
+    analysis_result: AnalysisResult | None = None
+    if isinstance(analysis, AnalysisState):
+        tool_schemas = list(
+            zip(
+                adapter.tool_names(payload),
+                [
+                    segment.est_tokens
+                    for segment in result.original_segments
+                    if segment.kind == "tool_def"
+                ],
+                strict=False,
+            )
+        )
+        analysis_result = analysis.observe(
+            session_id=ctx.session_id,
+            project=ctx.project,
+            ts=time.time(),
+            segments=result.original_segments,
+            observations=observations_from_texts(result.original_texts),
+            model=model or "",
+            config_hash=ctx.config_hash,
+            tool_schemas=tool_schemas,
+            used_tools=adapter.used_tool_names(payload),
+            edits=(
+                edit_observations(payload, route.provider)
+                if config.waste.churn_detector.enabled
+                else []
+            ),
+            churn_enabled=config.waste.churn_detector.enabled,
+            schema_bloat_enabled=config.waste.schema_bloat.enabled,
+            schema_min_requests=config.waste.schema_bloat.min_session_requests,
+            cache_policy=route.profile.cache_policy,
+        )
+    if mode is Mode.ACTIVE and result.changed:
+        return orjson.dumps(payload), True, result, ctx, analysis_result
+    return raw, False, result, ctx, analysis_result
+
+
+async def _request_content(request: Request, config: Config) -> bytes | AsyncIterator[bytes]:
+    raw_length = request.headers.get("content-length")
+    if raw_length and raw_length.isdigit():
+        if int(raw_length) > config.server.max_body_bytes:
+            return request.stream()
+    return await request.body()
+
+
+def _capture_blobs(
+    request: Request,
+    config: Config,
+    raw: bytes | AsyncIterator[bytes],
+    result: PipelineResult | None,
+    final: bytes | AsyncIterator[bytes] | None = None,
+) -> list[dict[str, Any]]:
+    capture = config.telemetry.capture_payloads
+    captures: list[dict[str, Any]] = []
+    if capture == "off" or not isinstance(raw, bytes):
+        return captures
+    blobs = getattr(request.app.state, "blobs", None)
+    if blobs is None:
+        return captures
+    if capture == "full":
+        request_hash = blobs.put(redact_bytes(raw))
+        captures.append(
+            {
+                "transform_id": None,
+                "location": "request",
+                "before_hash": request_hash,
+                "after_hash": None,
+            }
+        )
+        if isinstance(final, bytes):
+            final_hash = blobs.put(redact_bytes(final))
+            captures.append(
+                {
+                    "transform_id": None,
+                    "location": "final_request",
+                    "before_hash": final_hash,
+                    "after_hash": None,
+                }
+            )
+    if result is not None:
+        for index, (before, after) in enumerate(result.changed_blocks):
+            before_hash = blobs.put(redact_bytes(before.encode("utf-8")))
+            after_hash = blobs.put(redact_bytes(after.encode("utf-8")))
+            captures.append(
+                {
+                    "transform_id": None,
+                    "location": f"block-{index}",
+                    "before_hash": before_hash,
+                    "after_hash": after_hash,
+                }
+            )
+    return captures
+
+
+_DROPPED_HEADERS = frozenset(
+    {
+        "authorization",
+        "x-api-key",
+        "x-goog-api-key",
+        "cookie",
+        "set-cookie",
+        "proxy-authorization",
+    }
+)
+_SECRET_HEADER_PARTS = ("key", "token", "secret", "password")
+
+
+def _safe_headers(headers: Mapping[str, str]) -> dict[str, str]:
+    """Redacted request headers for the local dashboard (INV-14)."""
+    safe: dict[str, str] = {}
+    for name, value in headers.items():
+        lower = name.lower()
+        if lower in _DROPPED_HEADERS or any(part in lower for part in _SECRET_HEADER_PARTS):
+            safe[name] = "[redacted]"
+        else:
+            safe[name] = value
+    return safe
+
+
+def _clean_request_headers(headers: Mapping[str, str], *, force_identity: bool) -> dict[str, str]:
+    connection = _connection_tokens(headers.get("connection", ""))
+    blocked = HOP_BY_HOP | connection | _REQUEST_STRIP
+    cleaned: dict[str, str] = {}
+    for name, value in headers.items():
+        lower = name.lower()
+        if lower in blocked or lower.startswith("x-ctxoptimizer-"):
+            continue
+        cleaned[name] = value
+    if force_identity:
+        cleaned["accept-encoding"] = "identity"
+    return cleaned
+
+
+def _clean_response_headers(headers: httpx.Headers, request_id: str) -> dict[str, str]:
+    connection = _connection_tokens(headers.get("connection", ""))
+    blocked = HOP_BY_HOP | connection | {"content-length", "transfer-encoding"}
+    cleaned = {name: value for name, value in headers.items() if name.lower() not in blocked}
+    cleaned["x-ctxoptimizer-request-id"] = request_id
+    return cleaned
+
+
+def _connection_tokens(value: str) -> frozenset[str]:
+    return frozenset(token.strip().lower() for token in value.split(",") if token.strip())
+
+
+def _extract_model(content: bytes | AsyncIterator[bytes]) -> str | None:
+    if not isinstance(content, bytes):
+        return None
+    try:
+        payload = orjson.loads(content)
+    except (orjson.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    model = payload.get("model")
+    return model if isinstance(model, str) else None
+
+
+def _is_stream(content: bytes | AsyncIterator[bytes]) -> int | None:
+    if not isinstance(content, bytes):
+        return None
+    try:
+        payload = orjson.loads(content)
+    except (orjson.JSONDecodeError, TypeError):
+        return None
+    if isinstance(payload, dict):
+        return 1 if payload.get("stream") is True else 0
+    return None
+
+
+def _table_for(config: Config) -> PricingTable:
+    key = config.pricing.file
+    table = _TABLES.get(key)
+    if table is None:
+        try:
+            table = load_pricing(Path(key) if key else None)
+        except Exception:
+            table = PricingTable([])
+        _TABLES[key] = table
+    return table
+
+
+def _price(usage: Usage, route: Route, config: Config, model: str | None) -> PriceResult:
+    return price_usage(usage, _table_for(config), route.profile.pricing_provider, model)
+
+
+def _observe_guard_savings(
+    request: Request,
+    session_id: str,
+    pipeline_result: PipelineResult | None,
+    priced: PriceResult,
+    mode: Mode,
+) -> None:
+    if mode is not Mode.ACTIVE or pipeline_result is None:
+        return
+    guard = getattr(request.app.state, "guard", None)
+    if not isinstance(guard, Guard) or priced.price is None:
+        return
+    input_rate = priced.price.input
+    for report in pipeline_result.reports:
+        if not report.ran or report.discarded_reason is not None:
+            continue
+        saved_tokens = max(report.est_tokens_before - report.est_tokens_after, 0)
+        guard.observe_savings(
+            session_id,
+            report.transform_id,
+            saved_tokens * input_rate / 1_000_000,
+        )
+
+
+def _baseline_price(
+    analysis: AnalysisResult | None,
+    route: Route,
+    config: Config,
+    model: str | None,
+) -> float | None:
+    if analysis is None:
+        return None
+    sim = analysis.baseline
+    usage = Usage(
+        fresh_input=sim.fresh_tokens,
+        cache_read=sim.read_tokens,
+        cache_write_5m=sim.write_5m_tokens,
+        cache_write_1h=sim.write_1h_tokens,
+        source="estimated",
+    )
+    priced = _price(usage, route, config, model)
+    return priced.cost_usd if priced.priced else None
+
+
+def _store_record(
+    *,
+    request_id: str,
+    route: Route,
+    config: Config,
+    model: str | None,
+    raw: bytes | AsyncIterator[bytes],
+    content: bytes | AsyncIterator[bytes],
+    session_id: str,
+    project: str | None,
+    mode: Mode,
+    mutated: bool,
+    fallback_used: bool,
+    status_code: int,
+    outcome: str,
+    ttfb_ms: float,
+    total_ms: float,
+    usage: Usage,
+    priced: PriceResult,
+    pipeline_result: PipelineResult | None = None,
+    analysis: AnalysisResult | None = None,
+    captures: list[dict[str, Any]] | None = None,
+    baseline_cost: float | None = None,
+    error: str | None = None,
+    headers: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    raw_size = len(raw) if isinstance(raw, bytes) else None
+    final_size = len(content) if isinstance(content, bytes) else raw_size
+    return {
+        "request_id": request_id,
+        "ts": time.time(),
+        "session_id": session_id or "unknown",
+        "project": project,
+        "client": route.client_name,
+        "provider": route.provider.value,
+        "endpoint": route.endpoint.value,
+        "upstream": route.upstream_name,
+        "model": model,
+        "stream": _is_stream(raw),
+        "mode": mode.value,
+        "mutated": 1 if mutated else 0,
+        "fallback_used": 1 if fallback_used else 0,
+        "config_hash": config.config_hash,
+        "status_code": status_code,
+        "outcome": outcome,
+        "ttfb_ms": round(ttfb_ms, 3),
+        "total_ms": round(total_ms, 3),
+        "proxy_overhead_ms": round(max(total_ms - ttfb_ms, 0.0), 3),
+        "orig_bytes": raw_size,
+        "final_bytes": final_size,
+        "orig_est_tokens": pipeline_result.orig_est_tokens if pipeline_result else None,
+        "final_est_tokens": pipeline_result.final_est_tokens if pipeline_result else None,
+        "request_headers_json": json.dumps(headers or {}, sort_keys=True),
+        "usage_source": usage.source,
+        "fresh_input": usage.fresh_input,
+        "cache_read": usage.cache_read,
+        "cache_write_5m": usage.cache_write_5m,
+        "cache_write_1h": usage.cache_write_1h,
+        "cache_write_30m": usage.cache_write_30m,
+        "cache_write_12h": usage.cache_write_12h,
+        "output_tokens": usage.output,
+        "reasoning_tokens": usage.reasoning,
+        "provider_cost_usd": usage.provider_cost_usd,
+        "priced": 1 if priced.priced else 0,
+        "price_source": priced.source,
+        "cost_actual_usd": priced.cost_usd,
+        "_transform_reports": pipeline_result.reports if pipeline_result else [],
+        "_drift": analysis.drift if analysis else None,
+        "_findings": analysis.findings if analysis else [],
+        "_captures": captures or [],
+        "cost_baseline_sim_usd": baseline_cost,
+        "sim_read_baseline": analysis.baseline.read_tokens if analysis else None,
+        "sim_read_optimized": usage.cache_read,
+        "error": error,
+        "_fallback_transform_ids": (
+            [
+                report.transform_id
+                for report in pipeline_result.reports
+                if report.changed and report.discarded_reason is None
+            ]
+            if fallback_used and pipeline_result
+            else []
+        ),
+    }
+
+
+def error_response(provider: Provider, status: int, message: str) -> JSONResponse:
+    """Build a provider-shaped proxy-originated error (SPEC section 9.6)."""
+    if provider is Provider.ANTHROPIC:
+        payload: dict[str, object] = {
+            "type": "error",
+            "error": {"type": "api_error", "message": message},
+        }
+    elif provider is Provider.GEMINI:
+        payload = {"error": {"code": status, "message": message, "status": "UNAVAILABLE"}}
+    elif provider is Provider.OLLAMA:
+        payload = {"error": message}
+    else:
+        code = "upstream_timeout" if status == 504 else "upstream_unreachable"
+        payload = {"error": {"message": message, "type": "server_error", "code": code}}
+    return JSONResponse(payload, status_code=status)
+
+
+__all__ = ["error_response", "forward"]

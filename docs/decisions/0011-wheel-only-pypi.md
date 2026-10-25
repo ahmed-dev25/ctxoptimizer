@@ -22,7 +22,7 @@ clean install/upgrade flows.
 - Keep GitHub releases for wheel/sdist and `SHA256SUMS`.
 - Remove PyInstaller builds, standalone binaries, OS code-signing/notarization
   steps and the associated documentation.
-- Keep `uv tool upgrade ctxproxy` / `pipx upgrade ctxproxy` as the update path.
+- Keep `uv tool upgrade ctxoptimizer` / `pipx upgrade ctxoptimizer` as the update path.
 
 ## Consequences
 

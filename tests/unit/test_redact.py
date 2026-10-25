@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ctxproxy.telemetry.redact import redact_bytes, redact_text
+from ctxoptimizer.telemetry.redact import redact_bytes, redact_text
 
 
 def test_redacts_common_credentials() -> None:

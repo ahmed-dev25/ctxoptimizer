@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from ctxproxy.models import Usage
-from ctxproxy.telemetry.pricing import (
+from ctxoptimizer.models import Usage
+from ctxoptimizer.telemetry.pricing import (
     ModelPrice,
     PricingTable,
     load_pricing,

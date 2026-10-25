@@ -31,7 +31,7 @@ jobs:
         run: |
           uv venv .release-smoke
           uv pip install --python .release-smoke/bin/python dist/*.whl
-          .release-smoke/bin/ctxproxy --version
+          .release-smoke/bin/ctxoptimizer --version
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/ctxproxy
+      url: https://pypi.org/p/ctxoptimizer
     permissions:
       id-token: write
     steps:

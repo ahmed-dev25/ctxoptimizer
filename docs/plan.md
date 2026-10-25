@@ -1,4 +1,4 @@
-# ctxproxy — Milestone Plan (P0 + P1)
+# ctxoptimizer — Milestone Plan (P0 + P1)
 
 **Status:** P1 complete (2026-10-25); P2 next · **Created:** 2026-10-24 · **Owner:** ahmed
 **Scope source:** `SPEC.md` §22 (authoritative). This document turns the P0/P1
@@ -79,18 +79,18 @@ P1-3 is deliberately last: parser code is written against real provider bytes
 
 ### P0-1 — Toolchain + skeleton
 **Deliverable:** `pyproject.toml` with runtime/dev dependencies and the
-`ctxproxy.cli:app` entry point; ruff/mypy/pytest configuration; typed empty module
+`ctxoptimizer.cli:app` entry point; ruff/mypy/pytest configuration; typed empty module
 tree per SPEC §5; `.github/workflows/ci.yml`; smoke test.
-**Files:** `pyproject.toml`, `src/ctxproxy/**`, `tests/conftest.py`,
+**Files:** `pyproject.toml`, `src/ctxoptimizer/**`, `tests/conftest.py`,
 `tests/unit/test_smoke.py`, `.github/workflows/ci.yml`.
 **Tests:** package exposes version `0.4.1`; every module imports cleanly.
 **DoD:** `ruff check`, `ruff format --check`, `mypy --strict src`, `pytest -q` pass;
-`uv build` produces a wheel; `uv run ctxproxy --version` prints `0.1.0`.
+`uv build` produces a wheel; `uv run ctxoptimizer --version` prints `0.1.0`.
 **Note:** coverage is reported but not enforced while most modules are stubs.
 
 ### P0-2 — Config
 **Deliverable:** pydantic v2 models for the full §7.2 config including the gap
-defaults in §7 below; TOML load via `tomllib`; `CTXPROXY_*` env overrides; CLI
+defaults in §7 below; TOML load via `tomllib`; `CTXOPTIMIZER_*` env overrides; CLI
 override merge; first-run config file creation with commented defaults;
 `config_hash` = sha256 of the canonical effective transform config.
 **Validation:** `target_bytes * 1.5 <= trigger_bytes`; `allow_remote` requires
@@ -122,7 +122,7 @@ regeneration) so later suites trust it.
 ### P1-1 — Routing + ingress
 **Deliverable:** `routing.py` implementing the §8.2 detection table;
 `server.py` with `/p/<project>/**` and `/u/<upstream>/**` prefixes and
-`/_ctxproxy/health`; query-string preservation; `x-ctxproxy-*` stripping;
+`/_ctxoptimizer/health`; query-string preservation; `x-ctxoptimizer-*` stripping;
 absolute-URI target rejection (SEC-11).
 **Tests:** every row of the detection table; prefix stripping; `?beta=true`,
 Gemini `key=` and `alt=sse` preserved; unknown path -> default upstream
@@ -182,7 +182,7 @@ Built-in profiles for anthropic, openai, deepseek, deepseek-anthropic, openroute
 gemini and ollama.
 **Tests:** named upstream resolution, unknown name -> 404, prefix stripping, query
 preservation, profile defaults, and no provider-specific injection on third-party hosts.
-**DoD:** all gates; `ctxproxy doctor` can resolve every configured upstream.
+**DoD:** all gates; `ctxoptimizer doctor` can resolve every configured upstream.
 
 ### P1-8 — Gateway usage quirks
 **Deliverable:** usage extraction for DeepSeek (`prompt_cache_hit_tokens` /

@@ -5,11 +5,11 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider, RequestContext, TransformReport
-from ctxproxy.pipeline import run_pipeline
-from ctxproxy.providers import adapter_for
-from ctxproxy.transforms.base import TextTransform
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext, TransformReport
+from ctxoptimizer.pipeline import run_pipeline
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.transforms.base import TextTransform
 
 
 def _payload() -> dict[str, Any]:

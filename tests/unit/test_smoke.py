@@ -8,9 +8,9 @@ from importlib.util import find_spec
 
 from typer.testing import CliRunner
 
-import ctxproxy
-from ctxproxy import __version__
-from ctxproxy.cli import app
+import ctxoptimizer
+from ctxoptimizer import __version__
+from ctxoptimizer.cli import app
 
 
 def test_version_is_declared() -> None:
@@ -29,10 +29,10 @@ def test_license_command_is_removed() -> None:
 
 
 def test_config_has_no_license_section() -> None:
-    from ctxproxy.config import Config
+    from ctxoptimizer.config import Config
 
     assert "license" not in Config.model_fields
-    assert find_spec("ctxproxy.licensing") is None
+    assert find_spec("ctxoptimizer.licensing") is None
 
 
 def test_update_command_is_removed() -> None:
@@ -41,14 +41,14 @@ def test_update_command_is_removed() -> None:
 
 
 def test_config_has_no_update_section() -> None:
-    from ctxproxy.config import Config
+    from ctxoptimizer.config import Config
 
     assert "update" not in Config.model_fields
-    assert find_spec("ctxproxy.update") is None
+    assert find_spec("ctxoptimizer.update") is None
 
 
 def test_every_module_imports() -> None:
-    modules = list(pkgutil.walk_packages(ctxproxy.__path__, prefix="ctxproxy."))
+    modules = list(pkgutil.walk_packages(ctxoptimizer.__path__, prefix="ctxoptimizer."))
     assert modules, "expected submodules to exist"
     for info in modules:
         importlib.import_module(info.name)

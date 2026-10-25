@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ctxproxy.telemetry.blobs import BlobStore
+from ctxoptimizer.telemetry.blobs import BlobStore
 
 
 def test_put_get_and_prefix(tmp_path: Path) -> None:

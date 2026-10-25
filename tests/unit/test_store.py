@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from ctxproxy.telemetry.store import SCHEMA_VERSION, Store
+from ctxoptimizer.telemetry.store import SCHEMA_VERSION, Store
 
 
 def _record(index: int, *, ts: float | None = None, cost: float = 0.01) -> dict[str, Any]:
@@ -44,7 +44,7 @@ def _record(index: int, *, ts: float | None = None, cost: float = 0.01) -> dict[
 
 @pytest.fixture
 def store(tmp_path: Path) -> Store:
-    instance = Store(tmp_path / "ctxproxy.db")
+    instance = Store(tmp_path / "ctxoptimizer.db")
     try:
         yield instance
     finally:

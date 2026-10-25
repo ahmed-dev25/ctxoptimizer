@@ -7,10 +7,10 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
-from ctxproxy.providers import adapter_for
-from ctxproxy.transforms.cache_serve import CacheServe, CacheServeState
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.transforms.cache_serve import CacheServe, CacheServeState
 
 
 def _config() -> Config:
@@ -70,8 +70,8 @@ def test_cache_serve_stubs_only_at_batch_boundary() -> None:
     report = transform.apply(_ctx(config), second, adapter, config)
     text = adapter.iter_tool_results(second).__next__().get_text()
     assert report.changed is True
-    assert text is not None and text.startswith("[ctxproxy: content identical to turn 0")
-    assert "ctxproxy_expand(" in text
+    assert text is not None and text.startswith("[ctxoptimizer: content identical to turn 0")
+    assert "ctxoptimizer_expand(" in text
 
     third = transform.apply(_ctx(config), second, adapter, config)
     assert third.changed is False

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
-from ctxproxy.providers import adapter_for
-from ctxproxy.transforms.stale_result_elision import StaleResultElision
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.transforms.stale_result_elision import StaleResultElision
 
 
 def _config(enabled: bool = True) -> Config:
@@ -72,7 +72,7 @@ def test_old_result_is_elided_and_recent_result_is_kept() -> None:
     refs = list(adapter.iter_tool_results(payload))
     old = refs[0].get_text()
     new = refs[1].get_text()
-    assert old is not None and old.startswith("[ctxproxy: tool result elided (5.9 KB)")
+    assert old is not None and old.startswith("[ctxoptimizer: tool result elided (5.9 KB)")
     assert new == "y" * 6000
 
 

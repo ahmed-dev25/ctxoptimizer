@@ -429,7 +429,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ctxproxy"
+name = "ctxoptimizer"
 version = "0.4.1"
 source = { editable = "." }
 dependencies = [

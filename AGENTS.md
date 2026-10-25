@@ -1,6 +1,6 @@
 # Agent instructions
 
-ctxproxy is a local LLM cost-optimization proxy. `SPEC.md` is authoritative.
+ctxoptimizer is a local LLM cost-optimization proxy. `SPEC.md` is authoritative.
 Read, in this order: `SPEC.md`, `docs/plan.md`, `docs/progress.md`, `AGENTS.md`.
 
 ## Hard rules

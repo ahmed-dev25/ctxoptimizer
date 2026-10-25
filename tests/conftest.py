@@ -266,7 +266,7 @@ def golden_factory() -> Callable[[Path], GoldenRunner]:
 @pytest.fixture
 def db_path(tmp_path: Path) -> Path:
     """Path for a throwaway SQLite database."""
-    return tmp_path / "ctxproxy.db"
+    return tmp_path / "ctxoptimizer.db"
 
 
 @pytest.fixture

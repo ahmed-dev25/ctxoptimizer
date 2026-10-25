@@ -6,9 +6,9 @@ from collections.abc import Mapping
 
 import pytest
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider
-from ctxproxy.routing import UnknownUpstream, classify, is_absolute_target
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider
+from ctxoptimizer.routing import UnknownUpstream, classify, is_absolute_target
 
 
 def _config() -> Config:
@@ -101,7 +101,7 @@ def test_project_header_wins() -> None:
         "POST",
         "/p/myrepo/v1/messages",
         "",
-        {"x-ctxproxy-project": "other"},
+        {"x-ctxoptimizer-project": "other"},
         _config(),
     )
     assert route.project == "other"
@@ -113,14 +113,14 @@ def test_mode_defaults_to_config() -> None:
 
 
 def test_mode_header_and_bypass() -> None:
-    active = classify("POST", "/v1/messages", "", {"x-ctxproxy-mode": "active"}, _config())
+    active = classify("POST", "/v1/messages", "", {"x-ctxoptimizer-mode": "active"}, _config())
     assert active.mode is Mode.ACTIVE
-    bypass = classify("POST", "/v1/messages", "", {"x-ctxproxy-bypass": "1"}, _config())
+    bypass = classify("POST", "/v1/messages", "", {"x-ctxoptimizer-bypass": "1"}, _config())
     assert bypass.mode is Mode.PASSTHROUGH
 
 
 def test_invalid_mode_header_is_ignored() -> None:
-    route = classify("POST", "/v1/messages", "", {"x-ctxproxy-mode": "turbo"}, _config())
+    route = classify("POST", "/v1/messages", "", {"x-ctxoptimizer-mode": "turbo"}, _config())
     assert route.mode is Mode.SHADOW
 
 
@@ -138,7 +138,7 @@ def test_absolute_target_detection() -> None:
 
 
 def test_headers_mapping_is_case_insensitive() -> None:
-    headers: Mapping[str, str] = {"X-Ctxproxy-Session": "abc"}
+    headers: Mapping[str, str] = {"X-Ctxoptimizer-Session": "abc"}
     route = classify("POST", "/v1/messages", "", headers, _config())
     assert route.session_id == "abc"
 

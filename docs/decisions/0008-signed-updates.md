@@ -12,10 +12,10 @@ distributed as a Python wheel and optionally as a frozen one-file binary.
 
 ## Decision
 
-- `ctxproxy update --check` and `ctxproxy update` fetch a small manifest over
+- `ctxoptimizer update --check` and `ctxoptimizer update` fetch a small manifest over
   HTTPS, verify an Ed25519 signature and SHA-256, then install the artifact.
 - The update public key is configured in `[update].public_key` or
-  `CTXPROXY_UPDATE_PUBLIC_KEY`. The private key never enters the repository.
+  `CTXOPTIMIZER_UPDATE_PUBLIC_KEY`. The private key never enters the repository.
 - `--allow-unsigned` is a development-only escape hatch.
 - `--check` is side-effect free. `--dry-run` verifies and reports without
   installing.

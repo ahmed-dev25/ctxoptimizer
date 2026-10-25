@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from ctxproxy.analysis.markers import marker_quality
-from ctxproxy.analysis.segments import Segment
+from ctxoptimizer.analysis.markers import marker_quality
+from ctxoptimizer.analysis.segments import Segment
 
 
 def _segment(tokens: int, marker: bool) -> Segment:

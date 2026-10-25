@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from hashlib import sha256
 
-from ctxproxy.analysis.baseline import simulate
-from ctxproxy.analysis.drift import DriftEvent, DriftTracker, detect_drift
-from ctxproxy.analysis.segments import Segment
-from ctxproxy.analysis.waste import (
+from ctxoptimizer.analysis.baseline import simulate
+from ctxoptimizer.analysis.drift import DriftEvent, DriftTracker, detect_drift
+from ctxoptimizer.analysis.segments import Segment
+from ctxoptimizer.analysis.waste import (
     HashObservation,
     identical_outputs,
     recurring_drift,

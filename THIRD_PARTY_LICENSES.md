@@ -1,6 +1,6 @@
 # Third-party licenses
 
-ctxproxy is distributed under the MIT License. Runtime dependencies are
+ctxoptimizer is distributed under the MIT License. Runtime dependencies are
 installed from PyPI; this file records their upstream licenses for release
 review. Verify exact versions in `uv.lock` and the installed package metadata
 before shipping a binary.

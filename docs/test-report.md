@@ -17,7 +17,7 @@ Other gates:
 | `uv run ruff format --check .` | pass |
 | `uv run mypy --strict src` | pass (62 source files) |
 | `uv build --wheel` | pass |
-| `ctxproxy --version` | `0.4.1` |
+| `ctxoptimizer --version` | `0.4.1` |
 
 ## Coverage map
 

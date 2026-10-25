@@ -5,9 +5,9 @@ from __future__ import annotations
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from ctxproxy.models import Endpoint, Provider
-from ctxproxy.profiles import BUILTIN_PROFILES
-from ctxproxy.telemetry.usage import new_usage_parser
+from ctxoptimizer.models import Endpoint, Provider
+from ctxoptimizer.profiles import BUILTIN_PROFILES
+from ctxoptimizer.telemetry.usage import new_usage_parser
 
 
 @settings(max_examples=60, deadline=None)

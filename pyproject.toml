@@ -1,5 +1,5 @@
 [project]
-name = "ctxproxy"
+name = "ctxoptimizer"
 version = "0.4.1"
 description = "Local, deterministic cost optimizer for AI coding agents"
 readme = "README.md"
@@ -38,13 +38,13 @@ dev = [
 ]
 
 [project.scripts]
-ctxproxy = "ctxproxy.cli:app"
+ctxoptimizer = "ctxoptimizer.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/ahmed-dev25/ctxproxy"
-Repository = "https://github.com/ahmed-dev25/ctxproxy"
-Issues = "https://github.com/ahmed-dev25/ctxproxy/issues"
-Changelog = "https://github.com/ahmed-dev25/ctxproxy/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/ahmed-dev25/ctxoptimizer"
+Repository = "https://github.com/ahmed-dev25/ctxoptimizer"
+Issues = "https://github.com/ahmed-dev25/ctxoptimizer/issues"
+Changelog = "https://github.com/ahmed-dev25/ctxoptimizer/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.13.1,<0.14.0"]
@@ -79,7 +79,7 @@ addopts = "-m 'not live'"
 
 [tool.coverage.run]
 branch = true
-source = ["ctxproxy"]
+source = ["ctxoptimizer"]
 
 [tool.coverage.report]
 show_missing = true

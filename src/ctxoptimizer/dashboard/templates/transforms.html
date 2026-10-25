@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxoptimizer — Transforms</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
+    nav a, a { color: #60a5fa; text-decoration: none; }
+    h2 { margin: 26px 0 10px; font-size: 1.05rem; color: #93c5fd; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .84rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 7px 9px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .72rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    input[type=number] { width: 100px; background: #0d1117; color: #e6edf3;
+                         border: 1px solid #2d3644; border-radius: 6px; padding: 4px; }
+    button { background: #1f6feb; color: white; border: 0; border-radius: 6px;
+             padding: 6px 10px; cursor: pointer; }
+    #result { margin-top: 8px; color: #a5d6ff; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/_ctxoptimizer/">Overview</a><a href="/_ctxoptimizer/live">Live</a>
+    <a href="/_ctxoptimizer/sessions">Sessions</a><a href="/_ctxoptimizer/requests">Requests</a>
+    <a href="/_ctxoptimizer/waste">Waste</a><a href="/_ctxoptimizer/transforms">Transforms</a>
+    <a href="/_ctxoptimizer/pricing">Pricing</a><a href="/_ctxoptimizer/settings">Settings</a>
+    <a href="/_ctxoptimizer/doctor">Doctor</a>
+  </nav>
+  <h1>Transforms</h1>
+  <p class="muted">Toggles apply to this process (hot reload). Stats are from persisted reports.</p>
+
+  <table>
+    <thead><tr><th>Transform</th><th>Enabled</th><th>Quarantined</th><th>Runs</th>
+               <th>Tokens saved</th><th>Avg ms</th><th>Errors</th><th>No-regress</th>
+               <th>Fallbacks</th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row["transform"] }}</td>
+        <td><input type="checkbox" data-transform="{{ row['transform'] }}"
+                   {% if row["enabled"] %}checked{% endif %}></td>
+        <td>{{ "yes" if row["quarantined"] else "no" }}</td>
+        <td>{{ row["runs"] }}</td><td>{{ row["tokens_saved"] }}</td>
+        <td>{{ row["avg_ms"] }}</td><td>{{ row["errors"] }}</td><td>{{ row["no_regress"] }}</td>
+        <td>{{ row["fallbacks"] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted" id="toggle-status"></p>
+
+  <h2>Stale-result elision break-even <span class="muted">sim.</span></h2>
+  <p class="muted">Elided tokens and batch turns; assumes input-rate savings and one
+     cache-miss per boundary. Conservative estimate only.</p>
+  <form id="break-even">
+    <input type="number" id="tokens" value="8192" min="1"> elided tokens
+    <input type="number" id="batch" value="8" min="1"> batch turns
+    <input type="number" id="input" value="3.0" step="0.01" min="0"> input $/Mtok
+    <input type="number" id="read" value="0.3" step="0.01" min="0"> cache-read $/Mtok
+    <button type="submit">Estimate</button>
+  </form>
+  <div id="result"></div>
+
+  <h2>Quarantine history</h2>
+  <p class="muted">MCP expand usage: {{ expand["total"] }} retrieval(s),
+     {{ expand["errors"] }} error(s).</p>
+  <table>
+    <thead><tr><th>Time</th><th>Session</th><th>Transform</th><th>Reason</th></tr></thead>
+    <tbody>
+      {% for event in guard_events %}
+      <tr><td>{{ event["ts"]|round(0) }}</td><td>{{ event["session_id"] or "—" }}</td>
+          <td>{{ event["transform_id"] }}</td><td>{{ event["reason"] }}</td></tr>
+      {% else %}
+      <tr><td colspan="4" class="muted">No quarantine events.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <script>
+    function csrf() {
+      const match = document.cookie.match(/(?:^|; )ctxoptimizer_csrf=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+    async function patchConfig(patch) {
+      const response = await fetch("/_ctxoptimizer/api/config", {
+        method: "POST",
+        headers: {"content-type": "application/json", "x-ctxoptimizer-csrf": csrf()},
+        body: JSON.stringify(patch),
+      });
+      const body = await response.json();
+      document.getElementById("toggle-status").textContent =
+        response.ok ? "Saved." : ("Error: " + (body.error || response.status));
+    }
+    document.querySelectorAll("input[data-transform]").forEach((box) => {
+      box.addEventListener("change", () => {
+        patchConfig({transforms: {[box.dataset.transform]: {enabled: box.checked}}});
+      });
+    });
+    document.getElementById("break-even").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const params = new URLSearchParams({
+        elided_tokens: document.getElementById("tokens").value,
+        batch_turns: document.getElementById("batch").value,
+        input_per_mtok: document.getElementById("input").value,
+        cache_read_per_mtok: document.getElementById("read").value,
+      });
+      const response = await fetch("/_ctxoptimizer/api/stale-elision/estimate?" + params);
+      document.getElementById("result").textContent = JSON.stringify(await response.json(), null, 2);
+    });
+  </script>
+</body>
+</html>

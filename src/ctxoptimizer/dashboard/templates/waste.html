@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxoptimizer — Waste</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
+    nav a, a { color: #60a5fa; text-decoration: none; }
+    h1 { margin: 0 0 4px; font-size: 1.6rem; }
+    h2 { margin: 28px 0 10px; font-size: 1.1rem; color: #93c5fd; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .86rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .75rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    .est { color: #fcd34d; font-weight: 600; }
+    .card { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
+            padding: 14px 16px; margin-bottom: 10px; }
+    button { background: #1f6feb; color: white; border: 0; border-radius: 6px;
+             padding: 4px 8px; cursor: pointer; font-size: .78rem; }
+    code { color: #a5d6ff; }
+    #status { color: #a5d6ff; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/_ctxoptimizer/">Overview</a><a href="/_ctxoptimizer/live">Live</a>
+    <a href="/_ctxoptimizer/sessions">Sessions</a><a href="/_ctxoptimizer/requests">Requests</a>
+    <a href="/_ctxoptimizer/waste">Waste</a><a href="/_ctxoptimizer/transforms">Transforms</a>
+    <a href="/_ctxoptimizer/pricing">Pricing</a><a href="/_ctxoptimizer/settings">Settings</a>
+    <a href="/_ctxoptimizer/doctor">Doctor</a>
+  </nav>
+  <h1>Waste Opportunities</h1>
+  <p class="muted">v{{ version }} · mode {{ mode }} · advisory only, never auto-applied</p>
+
+  <h2>Recommendations <span class="est">sim.</span></h2>
+  {% for item in recommendations %}
+  <div class="card">
+    <b>{{ item["title"] }}</b> <span class="est">{{ item["label"] }}</span><br>
+    <span class="muted">{{ item["evidence"] }} · {{ item["action"] }}</span><br>
+    <button class="apply" data-id="{{ item['id'] }}">Apply / confirm</button>
+    <button class="dismiss" data-id="{{ item['id'] }}">Dismiss 30d</button>
+  </div>
+  {% else %}
+  <p class="muted">No recommendations yet. Run some traffic through the proxy.</p>
+  {% endfor %}
+  <div id="status"></div>
+
+  <h2>Findings <span class="est">est.</span></h2>
+  <table>
+    <thead>
+      <tr><th>Detector</th><th>Session</th><th>Project</th><th>Occurrences</th>
+          <th>Est. tokens</th><th>Est. USD</th><th>Status</th><th>Evidence</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for finding in findings %}
+      <tr>
+        <td>{{ finding["detector"] }}</td>
+        <td><a href="/_ctxoptimizer/sessions/{{ finding['session_id'] }}">{{ finding["session_id"] or "—" }}</a></td>
+        <td>{{ finding["project"] or "—" }}</td>
+        <td>{{ finding["occurrences"] }}</td>
+        <td class="est">{{ finding["est_tokens_wasted"] if finding["est_tokens_wasted"] is not none else "—" }}</td>
+        <td class="est">{% if finding["est_cost_usd"] is not none %}${{ "%.6f"|format(finding["est_cost_usd"]) }}{% else %}—{% endif %}</td>
+        <td>{{ finding["status"] }}</td>
+        <td><code>{{ finding["evidence_json"] }}</code></td>
+        <td>
+          {% for status in ("ack", "skipped", "fixed") %}
+          <button class="status" data-id="{{ finding['finding_id'] }}"
+                  data-status="{{ status }}">{{ status }}</button>
+          {% endfor %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="muted">No findings yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <script>
+    function csrf() {
+      const match = document.cookie.match(/(?:^|; )ctxoptimizer_csrf=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+    async function post(url, body) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {"content-type": "application/json", "x-ctxoptimizer-csrf": csrf()},
+        body: JSON.stringify(body),
+      });
+      const payload = await response.json();
+      document.getElementById("status").textContent =
+        response.ok ? JSON.stringify(payload) : ("Error: " + (payload.error || response.status));
+    }
+    document.querySelectorAll("button.status").forEach((button) => {
+      button.addEventListener("click", () => post(
+        "/_ctxoptimizer/api/waste/" + button.dataset.id + "/status",
+        {status: button.dataset.status},
+      ));
+    });
+    document.querySelectorAll("button.apply").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (confirm("Apply this recommendation?")) {
+          post("/_ctxoptimizer/api/recommend/" + button.dataset.id + "/apply", {});
+        }
+      });
+    });
+    document.querySelectorAll("button.dismiss").forEach((button) => {
+      button.addEventListener("click", () => {
+        post("/_ctxoptimizer/api/recommend/" + button.dataset.id + "/dismiss", {days: 30});
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible bug in ctxproxy
+description: Report a reproducible bug in ctxoptimizer
 title: "[bug]: "
 labels: ["bug"]
 body:
@@ -11,7 +11,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: ctxproxy version
+      label: ctxoptimizer version
       placeholder: "0.4.0"
     validations:
       required: true
@@ -46,4 +46,4 @@ body:
     id: doctor
     attributes:
       label: Diagnostics
-      description: Paste redacted `ctxproxy doctor` output and relevant logs.
+      description: Paste redacted `ctxoptimizer doctor` output and relevant logs.

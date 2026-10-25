@@ -35,12 +35,12 @@ It is fail-open by design: transform errors are discarded, a no-regression
 guard reverts changes that do not save enough tokens, and an upstream 400/422
 retries the original bytes. A session-scoped guard quarantines a transform
 after repeated fallbacks. If something still breaks, run with
-`x-ctxproxy-bypass: 1` and open the request detail page.
+`x-ctxoptimizer-bypass: 1` and open the request detail page.
 
 ## Where is the dashboard token?
 
 It is printed in the startup banner. Open the URL once; the cookie is set for
-`/_ctxproxy`. Restarting the proxy rotates the token.
+`/_ctxoptimizer`. Restarting the proxy rotates the token.
 
 ## Can I use Cursor / a browser extension?
 
@@ -53,7 +53,7 @@ The bundled pricing table only contains verified/public rates. Unknown models
 stay unpriced rather than inventing a number; add an override in the Pricing
 page or `pricing.json`.
 
-## Is ctxproxy open source?
+## Is ctxoptimizer open source?
 
-Yes. ctxproxy is free and open-source software under the MIT License. There is
+Yes. ctxoptimizer is free and open-source software under the MIT License. There is
 no license key, activation step or active-mode gate. See `LICENSE`.

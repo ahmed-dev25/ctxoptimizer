@@ -6,7 +6,7 @@ import logging
 
 import pytest
 
-from ctxproxy.log import configure_logging, sanitize_headers, sanitize_url
+from ctxoptimizer.log import configure_logging, sanitize_headers, sanitize_url
 
 
 def test_sanitize_headers_is_case_insensitive() -> None:

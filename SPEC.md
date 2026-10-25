@@ -1,6 +1,6 @@
-# SPEC.md — ctxproxy: The Agent-Run Cost Optimizer
+# SPEC.md — ctxoptimizer: The Agent-Run Cost Optimizer
 
-Working name: **ctxproxy** (package `ctxproxy`, CLI `ctxproxy`).
+Working name: **ctxoptimizer** (package `ctxoptimizer`, CLI `ctxoptimizer`).
 Spec version: 2.0 (supersedes SPEC v1.0 and the "Architecture v4" docx). Language: **Python 3.11+**.
 
 > **Positioning change (v2.0):** this is no longer a "context garbage collector." It is an
@@ -17,7 +17,7 @@ Spec version: 2.0 (supersedes SPEC v1.0 and the "Architecture v4" docx). Languag
 This file is the single source of truth. Rules for any AI coding session working from it:
 
 1. **Work one task at a time.** Pick one task from §22 (Roadmap). Do not implement later phases early.
-2. **Tests first.** For every module, write the tests described in §20 before or alongside the code. A task is done only when `ruff check`, `mypy --strict ctxproxy`, and `pytest` all pass.
+2. **Tests first.** For every module, write the tests described in §20 before or alongside the code. A task is done only when `ruff check`, `mypy --strict ctxoptimizer`, and `pytest` all pass.
 3. **Invariants (§2) are non-negotiable.** If a task seems to require violating one, stop and flag it instead of working around it.
 4. **Do not invent provider API behavior.** Where this spec says *VERIFY*, check the provider's current docs or capture real traffic before coding against it. Record findings in `docs/provider-notes.md`.
 5. **Never add dependencies** not listed in §6 without stating why in the PR description.
@@ -72,7 +72,7 @@ The v2 value chain: **fewer tokens per request** (transforms) → **higher cache
 | `shadow` | Forward the **original** unchanged; compute what transforms *would* have done and log potential savings. | **yes (first run)** |
 | `active` | Forward the transformed request; log actual + simulated baseline. | no (user opts in) |
 
-Mode is switchable at runtime (CLI, dashboard, `x-ctxproxy-bypass` header per request).
+Mode is switchable at runtime (CLI, dashboard, `x-ctxoptimizer-bypass` header per request).
 
 ---
 
@@ -124,7 +124,7 @@ IDs are referenced in tests and code comments (`# INV-3`).
 | Gemini CLI / SDK | base URL override | VERIFY; Gemini adapter is Phase 6. |
 | Cursor | Often routes requests through Cursor's own servers → a localhost proxy typically **cannot** see traffic | Document as limited/unsupported unless verified. Do not advertise. |
 
-`ctxproxy doctor` (§15) must check the above where possible and print per-client setup commands.
+`ctxoptimizer doctor` (§15) must check the above where possible and print per-client setup commands.
 
 ---
 
@@ -162,20 +162,20 @@ Client ──HTTP──▶ [1 Ingress: route/auth/limits]
 ### 4.2 Components
 | Component | Module | Responsibility |
 |---|---|---|
-| Server/Ingress | `ctxproxy/server.py` | Starlette app, routes, lifespan, shared `httpx.AsyncClient`. |
-| Router | `ctxproxy/routing.py` | Classify requests → `(Provider, Endpoint, upstream)` (§8). |
-| Adapters | `ctxproxy/providers/*.py` | Provider-specific parsing, block iteration, usage parsing, error shaping. |
-| Pipeline | `ctxproxy/pipeline.py` | Ordered transform execution, time budget, guards, reports. |
-| Transforms | `ctxproxy/transforms/*.py` | Individual transforms (§12). |
-| Analysis | `ctxproxy/analysis/*.py` | Segmenting, hashing, token estimation, prefix-drift, baseline simulator. |
-| Waste analysis | `ctxproxy/analysis/waste.py` | Deterministic waste detectors over segments + history; findings recorded only (§13.6). |
-| Recommendations | `ctxproxy/analysis/recommend.py` | Ranks config/behavior recommendations from measured evidence (§13.7). |
-| Expand MCP | `ctxproxy/mcp.py` | Stdio MCP server exposing `ctxproxy_expand(ref)` for on-demand retrieval of omitted output (§12.13). |
-| Pipeline guard | `ctxproxy/pipeline.py` (guard section) | Auto-quarantine rules on fallback counters / our-fault drift (§12.14). |
-| Telemetry | `ctxproxy/telemetry/*.py` | Usage normalization, pricing, cost, SQLite writer, blob store. |
-| Dashboard | `ctxproxy/dashboard/*` | Admin API + Jinja/HTMX UI under `/_ctxproxy/`. |
-| CLI | `ctxproxy/cli.py` | Typer commands (§15). |
-| Config | `ctxproxy/config.py` | TOML + env + CLI → validated `Config` (§7). |
+| Server/Ingress | `ctxoptimizer/server.py` | Starlette app, routes, lifespan, shared `httpx.AsyncClient`. |
+| Router | `ctxoptimizer/routing.py` | Classify requests → `(Provider, Endpoint, upstream)` (§8). |
+| Adapters | `ctxoptimizer/providers/*.py` | Provider-specific parsing, block iteration, usage parsing, error shaping. |
+| Pipeline | `ctxoptimizer/pipeline.py` | Ordered transform execution, time budget, guards, reports. |
+| Transforms | `ctxoptimizer/transforms/*.py` | Individual transforms (§12). |
+| Analysis | `ctxoptimizer/analysis/*.py` | Segmenting, hashing, token estimation, prefix-drift, baseline simulator. |
+| Waste analysis | `ctxoptimizer/analysis/waste.py` | Deterministic waste detectors over segments + history; findings recorded only (§13.6). |
+| Recommendations | `ctxoptimizer/analysis/recommend.py` | Ranks config/behavior recommendations from measured evidence (§13.7). |
+| Expand MCP | `ctxoptimizer/mcp.py` | Stdio MCP server exposing `ctxoptimizer_expand(ref)` for on-demand retrieval of omitted output (§12.13). |
+| Pipeline guard | `ctxoptimizer/pipeline.py` (guard section) | Auto-quarantine rules on fallback counters / our-fault drift (§12.14). |
+| Telemetry | `ctxoptimizer/telemetry/*.py` | Usage normalization, pricing, cost, SQLite writer, blob store. |
+| Dashboard | `ctxoptimizer/dashboard/*` | Admin API + Jinja/HTMX UI under `/_ctxoptimizer/`. |
+| CLI | `ctxoptimizer/cli.py` | Typer commands (§15). |
+| Config | `ctxoptimizer/config.py` | TOML + env + CLI → validated `Config` (§7). |
 
 ### 4.3 Concurrency model
 - Single process, single asyncio event loop (`uvicorn --workers 1`; state like session caches and the SQLite writer assume one process).
@@ -188,7 +188,7 @@ Client ──HTTP──▶ [1 Ingress: route/auth/limits]
 ## 5. Repository Layout
 
 ```
-ctxproxy/
+ctxoptimizer/
 ├── pyproject.toml
 ├── SPEC.md
 ├── AGENTS.md                  # short pointer to SPEC.md + coding rules (see §24.1)
@@ -197,7 +197,7 @@ ctxproxy/
 │   ├── provider-notes.md      # verified provider behavior, with dates
 │   ├── client-setup.md
 │   └── decisions/             # optional ADRs
-├── src/ctxproxy/
+├── src/ctxoptimizer/
 │   ├── __init__.py            # __version__
 │   ├── __main__.py
 │   ├── cli.py
@@ -206,7 +206,7 @@ ctxproxy/
 │   ├── routing.py
 │   ├── proxy.py               # forwarding core: headers, streaming, tee, retry-original
 │   ├── pipeline.py
-│   ├── mcp.py                  # local MCP stdio server: ctxproxy_expand(ref) (§12.13)
+│   ├── mcp.py                  # local MCP stdio server: ctxoptimizer_expand(ref) (§12.13)
 │   ├── models.py              # dataclasses/enums: RequestContext, Usage, Report...
 │   ├── providers/
 │   │   ├── base.py            # ProviderAdapter Protocol
@@ -287,7 +287,7 @@ Do not use: `requests` (blocking), `fastapi` on proxy routes (allowed only for a
 ## 7. Configuration
 
 ### 7.1 Sources and precedence
-CLI flags > environment (`CTXPROXY_*`) > config file > defaults. Config file path: `platformdirs.user_config_dir("ctxproxy")/config.toml`. Created on first run with commented defaults. Hot-reload via `POST /_ctxproxy/api/reload`, `SIGHUP` (POSIX), or `ctxproxy reload`. Each reload computes `config_hash` (sha256 of the canonical effective transform config). `config_hash` is stored on every request, because changing transform config alters transformed bytes and causes a one-time cache miss — the dashboard must annotate that.
+CLI flags > environment (`CTXOPTIMIZER_*`) > config file > defaults. Config file path: `platformdirs.user_config_dir("ctxoptimizer")/config.toml`. Created on first run with commented defaults. Hot-reload via `POST /_ctxoptimizer/api/reload`, `SIGHUP` (POSIX), or `ctxoptimizer reload`. Each reload computes `config_hash` (sha256 of the canonical effective transform config). `config_hash` is stored on every request, because changing transform config alters transformed bytes and causes a one-time cache miss — the dashboard must annotate that.
 
 ### 7.2 Full default config (`config.toml`)
 ```toml
@@ -376,7 +376,7 @@ never_touch = ["*read*", "*view*", "*cat*", "*edit*", "*write*", "*patch*", "*ap
 # Unknown tool names: not touched by truncation/elision; content-local cleanups (ANSI/progress) still allowed.
 
 [telemetry]
-db_path = ""                     # default: user_data_dir/ctxproxy/ctxproxy.db
+db_path = ""                     # default: user_data_dir/ctxoptimizer/ctxoptimizer.db
 capture_payloads = "changed_blocks"   # off | changed_blocks | full
 retention_days = 14
 redact_secrets = true
@@ -416,14 +416,14 @@ enabled = true
 ```
 
 ### 7.3 Environment variables
-`CTXPROXY_PORT`, `CTXPROXY_HOST`, `CTXPROXY_MODE`, `CTXPROXY_CONFIG`, `CTXPROXY_DATA_DIR`, `CTXPROXY_LOG_LEVEL`, `CTXPROXY_UPSTREAM_<NAME>`. Per-request headers (stripped before forwarding, INV-11): `x-ctxproxy-bypass: 1`, `x-ctxproxy-session: <id>`, `x-ctxproxy-project: <name>`, `x-ctxproxy-mode: shadow|active|passthrough`.
+`CTXOPTIMIZER_PORT`, `CTXOPTIMIZER_HOST`, `CTXOPTIMIZER_MODE`, `CTXOPTIMIZER_CONFIG`, `CTXOPTIMIZER_DATA_DIR`, `CTXOPTIMIZER_LOG_LEVEL`, `CTXOPTIMIZER_UPSTREAM_<NAME>`. Per-request headers (stripped before forwarding, INV-11): `x-ctxoptimizer-bypass: 1`, `x-ctxoptimizer-session: <id>`, `x-ctxoptimizer-project: <name>`, `x-ctxoptimizer-mode: shadow|active|passthrough`.
 
 ---
 
 ## 8. Routing & Provider Detection
 
 ### 8.1 Namespaces
-- `/_ctxproxy/**` — dashboard, admin API, health (`/_ctxproxy/health`). Never forwarded.
+- `/_ctxoptimizer/**` — dashboard, admin API, health (`/_ctxoptimizer/health`). Never forwarded.
 - `/p/<project>/**` — optional project tag; the prefix is stripped, remainder routed normally. Lets clients without custom headers tag a project via base URL (`http://localhost:8787/p/myrepo`).
 - `/u/<upstream>/**` — explicit named-upstream routing (§8.3); prefix stripped.
 - Everything else — auto-detected by path.
@@ -461,9 +461,9 @@ Anthropic request query strings (e.g. `?beta=true`) MUST be forwarded unchanged.
 
 ### 9.2 Header handling
 - Strip hop-by-hop headers in both directions: `connection, keep-alive, proxy-authenticate, proxy-authorization, te, trailers, transfer-encoding, upgrade` (plus any listed in `Connection`).
-- Strip `host` (httpx sets it), `content-length` (recomputed), `accept-encoding` (replaced when `force_identity_encoding`), and all `x-ctxproxy-*`.
+- Strip `host` (httpx sets it), `content-length` (recomputed), `accept-encoding` (replaced when `force_identity_encoding`), and all `x-ctxoptimizer-*`.
 - Forward everything else verbatim, including `authorization`, `x-api-key`, `anthropic-version`, `anthropic-beta`, `openai-*`, `user-agent`, `x-stainless-*`.
-- Response: forward status and headers except hop-by-hop and `content-length`/`content-encoding` handling per §9.4. Add `x-ctxproxy-request-id` (response only; harmless).
+- Response: forward status and headers except hop-by-hop and `content-length`/`content-encoding` handling per §9.4. Add `x-ctxoptimizer-request-id` (response only; harmless).
 
 ### 9.3 Streaming
 ```python
@@ -494,10 +494,10 @@ If the request has `content-encoding` (gzip/deflate/zstd/br): decode only if the
 
 ### 9.6 Error shaping (proxy-originated failures only)
 - Upstream connect/TLS/DNS failure → HTTP 502 with a provider-shaped body:
-  - Anthropic: `{"type":"error","error":{"type":"api_error","message":"ctxproxy: upstream unreachable: <reason>"}}`
-  - OpenAI-kind: `{"error":{"message":"ctxproxy: upstream unreachable: <reason>","type":"server_error","code":"upstream_unreachable"}}`
+  - Anthropic: `{"type":"error","error":{"type":"api_error","message":"ctxoptimizer: upstream unreachable: <reason>"}}`
+  - OpenAI-kind: `{"error":{"message":"ctxoptimizer: upstream unreachable: <reason>","type":"server_error","code":"upstream_unreachable"}}`
   - Gemini: `{"error":{"code":502,"message":"...","status":"UNAVAILABLE"}}`
-  - Ollama: `{"error":"ctxproxy: upstream unreachable: <reason>"}`
+  - Ollama: `{"error":"ctxoptimizer: upstream unreachable: <reason>"}`
 - Upstream timeout before first byte → 504 same shapes.
 - All other statuses are upstream's (INV-15).
 - A mid-stream upstream failure cannot change the already-sent status; close the stream and record `outcome="upstream_error"`.
@@ -672,10 +672,10 @@ class Transform(Protocol):
 #### 12.0.3 Marker format (all transforms that omit content)
 Single-line, ASCII, token-cheap, recognizable, never itself transformed:
 ```
-[ctxproxy: 412 lines (38.2 KB) omitted; ref=ab12cd34]
-[ctxproxy: line repeated 57 more times]
-[ctxproxy: output identical to earlier tool result toolu_01Abc... ]
-[ctxproxy: tool result elided (21.4 KB); re-run the tool if needed]
+[ctxoptimizer: 412 lines (38.2 KB) omitted; ref=ab12cd34]
+[ctxoptimizer: line repeated 57 more times]
+[ctxoptimizer: output identical to earlier tool result toolu_01Abc... ]
+[ctxoptimizer: tool result elided (21.4 KB); re-run the tool if needed]
 ```
 `ref` = first 8 hex chars of sha256 of the original text (lets the dashboard find the stored original; omitted when payload capture is `off`).
 
@@ -698,12 +698,12 @@ Remove: CSI sequences `\x1b\[[0-?]*[ -/]*[@-~]`; OSC `\x1b\][^\x07\x1b]*(?:\x07|
 
 ### 12.2 `progress_collapse`
 1. **Carriage-return overwrite:** for each line containing `\r`, keep the text after the last `\r` that is non-empty (terminal semantics).
-2. **Progress lines:** a line is progress-like if it matches any of: bar glyph runs `[#=>█▉▊▋▌▍▎▏\-\. ]{8,}` plus `\d{1,3}%`; `\b\d+(\.\d+)?\s?(kB|MB|GB|KiB|MiB)/s\b`; leading verbs `Downloading|Fetching|Receiving objects|Resolving deltas|Compressing objects|Unpacking|Counting objects|Collecting|Installing` combined with a percentage or size. Collapse each *consecutive* run of ≥ 3 progress-like lines into the **last** line of the run plus `[ctxproxy: N progress updates collapsed]` on the line before it.
+2. **Progress lines:** a line is progress-like if it matches any of: bar glyph runs `[#=>█▉▊▋▌▍▎▏\-\. ]{8,}` plus `\d{1,3}%`; `\b\d+(\.\d+)?\s?(kB|MB|GB|KiB|MiB)/s\b`; leading verbs `Downloading|Fetching|Receiving objects|Resolving deltas|Compressing objects|Unpacking|Counting objects|Collecting|Installing` combined with a percentage or size. Collapse each *consecutive* run of ≥ 3 progress-like lines into the **last** line of the run plus `[ctxoptimizer: N progress updates collapsed]` on the line before it.
 3. Never collapse lines containing `error|fail|fatal|warning` (case-insensitive).
 
 ### 12.3 `line_dedupe`
-- Exact runs: `rstrip()`-equal consecutive lines, run length ≥ `min_repeat` → first line + `[ctxproxy: line repeated N more times]`.
-- Near-duplicate runs: key = line with `\d+` → `#`, ISO-8601/`HH:MM:SS` timestamps → `<ts>`, hex ids (`[0-9a-f]{8,}`) → `<id>`; runs ≥ `2*min_repeat` keep first and last line, with `[ctxproxy: N similar lines omitted]` between. Never apply near-duplicate collapsing to lines matching the signal patterns in §12.5.
+- Exact runs: `rstrip()`-equal consecutive lines, run length ≥ `min_repeat` → first line + `[ctxoptimizer: line repeated N more times]`.
+- Near-duplicate runs: key = line with `\d+` → `#`, ISO-8601/`HH:MM:SS` timestamps → `<ts>`, hex ids (`[0-9a-f]{8,}`) → `<id>`; runs ≥ `2*min_repeat` keep first and last line, with `[ctxoptimizer: N similar lines omitted]` between. Never apply near-duplicate collapsing to lines matching the signal patterns in §12.5.
 
 ### 12.4 `whitespace_trim`
 `rstrip()` each line; collapse blank-line runs longer than `max_blank_run`; strip trailing blank lines to a single `\n`; **never** modify leading indentation. Only for `compactable` tools (trailing whitespace can be meaningful in file content/diffs).
@@ -712,19 +712,19 @@ Remove: CSI sequences `\x1b\[[0-?]*[ -/]*[@-~]`; OSC `\x1b\][^\x07\x1b]*(?:\x07|
 Trigger: `len(text.encode()) > trigger_bytes`. Goal: result ≤ `target_bytes` (+ markers). Config invariant (validated): `target_bytes * 1.5 <= trigger_bytes` so output never re-triggers (INV-5).
 
 Algorithm (all deterministic, line-oriented):
-1. Split into lines. Pre-pass: replace any single line longer than `max_line_chars` with `line[:max_line_chars] + " [ctxproxy: line truncated, N chars]"`; replace base64-like runs (`[A-Za-z0-9+/=]{1000,}`) with `[ctxproxy: base64 blob, N chars]`.
+1. Split into lines. Pre-pass: replace any single line longer than `max_line_chars` with `line[:max_line_chars] + " [ctxoptimizer: line truncated, N chars]"`; replace base64-like runs (`[A-Za-z0-9+/=]{1000,}`) with `[ctxoptimizer: base64 blob, N chars]`.
 2. Mark **must-keep** lines by priority, adding until the byte budget is exhausted:
    1. First `head_lines` lines (command echo, early errors).
    2. Last `tail_lines` lines (summary, exit codes, final errors).
    3. **Signal windows:** lines matching (case-insensitive) `error|fail(ed|ure)?|exception|traceback|panic|assert(ion)?|fatal|segfault|cannot|can't|undefined|not found|denied|timeout|exit (code|status)|npm ERR!|\bE\s{3}\S|^FAILED|^ERROR|error\[E\d+\]|^\s*File ".*", line \d+|\S+\.\w+:\d+(:\d+)?:` plus `context_lines` before/after each, capped at `max_signal_lines` lines. Python tracebacks and Rust/Go panics: keep the whole block (up to 100 lines) starting at `Traceback (most recent call last):` / `panic:` / `thread '...' panicked`.
    4. Summary lines: `\d+ (passed|failed|errors?|warnings?)`, `Tests?:`, `Test Suites:`, `Ran \d+ tests`, `BUILD (SUCCESS|FAILURE)`, `Finished|Compiling .* in`.
-3. Emit kept lines in original order; each maximal omitted gap becomes one marker `[ctxproxy: N lines (X KB) omitted; ref=…]`.
+3. Emit kept lines in original order; each maximal omitted gap becomes one marker `[ctxoptimizer: N lines (X KB) omitted; ref=…]`.
 4. If must-keep lines alone exceed `target_bytes * 1.5`, shrink in order: signal windows (keep first `max_signal_lines/2` and last half), then head, then tail — never drop summary lines.
 5. If `is_error` is true, double `max_signal_lines`.
 Edge cases: results that are valid JSON > 2×trigger → treat as plain text in v1 (document limitation); binary-looking content (NUL bytes) → leave untouched and add `notes["skipped"]="binary"`.
 
 ### 12.6 `duplicate_backref`
-Within a single request, hash (sha256 of text after ansi/progress cleanup) every tool result ≥ `min_bytes`. For a later result whose hash equals an earlier result's hash **and the earlier result is still full text in this request**, replace the later text with the stub `[ctxproxy: output identical to earlier tool result <tool_use_id>]`. Properties: only later duplicates change, so the earlier prefix is untouched (INV-6 holds); decision is position-independent (no "recent" protection — adding one would break INV-6). Never reference a stub; never use a result from a different message role context (only tool results).
+Within a single request, hash (sha256 of text after ansi/progress cleanup) every tool result ≥ `min_bytes`. For a later result whose hash equals an earlier result's hash **and the earlier result is still full text in this request**, replace the later text with the stub `[ctxoptimizer: output identical to earlier tool result <tool_use_id>]`. Properties: only later duplicates change, so the earlier prefix is untouched (INV-6 holds); decision is position-independent (no "recent" protection — adding one would break INV-6). Never reference a stub; never use a result from a different message role context (only tool results).
 
 ### 12.7 Pipeline order, budget, and guards (`pipeline.py`)
 Order (fixed): `ansi_strip → progress_collapse → line_dedupe → whitespace_trim → smart_truncate → duplicate_backref → cache_serve → stale_result_elision → volatile_normalizer → anthropic_cache | openai_hints`. (`cache_serve` runs before `stale_result_elision` so in-request duplicates resolve to the stateless rule first; elision then removes what's already been accounted for.)
@@ -742,7 +742,7 @@ turns = count_assistant_turns(payload)                         # adapter-provide
 boundary = max(0, ((turns - keep_recent_turns) // batch_turns) * batch_turns)
 # elide eligible tool results belonging to assistant turns with index < boundary
 ```
-Replace with `[ctxproxy: tool result elided (21.4 KB); re-run the tool if needed]`; keep `tool_use_id` pairing (INV-7). Cost trade-off: each boundary advance causes one cache miss for the tail beyond the first elided block; recommend ≥ 8 for `batch_turns`. Dashboard must show a break-even estimate from the simulator before the user enables it. If the client compacts its own history so `turns` shrinks, previously elided results reappear — acceptable and deterministic.
+Replace with `[ctxoptimizer: tool result elided (21.4 KB); re-run the tool if needed]`; keep `tool_use_id` pairing (INV-7). Cost trade-off: each boundary advance causes one cache miss for the tail beyond the first elided block; recommend ≥ 8 for `batch_turns`. Dashboard must show a break-even estimate from the simulator before the user enables it. If the client compacts its own history so `turns` shrinks, previously elided results reappear — acceptable and deterministic.
 
 ### 12.9 `anthropic_cache` (cache_control injection)
 Preconditions: provider=anthropic, endpoint=messages, mode=active, transform enabled, model not on the blocklist in `data/cache_limits.json`, not already at `max_breakpoints`.
@@ -771,8 +771,8 @@ Purpose: the largest recurring waste after cache misses itself — **the same un
 
 Stub format (reuses the marker grammar, §12.0.3):
 ```
-[ctxproxy: content identical to that retrieved at turn T (8.2 KB, sha256 ab12cd34...); unchanged.
- reread ref=ab12cd34 | ctxproxy_expand(ab12cd34) retrieves it]
+[ctxoptimizer: content identical to that retrieved at turn T (8.2 KB, sha256 ab12cd34...); unchanged.
+ reread ref=ab12cd34 | ctxoptimizer_expand(ab12cd34) retrieves it]
 ```
 
 Algorithm (per request, after other transforms):
@@ -788,20 +788,20 @@ Cache-safety scheme (INV-17 — same construction as §12.8):
 - Determinism (INV-4): decision inputs = request content + per-session map + config only.
 
 Preconditions & guardrails:
-- Requires `capture_payloads != off` (the blob store is what makes `expand` possible); if capture is off the transform refuses to enable and `ctxproxy doctor` says so.
+- Requires `capture_payloads != off` (the blob store is what makes `expand` possible); if capture is off the transform refuses to enable and `ctxoptimizer doctor` says so.
 - Stub count per request ≤ `max_stubs_per_request`; per-session state eviction is LRU and logged.
 - The stub always carries the re-fetch affordance ("re-run the tool" and/or `expand` ref) — the agent is never left without a path to the original bytes.
 - Guard (§12.14) applies in full: any fallback or client-side complaint that correlates with `cache_serve` quarantines it.
 
 Non-goals/note: no embedding/semantic similarity — hash identity only. Similar-but-different content stays untouched (that problem is deliberately unsolved; it needs judgment we refuse to fake).
 
-### 12.13 `ctxproxy_expand(ref)` — on-demand original retrieval (MCP stdio server)
+### 12.13 `ctxoptimizer_expand(ref)` — on-demand original retrieval (MCP stdio server)
 
 Promoted from "v2 idea" to Phase 3 scope: on-demand retrieval is what makes truncation-side transforms trustworthy ("lazy loading" instead of "data loss").
 
-- `ctxproxy mcp run` starts a minimal MCP **stdio** server (stdlib JSON-RPC; no SDK dependency). Register it as an MCP server in the client (`claude mcp add ctxproxy -- ctxproxy mcp run` or per-client config; `ctxproxy doctor` prints ready-made snippets and VERIFYs per client).
-- Single tool: `ctxproxy_expand(ref: str, max_tokens: int | None = None)`. `ref` = full sha256 or its 8-hex prefix (ambiguous prefix → error listing matches). Returns the **zlib-decompressed original** from the blob store, truncated head+tail with the standard marker grammar if `max_tokens` exceeded.
-- Trust model: reads only `ctxproxy`'s own data dir (POSIX `0600`); loopback-only companion HTTP endpoint (`/_ctxproxy/api/expand/<ref>`) for HTTP clients; **no network egress**; honors `purge` and retention.
+- `ctxoptimizer mcp run` starts a minimal MCP **stdio** server (stdlib JSON-RPC; no SDK dependency). Register it as an MCP server in the client (`claude mcp add ctxoptimizer -- ctxoptimizer mcp run` or per-client config; `ctxoptimizer doctor` prints ready-made snippets and VERIFYs per client).
+- Single tool: `ctxoptimizer_expand(ref: str, max_tokens: int | None = None)`. `ref` = full sha256 or its 8-hex prefix (ambiguous prefix → error listing matches). Returns the **zlib-decompressed original** from the blob store, truncated head+tail with the standard marker grammar if `max_tokens` exceeded.
+- Trust model: reads only `ctxoptimizer`'s own data dir (POSIX `0600`); loopback-only companion HTTP endpoint (`/_ctxoptimizer/api/expand/<ref>`) for HTTP clients; **no network egress**; honors `purge` and retention.
 - If the blob is missing (retention, purge, or capture=off): returns an honest error — the stub's re-run-the-tool affordance is the fallback path, never a broken reference.
 - Privacy: retrieval is logged (ref, ts) but never the content; dashboard shows "expand usage" only as a counter (it's a strong hint that a transform over-truncated — feeds the guard).
 
@@ -816,7 +816,7 @@ Sliding window per transform × session, fed by existing counters — no new plu
 | est. savings | < `min_savings_to_stay` USD over window while active | transform → shadow ("overhead without benefit") |
 | expand error rate for a transform's refs | > 20% of its expand calls erroring | that transform → shadow (broken retrieval = broken stub) |
 
-Properties: quarantine is **session-scoped and reversible** (`ctxproxy guard enable <transform>` / dashboard button; also auto-re-enables after N clean shadow sessions if `guard.auto_reenable = N > 0`). Quarantine events append to a new `guard_events` table (same schema pattern as `drift_events`). Rationale (D17): the product tunes itself per codebase — the trust story ("it never fights you") is a feature competitors auditors can't copy.
+Properties: quarantine is **session-scoped and reversible** (`ctxoptimizer guard enable <transform>` / dashboard button; also auto-re-enables after N clean shadow sessions if `guard.auto_reenable = N > 0`). Quarantine events append to a new `guard_events` table (same schema pattern as `drift_events`). Rationale (D17): the product tunes itself per codebase — the trust story ("it never fights you") is a feature competitors auditors can't copy.
 
 ---
 
@@ -824,11 +824,11 @@ Properties: quarantine is **session-scoped and reversible** (`ctxproxy guard ena
 
 ### 13.1 Session & project identification (`analysis/session.py`)
 Precedence for `session_id`:
-1. `x-ctxproxy-session` header.
+1. `x-ctxoptimizer-session` header.
 2. Client-provided session headers (VERIFY, e.g. Claude Code may send one).
 3. Derived: `sha256(provider | key_fingerprint | blake2b(system_text[:4096] + tools_names_joined) | blake2b(first_user_text[:2048]))[:16]`.
 `key_fingerprint` = `HMAC-SHA256(install_secret, api_key_or_bearer)[:12]` — the raw key is never stored (INV-11). Requests lacking system/tools (aux calls like title generation) form separate sessions tagged `kind="aux"` when `tools` absent and total tokens < 2000; dashboard groups by project and hides aux by default.
-`project`: `x-ctxproxy-project` header > `/p/<project>/` prefix > regex on system/first user text (`Working directory:\s*(\S+)`, `<cwd>(.*?)</cwd>`, `Primary working directory:` — VERIFY per client) → **basename only** > `"default"`.
+`project`: `x-ctxoptimizer-project` header > `/p/<project>/` prefix > regex on system/first user text (`Working directory:\s*(\S+)`, `<cwd>(.*?)</cwd>`, `Primary working directory:` — VERIFY per client) → **basename only** > `"default"`.
 
 ### 13.2 Client identification
 From `User-Agent`: `claude-cli`/`claude-code` → `claude-code`; `aider` → `aider`; `OpenAI/Python` → `openai-sdk`; `Anthropic/Python` → `anthropic-sdk`; `python-httpx`, `node`, `curl` → as-is. Unknown → `unknown`.
@@ -892,7 +892,7 @@ All detectors are **deterministic, advisory-only (INV-16), evidence-linked, and 
 | **W7** | `churn_detector` | Assistant edit (tool_use input) whose new value reverts a previously applied value (hash match against prior input values), or changes only whitespace | Σ billable delta of the touching turns | **off (Phase 6)** |
 | **W8** | `schema_bloat` | tool-schema segments never referenced by any `tool_use` in the session | their est_tokens × (session request count − 1) | on (Phase 6) |
 
-Rollups: per-session, per-project, and per-cause totals (tokens + `est_cost_usd` at the request's model pricing) power the dashboard's **Waste Opportunities** page (§16.2) and `ctxproxy waste`. ARanking is by `est_cost_usd × occurrences`, newest first within equal rank.
+Rollups: per-session, per-project, and per-cause totals (tokens + `est_cost_usd` at the request's model pricing) power the dashboard's **Waste Opportunities** page (§16.2) and `ctxoptimizer waste`. ARanking is by `est_cost_usd × occurrences`, newest first within equal rank.
 
 Detector-to-result plumbing: W1/W2 consume the per-request *original* segment list (pre-transform); the same finding that justifies an enabled `cache_serve` appears as W1 with `actionable=cache_serve`. Findings whose actionable target is already on are marked `fixed` automatically once the corresponding metric flattens (4 consecutive windows below threshold).
 
@@ -1000,7 +1000,7 @@ CREATE TABLE blobs(hash TEXT PRIMARY KEY, size INTEGER NOT NULL, created_ts REAL
 CREATE TABLE captures(
   request_id TEXT NOT NULL, transform_id TEXT, location TEXT, before_hash TEXT, after_hash TEXT);
 ```
-Writer thread: batches inserts in transactions (≤ 100 rows or 250 ms). Retention job (hourly): delete `requests`/children older than `retention_days`; delete orphan blobs; enforce `max_blob_bytes` (default 500 MB) by oldest-first purge. DB file permissions `0600` (POSIX). Provide `ctxproxy purge`.
+Writer thread: batches inserts in transactions (≤ 100 rows or 250 ms). Retention job (hourly): delete `requests`/children older than `retention_days`; delete orphan blobs; enforce `max_blob_bytes` (default 500 MB) by oldest-first purge. DB file permissions `0600` (POSIX). Provide `ctxoptimizer purge`.
 
 ### 14.4 Payload capture (`capture_payloads`)
 - `off`: no blobs, no `ref` in markers.
@@ -1014,30 +1014,30 @@ Secrets redaction (`telemetry/redact.py`) at capture time: patterns for `sk-ant-
 
 | Command | Purpose |
 |---|---|
-| `ctxproxy run [--port --host --mode --config]` | Start server in foreground (default entry). |
-| `ctxproxy status` | Query `/_ctxproxy/health`: version, mode, uptime, requests, dropped telemetry events. |
-| `ctxproxy mode <passthrough\|shadow\|active>` | Switch mode at runtime via admin API. |
-| `ctxproxy env [--shell bash\|zsh\|fish\|powershell]` | Print export lines for base URLs. |
-| `ctxproxy doctor` | Checks: port free, upstream reachability (HEAD/GET to base URLs), env vars set in current shell, DB writable, tiktoken availability, pricing file age (> 60 days → warn), detected clients and setup hints, loopback binding. |
-| `ctxproxy stats [--since 24h --project --json]` | Terminal summary: requests, tokens, cache hit ratio, actual vs simulated cost. |
-| `ctxproxy export --format csv\|json [--since]` | Export `requests` + reports. |
-| `ctxproxy capture --out DIR [--sanitize]` | Record request/response pairs as fixtures for tests (redacted). |
-| `ctxproxy waste [--project --since --detector --json]` | List open waste findings ranked by est. cost; `--summary` for per-cause rollups (§13.6). |
-| `ctxproxy recommend [--json]` | Print ranked recommendations with evidence + projected savings (§13.7). |
-| `ctxproxy guard status\|enable <transform>\|disable <transform>` | Inspect/quarantine/restore per transform (§12.14). |
-| `ctxproxy replay FILE [--config]` | Run the pipeline on a captured request offline; print reports and diff. Great for debugging transforms. |
-| `ctxproxy bench` | Latency/throughput harness (see §18). |
-| `ctxproxy purge [--all]` | Delete stored data. |
-| `ctxproxy mcp run` | Start the expand MCP stdio server (§12.13); `ctxproxy mcp snippet --client claude-code` prints registration config. |
-| `ctxproxy service install\|uninstall` (Phase 7) | launchd / systemd --user / Windows Task Scheduler. |
-| `ctxproxy --version` | |
+| `ctxoptimizer run [--port --host --mode --config]` | Start server in foreground (default entry). |
+| `ctxoptimizer status` | Query `/_ctxoptimizer/health`: version, mode, uptime, requests, dropped telemetry events. |
+| `ctxoptimizer mode <passthrough\|shadow\|active>` | Switch mode at runtime via admin API. |
+| `ctxoptimizer env [--shell bash\|zsh\|fish\|powershell]` | Print export lines for base URLs. |
+| `ctxoptimizer doctor` | Checks: port free, upstream reachability (HEAD/GET to base URLs), env vars set in current shell, DB writable, tiktoken availability, pricing file age (> 60 days → warn), detected clients and setup hints, loopback binding. |
+| `ctxoptimizer stats [--since 24h --project --json]` | Terminal summary: requests, tokens, cache hit ratio, actual vs simulated cost. |
+| `ctxoptimizer export --format csv\|json [--since]` | Export `requests` + reports. |
+| `ctxoptimizer capture --out DIR [--sanitize]` | Record request/response pairs as fixtures for tests (redacted). |
+| `ctxoptimizer waste [--project --since --detector --json]` | List open waste findings ranked by est. cost; `--summary` for per-cause rollups (§13.6). |
+| `ctxoptimizer recommend [--json]` | Print ranked recommendations with evidence + projected savings (§13.7). |
+| `ctxoptimizer guard status\|enable <transform>\|disable <transform>` | Inspect/quarantine/restore per transform (§12.14). |
+| `ctxoptimizer replay FILE [--config]` | Run the pipeline on a captured request offline; print reports and diff. Great for debugging transforms. |
+| `ctxoptimizer bench` | Latency/throughput harness (see §18). |
+| `ctxoptimizer purge [--all]` | Delete stored data. |
+| `ctxoptimizer mcp run` | Start the expand MCP stdio server (§12.13); `ctxoptimizer mcp snippet --client claude-code` prints registration config. |
+| `ctxoptimizer service install\|uninstall` (Phase 7) | launchd / systemd --user / Windows Task Scheduler. |
+| `ctxoptimizer --version` | |
 
 ---
 
-## 16. Dashboard & Admin API (`/_ctxproxy/`)
+## 16. Dashboard & Admin API (`/_ctxoptimizer/`)
 
 ### 16.1 Security
-Admin/UI endpoints require: loopback source (or admin token if `allow_remote`), `Host` header ∈ allowlist (`localhost`, `127.0.0.1`, `[::1]`, configured host:port) to defeat DNS rebinding, a per-run random **admin token** (printed in the startup banner; set as `HttpOnly; SameSite=Strict` cookie when the user opens the URL `/_ctxproxy/?token=…`), CSRF token on all POST/DELETE, **no CORS headers**. All assets are vendored (no CDN requests).
+Admin/UI endpoints require: loopback source (or admin token if `allow_remote`), `Host` header ∈ allowlist (`localhost`, `127.0.0.1`, `[::1]`, configured host:port) to defeat DNS rebinding, a per-run random **admin token** (printed in the startup banner; set as `HttpOnly; SameSite=Strict` cookie when the user opens the URL `/_ctxoptimizer/?token=…`), CSRF token on all POST/DELETE, **no CORS headers**. All assets are vendored (no CDN requests).
 
 ### 16.2 Pages
 1. **Overview** — period selector (today/7d/30d/custom); cards: total requests, actual spend, estimated baseline, **estimated savings** (or *potential savings* in shadow mode), **estimated wasted spend** (W1–W8 aggregate, `est.`), cache hit ratio (actual), tokens removed by transforms; charts: spend over time (actual vs baseline sim), waste-over-time by cause, cache read share, tokens per request; per-project and per-model tables.
@@ -1049,10 +1049,10 @@ Admin/UI endpoints require: loopback source (or admin token if `allow_remote`), 
 7. **Pricing** — table editor for models, "unpriced" list, last-updated stamp.
 8. **Settings** — mode, upstreams, capture level, retention, privacy banner, MIT license notice.
 9. **Waste Opportunities** — ranked findings per §13.6: cause, project/session, evidence (turns, hashes — no raw text), occurrences, `est. tokens/$ wasted`, status controls (ack/skip/fixed), and the linked recommendation where one exists (§13.7) with one-click apply + confirm.
-10. **Doctor** — results of `ctxproxy doctor` in UI.
+10. **Doctor** — results of `ctxoptimizer doctor` in UI.
 Number labeling (INV-13): every non-provider figure gets a badge `est.` / `sim.` with tooltip explaining the method.
 
-### 16.3 Admin API (JSON; all under `/_ctxproxy/api/`)
+### 16.3 Admin API (JSON; all under `/_ctxoptimizer/api/`)
 `GET health`, `GET config`, `POST config` (validated partial update + reload), `POST reload`, `POST mode`, `GET summary?since&project`, `GET timeseries?metric&bucket`, `GET sessions`, `GET sessions/{id}`, `GET requests?filter`, `GET requests/{id}`, `GET requests/{id}/diff`, `GET drift`, `GET transforms/stats`, `GET pricing`, `PUT pricing`, `GET live` (SSE), `POST purge`, `GET export`. Responses are versioned (`"api_version": 1`).
 Server-rendered pages (Jinja + HTMX) call the same service layer; no heavy SPA build step (keeps packaging simple).
 
@@ -1071,9 +1071,9 @@ Server-rendered pages (Jinja + HTMX) call the same service layer; no heavy SPA b
 | SEC-7 | HTML output is auto-escaped (Jinja autoescape on); diff viewer renders captured text as text, never HTML. |
 | SEC-8 | Regexes are linear-time and fuzz-tested against adversarial input (ReDoS). Optionally use `google-re2` via extra `[re2]`. |
 | SEC-9 | Upstream TLS verification always on (`certifi` / `SSL_CERT_FILE`); no `verify=False` flag in v1. |
-| SEC-10 | Do not forward `x-ctxproxy-*` headers upstream; do not trust them for authorization decisions. |
+| SEC-10 | Do not forward `x-ctxoptimizer-*` headers upstream; do not trust them for authorization decisions. |
 | SEC-11 | SSRF: upstream hosts come only from config; client-supplied absolute-URI request targets are rejected (400). `/u/<name>` accepts only configured names. |
-| SEC-12 | Privacy banner in dashboard whenever `capture_payloads != off`. `ctxproxy purge` wipes everything. |
+| SEC-12 | Privacy banner in dashboard whenever `capture_payloads != off`. `ctxoptimizer purge` wipes everything. |
 | SEC-13 | Dependency hygiene: pin lower bounds, run `pip-audit` in CI, lock file committed. |
 
 ---
@@ -1101,7 +1101,7 @@ Implementation rules:
 
 ## 19. License
 
-- ctxproxy is free and open-source software under the **MIT License**.
+- ctxoptimizer is free and open-source software under the **MIT License**.
 - `LICENSE` is the canonical license; `NOTICE` covers attribution and provider
   trademarks.
 - No activation key, tier gate, license server, or phone-home.
@@ -1130,21 +1130,21 @@ Implementation rules:
 7. **Benchmarks** — §18.
 
 ### 20.2 Coverage & CI
-GitHub Actions matrix: {ubuntu, macos, windows} × {3.11, 3.12, 3.13}. Gates: `ruff check`, `ruff format --check`, `mypy --strict`, `pytest -q --cov` (≥ 90% on `transforms/`, `analysis/`, `telemetry/usage.py`; ≥ 80% overall), `pip-audit`, bench regression check, wheel build + install smoke test (`ctxproxy --version`, start/health/stop).
+GitHub Actions matrix: {ubuntu, macos, windows} × {3.11, 3.12, 3.13}. Gates: `ruff check`, `ruff format --check`, `mypy --strict`, `pytest -q --cov` (≥ 90% on `transforms/`, `analysis/`, `telemetry/usage.py`; ≥ 80% overall), `pip-audit`, bench regression check, wheel build + install smoke test (`ctxoptimizer --version`, start/health/stop).
 
 ### 20.3 Fixture capture
-`ctxproxy capture` writes `{request.json, response.sse|json, meta.json}` with headers dropped and secrets redacted; a `scripts/sanitize_fixture.py` also replaces file paths/usernames/emails with stable fakes. Fixtures committed only after manual review.
+`ctxoptimizer capture` writes `{request.json, response.sse|json, meta.json}` with headers dropped and secrets redacted; a `scripts/sanitize_fixture.py` also replaces file paths/usernames/emails with stable fakes. Fixtures committed only after manual review.
 
 ---
 
 ## 21. Packaging & Distribution
 
-- `pyproject.toml` (hatchling), src layout, console script `ctxproxy = ctxproxy.cli:app`; extras `[tokens]`, `[re2]`, `[dev]`. Package data: templates, static, `data/*.json` (access via `importlib.resources`).
-- Primary install: `uv tool install ctxproxy` / `pipx install ctxproxy`. Document Python version requirement; `uv` can fetch Python itself.
-- Updates: no built-in self-update. Users run `uv tool upgrade ctxproxy` or `pipx upgrade ctxproxy`. Publish wheel/sdist to PyPI with Trusted Publishing and PEP 740 attestations; attach `SHA256SUMS` to the GitHub release.
+- `pyproject.toml` (hatchling), src layout, console script `ctxoptimizer = ctxoptimizer.cli:app`; extras `[tokens]`, `[re2]`, `[dev]`. Package data: templates, static, `data/*.json` (access via `importlib.resources`).
+- Primary install: `uv tool install ctxoptimizer` / `pipx install ctxoptimizer`. Document Python version requirement; `uv` can fetch Python itself.
+- Updates: no built-in self-update. Users run `uv tool upgrade ctxoptimizer` or `pipx upgrade ctxoptimizer`. Publish wheel/sdist to PyPI with Trusted Publishing and PEP 740 attestations; attach `SHA256SUMS` to the GitHub release.
 - No standalone binaries or OS code-signing step. Distribution is wheel/sdist only.
-- Autostart: `ctxproxy service install` generates launchd plist (`~/Library/LaunchAgents`), systemd user unit (`~/.config/systemd/user`), or a Windows Scheduled Task ("at logon"); `uninstall` reverses.
-- Versioning: SemVer; DB migrations forward-only with automatic backup (`ctxproxy.db.bak-<version>`) before migrating; config `schema_version` with warnings on unknown keys.
+- Autostart: `ctxoptimizer service install` generates launchd plist (`~/Library/LaunchAgents`), systemd user unit (`~/.config/systemd/user`), or a Windows Scheduled Task ("at logon"); `uninstall` reverses.
+- Versioning: SemVer; DB migrations forward-only with automatic backup (`ctxoptimizer.db.bak-<version>`) before migrating; config `schema_version` with warnings on unknown keys.
 - Docs site (README + `docs/`): quickstart (3 commands), per-client setup, privacy statement, FAQ ("why is my cache hit low?"), how savings are computed (INV-13 explanation), troubleshooting.
 
 ---
@@ -1160,11 +1160,11 @@ Each task = one coding-model session. "DoD" = definition of done (all gates in �
 - **P0-4** Test infrastructure: fake upstream server fixture, SSE replay helper, golden runner.
 
 ### Phase 1 — Transparent proxy + ground-truth telemetry (week 1)
-- **P1-1** `routing.py` + `server.py`: route table §8, `/_ctxproxy/health`, `/p/` and `/u/` prefixes. DoD: routing unit tests incl. query preservation.
+- **P1-1** `routing.py` + `server.py`: route table §8, `/_ctxoptimizer/health`, `/p/` and `/u/` prefixes. DoD: routing unit tests incl. query preservation.
 - **P1-2** `proxy.py`: header hygiene, streaming tee, disconnect handling, error shaping, no buffering. DoD: byte-equality integration tests; mid-stream disconnect test; 429 passthrough.
 - **P1-3** Usage parsers: Anthropic stream/non-stream, OpenAI chat (+ usage-less fallback), OpenAI Responses. DoD: fixtures from real captures for each; parser never raises on garbage (fuzz).
 - **P1-4** `pricing.py` + populated `pricing.json` + cost math. DoD: table-driven tests incl. cache read/write cases; unpriced model path.
-- **P1-5** `store.py`: schema, writer thread, retention, `ctxproxy stats`. DoD: queue overflow test; migration test.
+- **P1-5** `store.py`: schema, writer thread, retention, `ctxoptimizer stats`. DoD: queue overflow test; migration test.
 - **P1-6** CLI: `run`, `status`, `env`, `doctor` (basic), `export`. DoD: works end-to-end with Claude Code and an SDK script in passthrough mode; **ship-able internal alpha**.
 
 ### Phase 2 — Analysis, shadow mode, cache & waste diagnostics (week 2)
@@ -1173,7 +1173,7 @@ Each task = one coding-model session. "DoD" = definition of done (all gates in �
 - **P2-3** Pipeline framework (§12.7): journal/revert, budget, no-regress, shadow behavior, reports persisted.
 - **P2-4** Drift detector (§13.4) + `drift_events`. DoD: golden conversations for each cause; zero false "our-fault" on passthrough.
 - **P2-5** Baseline simulator (§13.5) + calibration error stat.
-- **P2-7** Waste detectors W1–W2 (`redundant_reread`, `identical_output`) + session content-hash state + `waste_findings` store + `ctxproxy waste`. DoD: no Finding ever mutates traffic (INV-16 test); finding dedupe test; evidence contains no raw text (INV-18 test).
+- **P2-7** Waste detectors W1–W2 (`redundant_reread`, `identical_output`) + session content-hash state + `waste_findings` store + `ctxoptimizer waste`. DoD: no Finding ever mutates traffic (INV-16 test); finding dedupe test; evidence contains no raw text (INV-18 test).
 - **P2-8** Waste detectors W3–W6 (`unbatched_fanout`, `runaway_session`, `recurring_drift`, `params_drift` rollups). DoD: golden sessions per detector; `est.` cost rollup matches method table.
 - **P2-6** Minimal dashboard v0: Overview + Cache & Waste Health (server-rendered). **Milestone: shadow mode already delivers value (cache diagnostics + waste attribution + potential savings).**
 
@@ -1182,10 +1182,10 @@ Each task = one coding-model session. "DoD" = definition of done (all gates in �
 - **P3-2** `line_dedupe`.
 - **P3-3** `smart_truncate` with signal windows (largest task; split by sub-steps 1–5 of §12.5). DoD: golden tests proving failing-test lines survive.
 - **P3-4** `duplicate_backref` + prefix-stability property tests (P3).
-- **P3-5** Active mode wiring, `x-ctxproxy-bypass`, retry-with-original (§9.7), blob capture + `changed_blocks`. DoD: integration test of regression → fallback.
-- **P3-7** Auto-quarantine guard (§12.14) + `guard_events` + `ctxproxy guard` + dashboard quarantine UI. DoD: injected fallback storms trigger quarantine; restore via CLI; quarantine never touches passthrough/shadow traffic.
+- **P3-5** Active mode wiring, `x-ctxoptimizer-bypass`, retry-with-original (§9.7), blob capture + `changed_blocks`. DoD: integration test of regression → fallback.
+- **P3-7** Auto-quarantine guard (§12.14) + `guard_events` + `ctxoptimizer guard` + dashboard quarantine UI. DoD: injected fallback storms trigger quarantine; restore via CLI; quarantine never touches passthrough/shadow traffic.
 - **P3-8** `cache_serve` (§12.12) incl. batch-boundary session state + property tests (idempotence, determinism, INV-6-at-boundaries) + refuses to enable with `capture=off`.
-- **P3-9** `ctxproxy_expand` MCP stdio server (§12.13) — minimal protocol, blob retrieval, truncation policy + `ctxproxy mcp snippet`. DoD: end-to-end test — agent retrieves omitted output via ref; missing-blob honest error.
+- **P3-9** `ctxoptimizer_expand` MCP stdio server (§12.13) — minimal protocol, blob retrieval, truncation policy + `ctxoptimizer mcp snippet`. DoD: end-to-end test — agent retrieves omitted output via ref; missing-blob honest error.
 - **P3-6** Dogfood: 1 week of real Claude Code/Aider use in shadow, then active; fix issues; record observed savings AND top waste findings honestly in `docs/results.md`.
 
 ### Phase 4 — Provider cache hints (week 5)
@@ -1241,7 +1241,7 @@ Each task = one coding-model session. "DoD" = definition of done (all gates in �
 
 ### 24.2 Session preamble (paste at the start of every session)
 ```
-You are implementing ctxproxy, a local LLM proxy in Python 3.11+. Read /SPEC.md (authoritative) and /AGENTS.md.
+You are implementing ctxoptimizer, a local LLM proxy in Python 3.11+. Read /SPEC.md (authoritative) and /AGENTS.md.
 Task: <TASK ID AND TITLE FROM SPEC §22>.
 Constraints: obey invariants INV-1..INV-15; use only listed dependencies; keep modules < 300 lines; typed public APIs per SPEC §10-§11.
 Process: 1) restate the acceptance criteria in your own words, 2) write failing tests, 3) implement, 4) run ruff, mypy --strict, pytest, 5) report using the format in AGENTS.md.
@@ -1252,22 +1252,22 @@ Do not modify SPEC.md except to append to §25/§26.
 
 **P1-2 (proxy core)**
 ```
-Implement SPEC §9 in src/ctxproxy/proxy.py and wire it into server.py.
+Implement SPEC §9 in src/ctxoptimizer/proxy.py and wire it into server.py.
 Requirements: shared httpx.AsyncClient (http2, trust_env, no read timeout), header hygiene (§9.2), force Accept-Encoding: identity (§9.4),
 streaming via aiter_raw() with a side-channel usage parser that can never raise into the response path, client-disconnect handling that closes upstream and records outcome,
 provider-shaped 502/504 errors (§9.6), pass-through of upstream status/headers/body for all upstream responses (INV-15). No transforms yet — body bytes forwarded exactly.
-Tests (integration, fake upstream): byte-for-byte equality for streamed and non-streamed responses with 1-byte, 7-byte and 4096-byte chunking; mid-stream client disconnect closes the upstream connection; 429 with retry-after passes through; connect failure → 502 body per provider; query string preserved (?beta=true); x-ctxproxy-* headers not forwarded; authorization header forwarded but never logged (assert log output).
+Tests (integration, fake upstream): byte-for-byte equality for streamed and non-streamed responses with 1-byte, 7-byte and 4096-byte chunking; mid-stream client disconnect closes the upstream connection; 429 with retry-after passes through; connect failure → 502 body per provider; query string preserved (?beta=true); x-ctxoptimizer-* headers not forwarded; authorization header forwarded but never logged (assert log output).
 ```
 
 **P1-3 (usage parsers)**
 ```
-Implement SPEC §14.1 parsers in src/ctxproxy/telemetry/usage.py for Anthropic (SSE + JSON), OpenAI chat (SSE with/without include_usage + JSON), OpenAI Responses (response.completed).
+Implement SPEC §14.1 parsers in src/ctxoptimizer/telemetry/usage.py for Anthropic (SSE + JSON), OpenAI chat (SSE with/without include_usage + JSON), OpenAI Responses (response.completed).
 Incremental SSE splitter must handle \r\n, split chunks mid-event/mid-UTF-8, comment lines, and `data: [DONE]`. feed() must never raise (catch internally, set disabled flag).
 Use tests/fixtures/<provider>/*.sse captured fixtures (create small hand-written ones if real captures are not present and mark them TODO-replace-with-real).
 Add a hypothesis fuzz test feeding random bytes in random chunk sizes; assert no exception and bounded memory. Normalization per SPEC table (fresh_input excludes cached for OpenAI).
 ```
 
-**P1-4 (pricing)** — "Implement SPEC §14.2. Do not invent prices: create `pricing.json` with the structure and the single Sonnet-class example from the spec, mark every entry `\"verified\": false`, and add a `ctxproxy doctor` warning for unverified/old pricing. Provide TODO list of models for the human to fill from official pricing pages."
+**P1-4 (pricing)** — "Implement SPEC §14.2. Do not invent prices: create `pricing.json` with the structure and the single Sonnet-class example from the spec, mark every entry `\"verified\": false`, and add a `ctxoptimizer doctor` warning for unverified/old pricing. Provide TODO list of models for the human to fill from official pricing pages."
 
 **P1-5 (store)** — "Implement SPEC §14.3: schema + forward-only migrations, single writer thread with batching, bounded queue with drop-counter, retention job, 0600 perms. Tests: 20k-row burst without blocking the caller > 5 ms; overflow increments counter; migration from v0 fixture DB."
 
@@ -1295,14 +1295,14 @@ Tip: for the transforms phase, give the model the **pure function signature and 
 | D6 | Pass-through client credentials; no key vault | Smaller attack surface, simpler UX. |
 | D7 | Retry-with-original on 400/422 | Converts transform bugs into invisible fallbacks plus a visible regression signal. |
 | D8 | Savings = provider usage (actual) vs *simulated* baseline, labeled | Honest comparative telemetry; replaces v4's unmeasured table. |
-| D9 | Dashboard under `/_ctxproxy/` | Avoids collisions with provider routes. |
+| D9 | Dashboard under `/_ctxoptimizer/` | Avoids collisions with provider routes. |
 | D10 | Server-rendered UI (Jinja+HTMX), vendored assets | No JS build step, offline-safe, easy to package. |
 | D11 | `duplicate_backref` allowed on file-read tools | Earlier copy stays intact; large safe win; position-independent. |
 | D12 | Reposition as **agent-run cost optimizer** (measure → diagnose → optimize → attribute → prevent → coach), not a "context garbage collector" | Waste attribution + coaching is the durable differentiator; compression alone is becoming commodity. |
 | D13 | All waste detectors advisory-only in v1 (INV-16) | Zero new mutation risk; every Finding can later graduate into a guarded Transform — but trust is earned before acting on it. |
 | D14 | `cache_serve` ships stateful-but-batch-anchored (INV-17), default off, capture-on required | Extends the proven §12.8 construction; byte-true (T0) keeps the no-judgment guarantee. |
 | D15 | **No LLM in any v1 decision path.** Future speculative features must pass the EV rule (verification spend ≤ 10% of the decision it protects, circuit-breakable, deterministic-ladder-first) | Keeps latency, cost, and determinism guarantees absolute in v1. |
-| D16 | `ctxproxy_expand` MCP promoted from open-question to Phase 3 scope | On-demand retrieval is the trust unlock that legitimizes all omission-type transforms. |
+| D16 | `ctxoptimizer_expand` MCP promoted from open-question to Phase 3 scope | On-demand retrieval is the trust unlock that legitimizes all omission-type transforms. |
 | D17 | Auto-quarantine guard ships *with* transforms (Phase 3), not as a later hardening pass | Self-tuning per codebase is a trust feature, not a cleanup task. |
 
 ---
@@ -1315,12 +1315,12 @@ Tip: for the transforms phase, give the model the **pure function signature and 
 4. Claude Code: session header names, working-directory pattern in system prompt, side-request behavior, whether `ANTHROPIC_BASE_URL` covers all traffic (e.g., telemetry/OAuth endpoints).
 5. Aider/Cline/Continue/Codex CLI exact base-URL configuration and request encodings (compression).
 6. Cursor feasibility (likely not proxyable locally).
-7. ~~Whether to add an optional MCP server exposing `ctxproxy_expand(ref)`~~ **Promoted to Phase 3 scope (§12.13, Decision D16).** Remaining open: stdio registration UX per client (see #12).
+7. ~~Whether to add an optional MCP server exposing `ctxoptimizer_expand(ref)`~~ **Promoted to Phase 3 scope (§12.13, Decision D16).** Remaining open: stdio registration UX per client (see #12).
 8. Optional JSON-aware truncation for large JSON tool results (v2).
 9. ~~Release checksum/signing policy for downloadable binaries~~ **Resolved: no standalone binaries; wheel/sdist via PyPI Trusted Publishing.**
 10. Legal: trademark-safe product name; no use of provider names in the product title.
 11. Edit-tool input schemas per client/agent (old_string/new_string vs unified diffs, etc.) needed by `churn_detector` (W7) — VERIFY per client before Phase 6.
-12. MCP stdio registration UX per client (`claude mcp add` semantics, VS Code/Cursor config shapes) for `ctxproxy_expand` — VERIFY.
+12. MCP stdio registration UX per client (`claude mcp add` semantics, VS Code/Cursor config shapes) for `ctxoptimizer_expand` — VERIFY.
 13. Assistant-text hash capture (§10 `assistant_text_hashes`) consistency across providers/streams — VERIFY block-boundary behavior before W7/W8 rely on it.
 14. Whether providers ship native server-side context dedup/reread handling (would shrink W1's value — monitor quarterly; attribution layer remains durable either way).
 15. Calibration of `est_tokens_wasted` rollups vs actuals (INV-18) — define the reconciliation report once ≥ 30 days of data exists.
@@ -1359,7 +1359,7 @@ E   AssertionError: expected 3, got 4
 tests/test_cart.py:88: AssertionError
 =========== 1 failed, 411 passed in 52.31s ===========
 ```
-Expected after pipeline: ANSI removed; CR progress collapsed to the 100% line; passing-output middle replaced by `[ctxproxy: 2,9xx lines (… KB) omitted; ref=…]`; **kept**: first 40 lines, the `E   AssertionError…` window with 3 lines of context, `tests/test_cart.py:88:` line, and the summary line `1 failed, 411 passed`. Second application changes nothing (idempotence).
+Expected after pipeline: ANSI removed; CR progress collapsed to the 100% line; passing-output middle replaced by `[ctxoptimizer: 2,9xx lines (… KB) omitted; ref=…]`; **kept**: first 40 lines, the `E   AssertionError…` window with 3 lines of context, `tests/test_cart.py:88:` line, and the summary line `1 failed, 411 passed`. Second application changes nothing (idempotence).
 
 Anthropic cache stair-step example (6 messages, `system` string, 12 tools, no client markers):
 - `system` → `[{"type":"text","text":"…","cache_control":{"type":"ephemeral"}}]` (BP-A; tools+system ≥ min tokens).
@@ -1372,7 +1372,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ctxproxy"
+name = "ctxoptimizer"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
@@ -1385,7 +1385,7 @@ re2     = ["google-re2>=1.1"]
 dev     = ["pytest>=8", "pytest-asyncio>=0.23", "respx>=0.21", "hypothesis>=6.100",
            "ruff>=0.5", "mypy>=1.10", "coverage>=7", "pytest-benchmark>=4", "pip-audit"]
 [project.scripts]
-ctxproxy = "ctxproxy.cli:app"
+ctxoptimizer = "ctxoptimizer.cli:app"
 
 [tool.ruff]
 line-length = 100

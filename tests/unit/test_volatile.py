@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from ctxproxy.config import Config
-from ctxproxy.models import Endpoint, Mode, Provider, RequestContext
-from ctxproxy.providers import adapter_for
-from ctxproxy.transforms import build_transforms
-from ctxproxy.transforms.volatile import (
+from ctxoptimizer.config import Config
+from ctxoptimizer.models import Endpoint, Mode, Provider, RequestContext
+from ctxoptimizer.providers import adapter_for
+from ctxoptimizer.transforms import build_transforms
+from ctxoptimizer.transforms.volatile import (
     VolatileNormalizer,
     normalize_system,
     normalize_user_env,

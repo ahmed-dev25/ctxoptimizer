@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ctxproxy — Agent-Run Cost Optimizer · Architecture Reference</title>
+<title>ctxoptimizer — Agent-Run Cost Optimizer · Architecture Reference</title>
 <style>
   :root{
     --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#2d3644;
@@ -105,7 +105,7 @@
       <span class="badge blue">Local · Deterministic · LLM-free core</span>
       <span class="badge amber">Python 3.11+</span>
     </div>
-    <h1><span class="mono">ctxproxy</span> — The Agent-Run Cost Optimizer</h1>
+    <h1><span class="mono">ctxoptimizer</span> — The Agent-Run Cost Optimizer</h1>
     <p class="tagline">A transparent local HTTP proxy between AI coding agents and LLM providers.
     Every request is <b>measured, cleaned, cached, attributed, and explained</b> — by pure deterministic
     code — while the agent, the provider, and the user experience nothing except a smaller bill
@@ -141,7 +141,7 @@
   <div class="card" style="margin-bottom:28px;">
     <h3 style="margin-top:0;">Setup (once, per machine)</h3>
     <p style="color:var(--muted); font-size:.93rem;">
-      1. <code>uv tool install ctxproxy</code> — one command.<br><br>
+      1. <code>uv tool install ctxoptimizer</code> — one command.<br><br>
       2. Point clients at the proxy:
       <code>ANTHROPIC_BASE_URL=http://127.0.0.1:8787</code> &nbsp;·&nbsp;
       <code>OPENAI_BASE_URL=http://127.0.0.1:8787/v1</code><br><br>
@@ -235,7 +235,7 @@
       <div class="stepnum s-purple">7</div>
       <div class="stepbody">
         <div class="stitle">Store, Visualize, Coach <code>telemetry/* · dashboard/*</code></div>
-        <p>Everything lands in local SQLite. Dashboard at <code>localhost:8787/_ctxproxy</code>:
+        <p>Everything lands in local SQLite. Dashboard at <code>localhost:8787/_ctxoptimizer</code>:
         live $ burn, actual vs simulated cost, cache health, <b style="color:var(--text)">Waste Opportunities ranked by $</b>,
         and <b style="color:var(--text)">one-click Recommendations</b> ("prune 3 unused MCP tool schemas — projected $X/mo").
         CLI mirror: <code>stats · waste · recommend</code>.</p>
@@ -247,7 +247,7 @@
       <div class="stepbody">
         <div class="stitle">The Retrieval Loop — nothing is lost <code>mcp.py</code></div>
         <p>Any transform that omitted content leaves a pointer. The agent can call the local MCP tool
-        <code>ctxproxy_expand(ref)</code> and get the <b style="color:var(--text)">original bytes back on demand</b>.
+        <code>ctxoptimizer_expand(ref)</code> and get the <b style="color:var(--text)">original bytes back on demand</b>.
         Deletions become lazy loading; the agent is never left without a path to the truth.</p>
       </div>
     </div>
@@ -341,7 +341,7 @@
     <div class="card"><h3 style="margin-top:0;">Why this matters</h3>
       <p style="color:var(--muted); font-size:.92rem;">The proxy promises "cheaper" without charging tokens to be clever.
       A competitor that calls an LLM to summarize competes against itself: its savings partially pay its own inference bill.
-      ctxproxy's interventions cost microseconds of CPU.</p></div>
+      ctxoptimizer's interventions cost microseconds of CPU.</p></div>
     <div class="card"><h3 style="margin-top:0;">The verification ladder (future-proofing)</h3>
       <p style="color:var(--muted); font-size:.92rem;">Deterministic checks (hash/mtime) → free repo signals (tests pass) → parsed invariants
       → <b>only then</b> a tiny sampled model judge — and only if the EV math clears. LLM is the method of <i>last</i> resort, never the first.</p></div>
@@ -394,10 +394,10 @@
       <h3 style="margin-top:0;">CLI &amp; dashboard surface</h3>
       <table>
         <tr><th>Command / page</th><th>Purpose</th></tr>
-        <tr><td><code>ctxproxy run · status · env · doctor</code></td><td>install → health-check → live</td></tr>
-        <tr><td><code>ctxproxy stats · waste · recommend</code></td><td>terminal cockpit for cost, waste, actions</td></tr>
-        <tr><td><code>ctxproxy guard status/enable</code></td><td>quarantine management</td></tr>
-        <tr><td><code>ctxproxy_expand(ref)</code> (MCP)</td><td>agent-side original retrieval</td></tr>
+        <tr><td><code>ctxoptimizer run · status · env · doctor</code></td><td>install → health-check → live</td></tr>
+        <tr><td><code>ctxoptimizer stats · waste · recommend</code></td><td>terminal cockpit for cost, waste, actions</td></tr>
+        <tr><td><code>ctxoptimizer guard status/enable</code></td><td>quarantine management</td></tr>
+        <tr><td><code>ctxoptimizer_expand(ref)</code> (MCP)</td><td>agent-side original retrieval</td></tr>
         <tr><td>Dashboard: Overview · Live · Sessions · Requests</td><td>$ burn, savings, per-turn drilldown</td></tr>
         <tr><td>Dashboard: Cache &amp; Waste Health · Waste Opportunities</td><td>diagnose &amp; act — ranked by $</td></tr>
       </table>
@@ -429,7 +429,7 @@
   <div class="grid3">
     <div><b style="color:var(--accent);">The one-liner</b>
       <p style="color:var(--muted); font-size:.9rem; margin-top:6px;">"Everyone compresses. Nobody tells you why your agent
-      wasted $212 last week. ctxproxy does — deterministically."</p></div>
+      wasted $212 last week. ctxoptimizer does — deterministically."</p></div>
     <div><b style="color:var(--accent2);">The moats</b>
       <p style="color:var(--muted); font-size:.9rem; margin-top:6px;">Waste attribution dataset · session content maps ·
       self-quarantine trust record · on-demand retrieval · honest-numbers reputation.</p></div>
@@ -437,7 +437,7 @@
       <p style="color:var(--muted); font-size:.9rem; margin-top:6px;"><code>SPEC.md</code> (authoritative, v2.0) ·
       <code>docs/provider-notes.md</code> · <code>AGENTS.md</code> coding rules. This page is a reading aid, not a spec.</p></div>
   </div>
-  <p style="color:var(--muted); font-size:.8rem; margin-top:22px;">ctxproxy architecture reference · generated from SPEC v2.0 · Oct 2026 · print-friendly</p>
+  <p style="color:var(--muted); font-size:.8rem; margin-top:22px;">ctxoptimizer architecture reference · generated from SPEC v2.0 · Oct 2026 · print-friendly</p>
 </footer>
 
 </div>

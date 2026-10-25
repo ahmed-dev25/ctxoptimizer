@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ctxoptimizer — {{ title }}</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 28px; background: #0d1117; color: #e6edf3;
+           font-family: 'Segoe UI', system-ui, sans-serif; }
+    nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; font-size: .88rem; }
+    nav a, a { color: #60a5fa; text-decoration: none; }
+    .muted { color: #9aa7b4; font-size: .9rem; }
+    h2 { margin: 26px 0 10px; font-size: 1.05rem; color: #93c5fd; }
+    table { width: 100%; border-collapse: collapse; font-size: .86rem;
+            background: #161b22; border: 1px solid #2d3644; border-radius: 10px; }
+    th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2d3644; }
+    th { color: #9aa7b4; font-size: .72rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    pre { background: #161b22; border: 1px solid #2d3644; border-radius: 10px;
+          padding: 14px; overflow: auto; font-size: .8rem; color: #a5d6ff;
+          white-space: pre-wrap; }
+    .diff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .label { color: #9aa7b4; font-size: .72rem; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/_ctxoptimizer/">Overview</a><a href="/_ctxoptimizer/live">Live</a>
+    <a href="/_ctxoptimizer/sessions">Sessions</a><a href="/_ctxoptimizer/requests">Requests</a>
+    <a href="/_ctxoptimizer/waste">Waste</a><a href="/_ctxoptimizer/transforms">Transforms</a>
+    <a href="/_ctxoptimizer/pricing">Pricing</a><a href="/_ctxoptimizer/settings">Settings</a>
+    <a href="/_ctxoptimizer/doctor">Doctor</a>
+  </nav>
+  <h1>{{ title }}</h1>
+  {% if found %}
+  <p class="muted">Metadata only; prompts are not shown unless capture is enabled.</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tbody>
+      {% for key in ("provider", "endpoint", "upstream", "model", "client", "project", "mode",
+                     "status_code", "outcome", "mutated", "fallback_used", "usage_source",
+                     "price_source", "cost_actual_usd", "error") %}
+      <tr><th>{{ key }}</th><td>{{ row[key] if row[key] is not none else "—" }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Timing</h2>
+  <table>
+    <thead><tr><th>Overhead</th><th>TTFB</th><th>Total</th><th>Original bytes</th><th>Final bytes</th>
+               <th>Original tokens</th><th>Final tokens</th></tr></thead>
+    <tbody><tr>
+      <td>{{ timing["proxy_overhead_ms"] or "—" }} ms</td>
+      <td>{{ timing["ttfb_ms"] or "—" }} ms</td>
+      <td>{{ timing["total_ms"] or "—" }} ms</td>
+      <td>{{ row["orig_bytes"] if row["orig_bytes"] is not none else "—" }}</td>
+      <td>{{ row["final_bytes"] if row["final_bytes"] is not none else "—" }}</td>
+      <td>{{ row["orig_est_tokens"] if row["orig_est_tokens"] is not none else "—" }}</td>
+      <td>{{ row["final_est_tokens"] if row["final_est_tokens"] is not none else "—" }}</td>
+    </tr></tbody>
+  </table>
+
+  <h2>Request headers (redacted)</h2>
+  <table>
+    <tbody>
+      {% for name, value in headers.items() %}
+      <tr><th>{{ name }}</th><td>{{ value }}</td></tr>
+      {% else %}
+      <tr><td class="muted">No headers captured.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Transform reports</h2>
+  <table>
+    <thead><tr><th>Transform</th><th>Changed</th><th>Items</th><th>Tokens saved</th>
+               <th>Duration</th><th>Discarded</th></tr></thead>
+    <tbody>
+      {% for report in reports %}
+      <tr><td>{{ report["transform_id"] }}</td><td>{{ report["changed"] }}</td>
+          <td>{{ report["items_touched"] }}</td><td>{{ report["est_tokens_saved"] }}</td>
+          <td>{{ "%.3f"|format(report["duration_ms"] or 0) }} ms</td>
+          <td>{{ report["discarded_reason"] or "—" }}</td></tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No reports persisted for this request.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Diff viewer (captured changed blocks)</h2>
+  {% if diff %}
+  {% for block in diff %}
+  <p class="label">{{ block["location"] }}</p>
+  <div class="diff">
+    <div><div class="label">before</div><pre>{{ block["before"] }}</pre></div>
+    <div><div class="label">after</div><pre>{{ block["after"] }}</pre></div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="muted">No captured diff. Set <code>capture_payloads = "changed_blocks"</code> or <code>"full"</code>.</p>
+  {% endif %}
+
+  <h2>Usage</h2>
+  <pre>{{ usage | tojson(indent=2) }}</pre>
+  {% else %}
+  <p class="muted">Request not found.</p>
+  {% endif %}
+</body>
+</html>

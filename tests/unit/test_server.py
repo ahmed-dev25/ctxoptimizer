@@ -8,9 +8,9 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.testclient import TestClient
 
-from ctxproxy.config import Config
-from ctxproxy.routing import Route
-from ctxproxy.server import create_app
+from ctxoptimizer.config import Config
+from ctxoptimizer.routing import Route
+from ctxoptimizer.server import create_app
 
 
 async def _echo_forward(request: Request, route: Route, config: Config) -> JSONResponse:
@@ -37,14 +37,14 @@ def _config(tmp_path: Path) -> Config:
                 "ollama": "http://127.0.0.1:11434",
                 "deepseek": "https://api.deepseek.com",
             },
-            "telemetry": {"db_path": str(tmp_path / "ctxproxy.db")},
+            "telemetry": {"db_path": str(tmp_path / "ctxoptimizer.db")},
         }
     )
 
 
 def test_health_endpoint(tmp_path: Path) -> None:
     with TestClient(create_app(_config(tmp_path))) as client:
-        response = client.get("/_ctxproxy/health")
+        response = client.get("/_ctxoptimizer/health")
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
@@ -58,9 +58,9 @@ def test_unknown_admin_path_is_404(tmp_path: Path) -> None:
     with TestClient(
         app,
         base_url="http://127.0.0.1",
-        headers={"x-ctxproxy-admin-token": app.state.admin_token},
+        headers={"x-ctxoptimizer-admin-token": app.state.admin_token},
     ) as client:
-        response = client.get("/_ctxproxy/api/nope")
+        response = client.get("/_ctxoptimizer/api/nope")
     assert response.status_code == 404
 
 

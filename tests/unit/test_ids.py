@@ -6,7 +6,7 @@ import itertools
 
 import pytest
 
-from ctxproxy.ids import CROCKFORD, new_ulid, ulid_timestamp_ms
+from ctxoptimizer.ids import CROCKFORD, new_ulid, ulid_timestamp_ms
 
 # Strictly increasing timestamps keep these tests independent of execution
 # order and of the module's monotonic clock state.
