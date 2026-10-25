@@ -236,6 +236,6 @@ def test_status_unreachable() -> None:
 
 
 def test_run_help() -> None:
-    result = runner.invoke(app, ["run", "--help"])
+    result = runner.invoke(app, ["run", "--help"], terminal_width=200)
     assert result.exit_code == 0
     assert "--host" in result.stdout
