@@ -1,18 +1,18 @@
 # ctxproxy — Progress
 
 **Last updated:** 2026-10-25
-**Milestone:** P0–P11 — MIT open-source release
-**Branch:** `main`
-**Overall:** P11 merged; history audit clean; old release/tag removed; ready to tag `v0.4.0`
+**Milestone:** P0–P12 — MIT open-source release
+**Branch:** `feat/p12-package-updates`
+**Overall:** P12 implemented; built-in self-update removed; gates pass; ready to merge and tag `v0.4.0`
 
 ## Resume here
 
-- **Last completed:** P11 MIT relicense (`7ee05d9`) and history secret audit.
+- **Last completed:** P12 package-manager updates (`3505114`).
 - **Last merge:** `123d8ee` (P11)
-- **Next task:** tag `v0.4.0`, publish release assets/manifest, make the
+- **Next task:** merge P12, tag `v0.4.0`, publish release assets, make the
   repository public.
 - **Blocked:** none
-- **Active branch:** none — working tree is on `main`
+- **Active branch:** `feat/p12-package-updates`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -86,10 +86,11 @@
 | P10 | Release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (292), coverage 80.64% | release artifacts, signed self-update, version `0.3.0`, release tooling |
 | P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (292), coverage 80.64% | signed-manifest test, dev update extra |
 | P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
-| P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates retained |
+| P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates later removed in P12 |
+| P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | pending | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxproxy update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
-| Release | `v0.4.0` | pending | — | `123d8ee` | — | ruff, format, mypy, pytest (292), coverage 81.64% | MIT release; tag and publish; repository still private |
+| Release | `v0.4.0` | pending | — | `3505114` | — | ruff, format, mypy, pytest (278), coverage 81.69% | MIT release; tag and publish; repository still private |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -127,6 +128,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P10-1 hardening | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `4322f03` |
 | 2026-10-25 | P10-2 CI repair | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `12049e1` |
 | 2026-10-25 | P11 MIT | pass | pass (63 files) | 292 passed | 81.64% (local + CI gate) | `7ee05d9` |
+| 2026-10-25 | P12 package updates | pass | pass (62 files) | 278 passed | 81.69% (local + CI gate) | `3505114` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -269,7 +271,11 @@ Rows are in execution order; see `docs/plan.md` §4.
 
 - 2026-10-25 — P11 MIT relicense: MIT `LICENSE`/`NOTICE`; removed the license
   module, CLI, config and EULA; active mode is unconditional; version 0.4.0;
-  signed updates remain.
+  signed updates remained until P12.
+
+- 2026-10-25 — P12 package-manager updates: removed `ctxproxy update`, the
+  update config/extra, PyNaCl dependency, manifest signer and signed-manifest
+  documentation; upgrades use `uv tool upgrade` or `pipx upgrade`.
 
 - 2026-10-25 — History audit: scanned 96 commits / 494 text blobs for provider
   keys, tokens, private keys, credential assignments, URLs and sensitive
@@ -286,7 +292,8 @@ Rows are in execution order; see `docs/plan.md` §4.
 - No live provider captures exist yet. P1-3 may use documented fixtures with a
   `meta.json` source (ADR 0005); captures replace them when available.
 - The repository is still private. Tag `v0.4.0` and publish release assets only
-  after the update signing keypair/manifest and fresh-machine checks are ready.
+  after the fresh-machine checks and package-manager update instructions are
+  verified.
 - Run `uv sync --extra dev` after cloning; `uv.lock` is committed.
 - Ruff formats Python code blocks inside Markdown. `SPEC.md` is excluded in
   `pyproject.toml`; do not remove that exclusion.
