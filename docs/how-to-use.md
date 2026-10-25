@@ -39,15 +39,15 @@ ctxproxy --version
 
 ### Option B — Python tool install
 
-From a published wheel:
+From GitHub while the PyPI package is pending:
 
 ```powershell
-uv tool install ctxproxy
+uv tool install "git+https://github.com/ahmed-dev25/ctxproxy.git"
 # or
-pipx install ctxproxy
+pipx install "git+https://github.com/ahmed-dev25/ctxproxy.git"
 ```
 
-From a local wheel:
+This requires Git on `PATH`. From a local wheel:
 
 ```powershell
 uv tool install --force .\ctxproxy-0.4.0-py3-none-any.whl

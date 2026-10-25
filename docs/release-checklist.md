@@ -40,7 +40,7 @@ decision or external credentials.
 ## 5. Packaging
 
 - [ ] PyInstaller binary runs on each OS (CI artifacts).
-- [ ] Publish wheel/sdist and `SHA256SUMS` (release workflow).
+- [ ] Publish wheel/sdist, binaries and `SHA256SUMS` (release workflow).
 - [ ] Confirm `uv tool upgrade ctxproxy` / `pipx upgrade ctxproxy` behavior.
 - [ ] macOS codesign + notarization (**owner certificate**).
 - [ ] Windows code signing (**owner certificate**).
