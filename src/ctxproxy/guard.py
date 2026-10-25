@@ -23,6 +23,9 @@ class Guard:
         self._drift: dict[tuple[str, str], int] = defaultdict(int)
         self._quarantined: dict[tuple[str, str], str] = {}
         self._recovery: dict[tuple[str, str], int] = defaultdict(int)
+        self._savings: dict[tuple[str, str], deque[float]] = defaultdict(
+            lambda: deque(maxlen=max(1, config.guard.fallback_window))
+        )
         self._store: object | None = None
 
     def bind_store(self, store: object) -> None:
@@ -73,6 +76,22 @@ class Guard:
             if self._recovery[key] >= self.config.guard.auto_reenable:
                 self.enable(*key)
 
+    def observe_savings(self, session_id: str, transform_id: str, usd: float) -> None:
+        """Quarantine a reduction that costs more than it saves over a window."""
+        if not self.config.guard.enabled:
+            return
+        if transform_id in {"anthropic_cache", "openai_hints"}:
+            return
+        key = (session_id, transform_id)
+        window = self._savings[key]
+        window.append(max(usd, 0.0))
+        if (
+            len(window) >= self.config.guard.fallback_window
+            and sum(window) < self.config.guard.min_savings_to_stay
+        ):
+            self._quarantined[key] = "low_savings"
+            self._record(session_id, transform_id, "low_savings")
+
     def observe_expand_health(self, session_id: str) -> None:
         """Quarantine omission transforms when expand errors are too high."""
         if not self.config.guard.enabled or self._store is None:
@@ -97,6 +116,7 @@ class Guard:
         self._fallbacks.pop((session_id, transform_id), None)
         self._drift.pop((session_id, transform_id), None)
         self._recovery.pop((session_id, transform_id), None)
+        self._savings.pop((session_id, transform_id), None)
         record = getattr(self._store, "record_guard_event", None)
         if callable(record):
             record(session_id, transform_id, "enabled", {"cleared": True}, cleared_ts=time.time())

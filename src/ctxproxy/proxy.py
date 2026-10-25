@@ -188,6 +188,7 @@ async def forward(request: Request, route: Route, config: Config) -> Response:
                         }
                     )
             priced = _price(usage, route, config, model)
+            _observe_guard_savings(request, session_id, pipeline_result, priced, effective_mode)
             baseline_cost = _baseline_price(analysis, route, config, model)
             request.app.state.last_request = {
                 "request_id": request_id,
@@ -515,6 +516,30 @@ def _table_for(config: Config) -> PricingTable:
 
 def _price(usage: Usage, route: Route, config: Config, model: str | None) -> PriceResult:
     return price_usage(usage, _table_for(config), route.profile.pricing_provider, model)
+
+
+def _observe_guard_savings(
+    request: Request,
+    session_id: str,
+    pipeline_result: PipelineResult | None,
+    priced: PriceResult,
+    mode: Mode,
+) -> None:
+    if mode is not Mode.ACTIVE or pipeline_result is None:
+        return
+    guard = getattr(request.app.state, "guard", None)
+    if not isinstance(guard, Guard) or priced.price is None:
+        return
+    input_rate = priced.price.input
+    for report in pipeline_result.reports:
+        if not report.ran or report.discarded_reason is not None:
+            continue
+        saved_tokens = max(report.est_tokens_before - report.est_tokens_after, 0)
+        guard.observe_savings(
+            session_id,
+            report.transform_id,
+            saved_tokens * input_rate / 1_000_000,
+        )
 
 
 def _baseline_price(
