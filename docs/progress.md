@@ -8,8 +8,8 @@
 ## Resume here
 
 - **Last completed:** P10 release + hardening + CI repair
-  (`ff54faa`/`4322f03`, merge `ca1481e`).
-- **Last merge:** `ca1481e` (P10-1)
+  (`12049e1`, merge `b37b12b`).
+- **Last merge:** `b37b12b` (CI repair)
 - **Next task:** complete `docs/release-checklist.md`; tag/release is
   `v0.3.0-alpha`.
 - **Blocked:** none
@@ -86,7 +86,7 @@
 | P9-1 | Low-savings guard | done | `feat/p9-1-savings` | `58410ee` | `6173b3b` | ruff, format, mypy, pytest (292), coverage 80.64% | min_savings_to_stay over the guard window |
 | P10 | Commercial release prep | done | `feat/p10-release` | `ff54faa` | `f50a2cf` | ruff, format, mypy, pytest (292), coverage 80.64% | proprietary LICENSE/EULA/NOTICE, signed self-update, version `0.3.0`, release tooling |
 | P10-1 | Release hardening | done | `fix/p10-release-hardening` | `4322f03` | `ca1481e` | ruff, format, mypy, pytest (292), coverage 80.64% | signed-manifest test, dev license extra |
-| P10-2 | CI repair | done | `fix/ci` | recorded at merge | — | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
+| P10-2 | CI repair | done | `fix/ci` | `12049e1` | `b37b12b` | ruff, format, mypy, pytest (292), coverage 80.64% | cross-platform binary update test, wheel smoke venv, coverage margin |
 | Release | `v0.3.0-alpha` | tagged | — | — | — | — | pre-release; live captures/signing/fresh-machine checks pending |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
@@ -123,7 +123,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P9-1 savings | pass | pass (63 files) | 292 passed | 80.64% enforced (CI) | `58410ee` |
 | 2026-10-25 | P10 release | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `ff54faa` |
 | 2026-10-25 | P10-1 hardening | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `4322f03` |
-| 2026-10-25 | P10-2 CI repair | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | recorded at merge |
+| 2026-10-25 | P10-2 CI repair | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `12049e1` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
