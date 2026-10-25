@@ -3,14 +3,14 @@
 **Last updated:** 2026-10-25
 **Milestone:** P0–P13 — MIT open-source release
 **Branch:** `main`
-**Overall:** repository public; P13 merged; ready to tag `v0.4.0`
+**Overall:** public repository; `v0.4.0` released with wheel, sdist, OS binaries and checksums; ready for website spec
 
 ## Resume here
 
-- **Last completed:** P13 release hardening (`986f54d`).
+- **Last completed:** `v0.4.0` public release (`c37913a`, release run
+  `40217381725`).
 - **Last merge:** `9afe91b` (P13)
-- **Next task:** tag `v0.4.0`, verify the public release, then start the website
-  spec.
+- **Next task:** start the website spec.
 - **Blocked:** PyPI publication requires owner credentials; installs use Git
   until the package name is published.
 - **Active branch:** none — working tree is on `main`
@@ -92,7 +92,7 @@
 | P13 | Release hardening | done | `feat/p13-release-hardening` | `986f54d` | `9afe91b` | ruff, format, mypy, pytest (278) | added SECURITY/CONTRIBUTING/CoC/templates/Dependabot; enabled secret scanning, push protection, Dependabot updates, CodeQL and branch protection; release workflow publishes wheel, sdist and unsigned OS binaries with checksums; Git install documented until PyPI |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
-| Release | `v0.4.0` | pending | — | `9afe91b` | — | ruff, format, mypy, pytest (278), coverage 81.69% | MIT release; public repository; tag and publish |
+| Release | `v0.4.0` | released | — | `c37913a` | — | release run `40217381725`; local wheel/binary smoke | wheel, sdist, Linux/macOS/Windows unsigned binaries, `SHA256SUMS`; public repo |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -284,6 +284,10 @@ Rows are in execution order; see `docs/plan.md` §4.
   Dependabot; release workflow now publishes wheel, sdist, per-OS unsigned
   binaries and combined `SHA256SUMS`; Git install documented until PyPI.
 
+- 2026-10-25 — Released `v0.4.0` with wheel, sdist, Linux/macOS/Windows
+  binaries and `SHA256SUMS`; verified checksums and fresh-wheel/binary installs.
+  PyPI publication remains owner-blocked.
+
 - 2026-10-25 — History audit: scanned 96 commits / 494 text blobs for provider
   keys, tokens, private keys, credential assignments, URLs and sensitive
   filenames. Only fake credential fixtures in tests were found. Removed the
@@ -298,9 +302,11 @@ Rows are in execution order; see `docs/plan.md` §4.
 - `origin` is `git@github.com:ahmed-dev25/ctxproxy.git`; CI runs on `main`.
 - No live provider captures exist yet. P1-3 may use documented fixtures with a
   `meta.json` source (ADR 0005); captures replace them when available.
-- The repository is public. Tag `v0.4.0` and publish release assets only after
-  the fresh-machine checks and package-manager update instructions are verified.
+- The repository is public. `v0.4.0` is tagged and released; verify a release
+  asset again after any workflow change.
 - PyPI publication is pending; the README uses a Git install until then.
+- Secret scanning, push protection, Dependabot alerts/updates, CodeQL default
+  setup and basic `main` protection are enabled.
 - Run `uv sync --extra dev` after cloning; `uv.lock` is committed.
 - Ruff formats Python code blocks inside Markdown. `SPEC.md` is excluded in
   `pyproject.toml`; do not remove that exclusion.
