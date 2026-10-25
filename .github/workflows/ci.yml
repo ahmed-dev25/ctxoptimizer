@@ -84,29 +84,3 @@ jobs:
 
       - name: Import smoke
         run: .wheel-smoke/bin/python -c "from ctxproxy.server import create_app; print('ok')"
-
-  binary:
-    name: pyinstaller smoke (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.11"
-
-      - name: Build one-file binary
-        run: uv run --with pyinstaller pyinstaller --onefile --name ctxproxy scripts/ctxproxy_entry.py
-
-      - name: Binary version smoke (unix)
-        if: runner.os != 'Windows'
-        run: ./dist/ctxproxy --version
-
-      - name: Binary version smoke (windows)
-        if: runner.os == 'Windows'
-        run: .\dist\ctxproxy.exe --version

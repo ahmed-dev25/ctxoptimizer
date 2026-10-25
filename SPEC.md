@@ -278,7 +278,7 @@ ctxproxy/
 | Paths | `platformdirs` | Data/log/config dirs per OS. |
 | Tokens (optional extra `[tokens]`) | `tiktoken` | **Downloads encodings on first use** → must degrade to heuristic when offline (§12.0.2). |
 | Dev | `pytest`, `pytest-asyncio`, `respx`, `hypothesis`, `ruff`, `mypy`, `coverage`, `pytest-benchmark` | |
-| Packaging | `hatchling`; distribute with `uv tool install` / `pipx`; later PyInstaller/Nuitka | |
+| Packaging | `uv_build`; wheel/sdist on PyPI via Trusted Publishing; `uv tool install` / `pipx` | |
 
 Do not use: `requests` (blocking), `fastapi` on proxy routes (allowed only for admin API if desired), `uvloop` as a hard dependency (not on Windows — optional).
 
@@ -1093,7 +1093,7 @@ Implementation rules:
 - Parse JSON once (`orjson.loads`), mutate in place, serialize once.
 - Avoid deep copies; the change journal stores only `(ref, old_text)` of touched blocks.
 - Precompile regexes at import; process line-by-line; no unbounded backtracking.
-- Large payloads (> `offload_threshold_bytes`) run via `asyncio.to_thread`; if event-loop lag (measured with a 100 ms heartbeat task) exceeds 100 ms p95 in `bench`, move the pipeline to a `ProcessPoolExecutor(max_workers=2)` (documented fallback; mind PyInstaller `freeze_support`).
+- Large payloads (> `offload_threshold_bytes`) run via `asyncio.to_thread`; if event-loop lag (measured with a 100 ms heartbeat task) exceeds 100 ms p95 in `bench`, move the pipeline to a `ProcessPoolExecutor(max_workers=2)` (documented fallback).
 - `scripts/bench.py` runs a fixed corpus (small/medium/large captured conversations), reports p50/p95/p99 overhead, and fails CI if p95 regresses > 20% vs the committed baseline.
 - Publish the measured numbers; do not claim "<2 ms".
 
@@ -1141,8 +1141,8 @@ GitHub Actions matrix: {ubuntu, macos, windows} × {3.11, 3.12, 3.13}. Gates: `r
 
 - `pyproject.toml` (hatchling), src layout, console script `ctxproxy = ctxproxy.cli:app`; extras `[tokens]`, `[re2]`, `[dev]`. Package data: templates, static, `data/*.json` (access via `importlib.resources`).
 - Primary install: `uv tool install ctxproxy` / `pipx install ctxproxy`. Document Python version requirement; `uv` can fetch Python itself.
-- Updates: no built-in self-update. Users run `uv tool upgrade ctxproxy` or `pipx upgrade ctxproxy`; trust comes from the package index/GitHub release channel and TLS. Publish `SHA256SUMS` for manual binary downloads.
-- Standalone binaries (Phase 7): PyInstaller `--onefile` (or Nuitka) per OS via CI. Expect 40–80 MB artifacts; macOS requires codesign + notarization; Windows may trigger SmartScreen/AV false positives (budget time for signing). Do **not** market as "tiny single binary".
+- Updates: no built-in self-update. Users run `uv tool upgrade ctxproxy` or `pipx upgrade ctxproxy`. Publish wheel/sdist to PyPI with Trusted Publishing and PEP 740 attestations; attach `SHA256SUMS` to the GitHub release.
+- No standalone binaries or OS code-signing step. Distribution is wheel/sdist only.
 - Autostart: `ctxproxy service install` generates launchd plist (`~/Library/LaunchAgents`), systemd user unit (`~/.config/systemd/user`), or a Windows Scheduled Task ("at logon"); `uninstall` reverses.
 - Versioning: SemVer; DB migrations forward-only with automatic backup (`ctxproxy.db.bak-<version>`) before migrating; config `schema_version` with warnings on unknown keys.
 - Docs site (README + `docs/`): quickstart (3 commands), per-client setup, privacy statement, FAQ ("why is my cache hit low?"), how savings are computed (INV-13 explanation), troubleshooting.
@@ -1200,7 +1200,7 @@ Each task = one coding-model session. "DoD" = definition of done (all gates in �
 - **P6-1** Gemini adapter (telemetry first, then limited transforms). **P6-2** Ollama adapter. **P6-3** Named OpenAI-compatible upstreams. **P6-4** `stale_result_elision` (opt-in) with break-even estimator. **P6-5** `churn_detector` (W7, opt-in, needs edit-tool input schemas per client — VERIFY §26.11) and `schema_bloat` (W8).
 
 ### Phase 7 — Ship (week 8)
-- **P7-1** Packaging (wheel, PyInstaller CI), service install. **P7-2** Package-manager update docs. **P7-3** Docs/site, README GIF, FAQ. **P7-4** Launch checklist: fresh-machine install test on all OSes, privacy statement, changelog. **P7-5** Release packaging: architecture doc, test report, dependency licenses file, clean git history.
+- **P7-1** Packaging (wheel/sdist on PyPI via Trusted Publishing), service install. **P7-2** Package-manager update docs. **P7-3** Docs/site, README GIF, FAQ. **P7-4** Launch checklist: fresh-machine install test on all OSes, privacy statement, changelog. **P7-5** Release packaging: architecture doc, test report, dependency licenses file, clean git history.
 
 ---
 
@@ -1214,7 +1214,7 @@ Each task = one coding-model session. "DoD" = definition of done (all gates in �
 | Provider API changes (fields, thresholds, headers) | Breakage | `cache_limits.json`/`pricing.json` data-driven, `docs/provider-notes.md` with verification dates, live contract tests, fail-open. |
 | Cursor/other clients can't be proxied locally | Market size | Honest compatibility table; focus on CLI/SDK/extension clients. |
 | Privacy/security concerns (code in DB) | Adoption | Local-only, capture off/limited by default, redaction, purge, clear docs. |
-| Python distribution friction (AV flags, size) | Install failures | `uv tool install` as primary path; sign binaries; provide checksums. |
+| Python distribution friction (install failures, supply chain) | Install/compromise risk | `uv tool install` as primary path; PyPI Trusted Publishing + PEP 740 attestations; wheel/sdist only. |
 | Savings claims perceived as inflated | Reputation | INV-13 labeling; publish methodology; show calibration error. |
 | Event-loop stalls under big payloads | Latency | Chunked line processing, offload threshold, process-pool fallback, benchmarks in CI. |
 | Waste detectors produce noisy/embarrassing findings | Trust | Evidence-required definitions, occurrence dedupe, `est.` labeling with stated method, ack/skip status, detector-level toggles, tuned-defaults after dogfood. |
@@ -1317,7 +1317,7 @@ Tip: for the transforms phase, give the model the **pure function signature and 
 6. Cursor feasibility (likely not proxyable locally).
 7. ~~Whether to add an optional MCP server exposing `ctxproxy_expand(ref)`~~ **Promoted to Phase 3 scope (§12.13, Decision D16).** Remaining open: stdio registration UX per client (see #12).
 8. Optional JSON-aware truncation for large JSON tool results (v2).
-9. Release checksum/signing policy for downloadable binaries (owner decision).
+9. ~~Release checksum/signing policy for downloadable binaries~~ **Resolved: no standalone binaries; wheel/sdist via PyPI Trusted Publishing.**
 10. Legal: trademark-safe product name; no use of provider names in the product title.
 11. Edit-tool input schemas per client/agent (old_string/new_string vs unified diffs, etc.) needed by `churn_detector` (W7) — VERIFY per client before Phase 6.
 12. MCP stdio registration UX per client (`claude mcp add` semantics, VS Code/Cursor config shapes) for `ctxproxy_expand` — VERIFY.

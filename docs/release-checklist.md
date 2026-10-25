@@ -37,14 +37,18 @@ decision or external credentials.
 - [ ] Capture is off/limited unless intentionally enabled.
 - [ ] No credentials in logs, DB, blobs or fixtures.
 
-## 5. Packaging
+## 5. Packaging and PyPI
 
-- [ ] PyInstaller binary runs on each OS (CI artifacts).
-- [ ] Publish wheel/sdist, binaries and `SHA256SUMS` (release workflow).
+- [ ] Build wheel/sdist and run the clean-venv install smoke.
+- [ ] Configure the PyPI trusted publisher:
+      owner `ahmed-dev25`, repo `ctxproxy`, workflow `release.yml`,
+      environment `pypi`, project `ctxproxy`.
+- [ ] Create the GitHub `pypi` environment restricted to `v*` tags.
+- [ ] Publish with Trusted Publishing; confirm PEP 740 attestations on PyPI.
+- [ ] Publish wheel/sdist and `SHA256SUMS` as GitHub release assets.
 - [ ] Confirm `uv tool upgrade ctxproxy` / `pipx upgrade ctxproxy` behavior.
-- [ ] macOS codesign + notarization (**owner certificate**).
-- [ ] Windows code signing (**owner certificate**).
 - [ ] Fresh-machine install test on Windows, macOS and Linux.
+- [x] No standalone binaries or OS code signing in this release path.
 
 ## 6. Product/legal (owner)
 
@@ -52,5 +56,5 @@ decision or external credentials.
 - [ ] Confirm provider/trademark wording in README and metadata.
 - [ ] Finalize model pricing/current model IDs and peak/off-peak policy.
 - [ ] Review `THIRD_PARTY_LICENSES.md` against the built artifact.
-- [ ] Tag with SemVer (`v0.4.0` recommended for the MIT release) and update
+- [ ] Tag with SemVer (`v0.4.1` recommended for the PyPI release) and update
       `CHANGELOG.md`/`docs/test-report.md`.

@@ -21,9 +21,7 @@ before shipping a binary.
 | google-re2 (optional) | ReDoS-resistant regex | BSD-3-Clause |
 | hypothesis / pytest / ruff / mypy / coverage (dev) | Development and CI | MIT / Apache-2.0 / PSF |
 
-PyInstaller (used only in CI for standalone binaries) is GPL-2.0-with-exception;
-its bootloader exception permits distributing bundled applications. Review the
-final artifact and included license texts before a public release.
+No standalone binary build tool is used for distribution.
 
 No provider SDK is bundled. Provider names are used descriptively only; see
 `SPEC.md` §26 for the trademark note.

@@ -14,16 +14,19 @@ prompt caching missed, and applies cache-safe payload reductions.
 
 ## Install
 
-Install from GitHub while the PyPI package is pending:
+```powershell
+uv tool install ctxproxy
+# or: pipx install ctxproxy
+ctxproxy run
+```
+
+If PyPI does not have the release yet, install from GitHub:
 
 ```powershell
 uv tool install "git+https://github.com/ahmed-dev25/ctxproxy.git"
 # or: pipx install "git+https://github.com/ahmed-dev25/ctxproxy.git"
 ctxproxy run
 ```
-
-This requires Git on `PATH`. Release wheels are also attached to each GitHub
-release for manual installation.
 
 From a checkout:
 
@@ -113,8 +116,9 @@ uv tool upgrade ctxproxy
 pipx upgrade ctxproxy
 ```
 
-There is no built-in self-update command. Source installs follow the GitHub
-repository; release-wheel installs must be replaced manually. See
+There is no built-in self-update command. PyPI releases are published with
+Trusted Publishing and PEP 740 attestations. Source installs follow the GitHub
+repository; downloaded wheels must be replaced manually. See
 [`docs/updating.md`](docs/updating.md).
 
 ## Documentation
@@ -128,7 +132,8 @@ repository; release-wheel installs must be replaced manually. See
 - [`docs/faq.md`](docs/faq.md) — cache, savings, troubleshooting
 - [`docs/test-report.md`](docs/test-report.md) — gates and test coverage summary
 - [`docs/updating.md`](docs/updating.md) — package-manager upgrades and release artifacts
-- [`docs/release-checklist.md`](docs/release-checklist.md) — release/signing checklist
+- [`docs/pypi-release.md`](docs/pypi-release.md) — PyPI Trusted Publishing setup
+- [`docs/release-checklist.md`](docs/release-checklist.md) — release checklist
 - [`docs/progress.md`](docs/progress.md) — build status and handoff notes
 - [`CHANGELOG.md`](CHANGELOG.md)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)

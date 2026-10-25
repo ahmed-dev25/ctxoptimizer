@@ -1,19 +1,19 @@
 # ctxproxy — Progress
 
 **Last updated:** 2026-10-25
-**Milestone:** P0–P13 — MIT open-source release
-**Branch:** `main`
-**Overall:** public repository; `v0.4.0` released with wheel, sdist, OS binaries and checksums; ready for website spec
+**Milestone:** P0–P14 — MIT open-source PyPI release
+**Branch:** `feat/p14-pypi-release`
+**Overall:** wheel/PyPI-only distribution implemented; `v0.4.1` prepared; PyPI trusted-publisher setup is owner-blocked
 
 ## Resume here
 
-- **Last completed:** `v0.4.0` public release (`c37913a`, release run
-  `40217381725`).
+- **Last completed:** P14 wheel-only PyPI distribution (`99e7fef`).
 - **Last merge:** `9afe91b` (P13)
-- **Next task:** start the website spec.
-- **Blocked:** PyPI publication requires owner credentials; installs use Git
-  until the package name is published.
-- **Active branch:** none — working tree is on `main`
+- **Next task:** configure the PyPI trusted publisher, tag `v0.4.1`, verify the
+  PyPI upload/attestations, then start the website spec.
+- **Blocked:** PyPI project/trusted-publisher creation requires the owner's PyPI
+  account; the `ctxproxy` name must be available.
+- **Active branch:** `feat/p14-pypi-release`
 - **Read first:** `SPEC.md` -> `docs/plan.md` -> this file -> `AGENTS.md`
 
 ## Smoke test (2026-10-25)
@@ -90,9 +90,11 @@
 | P11 | MIT relicense | done | `feat/p11-mit-license` | `7ee05d9` | `123d8ee` | ruff, format, mypy (63), pytest (292), coverage 81.64% | MIT LICENSE/NOTICE; license module, CLI, config and EULA removed; active mode unconditional; version `0.4.0`; signed updates later removed in P12 |
 | P12 | Package-manager updates | done | `feat/p12-package-updates` | `3505114` | `e776e6e` | ruff, format, mypy (62), pytest (278), coverage 81.69% | removed `ctxproxy update`, update config/extra, PyNaCl and manifest signer; docs use `uv tool upgrade`/`pipx upgrade` |
 | P13 | Release hardening | done | `feat/p13-release-hardening` | `986f54d` | `9afe91b` | ruff, format, mypy, pytest (278) | added SECURITY/CONTRIBUTING/CoC/templates/Dependabot; enabled secret scanning, push protection, Dependabot updates, CodeQL and branch protection; release workflow publishes wheel, sdist and unsigned OS binaries with checksums; Git install documented until PyPI |
+| P14 | Wheel-only PyPI release | done | `feat/p14-pypi-release` | `99e7fef` | pending | ruff, format, mypy (62), pytest (278), coverage 81.69% | version `0.4.1`; removed PyInstaller binaries, binary CI and code-signing path; release workflow uses PyPI Trusted Publishing + PEP 740 attestations and publishes wheel/sdist plus checksums |
 | Audit | History secret scan | done | `main` | — | — | scanned 96 commits / 494 blobs | no real credentials; fake credential fixtures in tests only; no sensitive filenames or binary blobs |
 | Release | `v0.3.0-alpha` | removed | — | — | — | — | superseded; GitHub release and tag deleted |
-| Release | `v0.4.0` | released | — | `c37913a` | — | release run `40217381725`; local wheel/binary smoke | wheel, sdist, Linux/macOS/Windows unsigned binaries, `SHA256SUMS`; public repo |
+| Release | `v0.4.0` | released | — | `c37913a` | — | release run `40217381725`; local wheel/binary smoke | wheel, sdist, Linux/macOS/Windows unsigned binaries, `SHA256SUMS`; superseded by wheel-only distribution |
+| Release | `v0.4.1` | pending | — | `99e7fef` | — | ruff, format, mypy, pytest (278), coverage 81.69% | wheel/sdist only; PyPI trusted publisher setup required before tagging |
 
 Status vocabulary: `todo` -> `in-progress` -> `blocked` -> `review` -> `done`.
 Rows are in execution order; see `docs/plan.md` §4.
@@ -131,6 +133,7 @@ Rows are in execution order; see `docs/plan.md` §4.
 | 2026-10-25 | P10-2 CI repair | pass | pass (64 files) | 292 passed | 80.64% enforced (CI) | `12049e1` |
 | 2026-10-25 | P11 MIT | pass | pass (63 files) | 292 passed | 81.64% (local + CI gate) | `7ee05d9` |
 | 2026-10-25 | P12 package updates | pass | pass (62 files) | 278 passed | 81.69% (local + CI gate) | `3505114` |
+| 2026-10-25 | P14 PyPI wheel-only | pass | pass (62 files) | 278 passed | 81.69% (local + CI gate) | `99e7fef` |
 | 2026-10-25 | smoke | live OpenCode -> DeepSeek | n/a | manual | 3 rows, 99.2% cache hit, $0.005393 | `312bb3a` |
 
 ## Changelog
@@ -288,6 +291,12 @@ Rows are in execution order; see `docs/plan.md` §4.
   binaries and `SHA256SUMS`; verified checksums and fresh-wheel/binary installs.
   PyPI publication remains owner-blocked.
 
+- 2026-10-25 — P14 wheel-only PyPI release: version 0.4.1; removed standalone
+  binaries, PyInstaller CI and OS code-signing steps; release workflow now uses
+  PyPI Trusted Publishing with PEP 740 attestations, build provenance, and a
+  GitHub release with wheel/sdist plus checksums. PyPI trusted-publisher setup
+  is the remaining owner action.
+
 - 2026-10-25 — History audit: scanned 96 commits / 494 text blobs for provider
   keys, tokens, private keys, credential assignments, URLs and sensitive
   filenames. Only fake credential fixtures in tests were found. Removed the
@@ -302,9 +311,11 @@ Rows are in execution order; see `docs/plan.md` §4.
 - `origin` is `git@github.com:ahmed-dev25/ctxproxy.git`; CI runs on `main`.
 - No live provider captures exist yet. P1-3 may use documented fixtures with a
   `meta.json` source (ADR 0005); captures replace them when available.
-- The repository is public. `v0.4.0` is tagged and released; verify a release
-  asset again after any workflow change.
-- PyPI publication is pending; the README uses a Git install until then.
+- The repository is public. `v0.4.0` is tagged and released; `v0.4.1` is
+  prepared for wheel-only PyPI distribution but is not tagged yet.
+- PyPI setup is owner-blocked: configure trusted publisher `ahmed-dev25/ctxproxy`,
+  workflow `release.yml`, environment `pypi`, project `ctxproxy`; see
+  `docs/pypi-release.md`.
 - Secret scanning, push protection, Dependabot alerts/updates, CodeQL default
   setup and basic `main` protection are enabled.
 - Run `uv sync --extra dev` after cloning; `uv.lock` is committed.

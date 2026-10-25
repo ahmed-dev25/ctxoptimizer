@@ -1,6 +1,6 @@
 [project]
 name = "ctxproxy"
-version = "0.4.0"
+version = "0.4.1"
 description = "Local, deterministic cost optimizer for AI coding agents"
 readme = "README.md"
 license = "MIT"
@@ -39,6 +39,12 @@ dev = [
 
 [project.scripts]
 ctxproxy = "ctxproxy.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/ahmed-dev25/ctxproxy"
+Repository = "https://github.com/ahmed-dev25/ctxproxy"
+Issues = "https://github.com/ahmed-dev25/ctxproxy/issues"
+Changelog = "https://github.com/ahmed-dev25/ctxproxy/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.13.1,<0.14.0"]

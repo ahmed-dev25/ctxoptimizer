@@ -83,7 +83,7 @@ P1-3 is deliberately last: parser code is written against real provider bytes
 tree per SPEC §5; `.github/workflows/ci.yml`; smoke test.
 **Files:** `pyproject.toml`, `src/ctxproxy/**`, `tests/conftest.py`,
 `tests/unit/test_smoke.py`, `.github/workflows/ci.yml`.
-**Tests:** package exposes version `0.4.0`; every module imports cleanly.
+**Tests:** package exposes version `0.4.1`; every module imports cleanly.
 **DoD:** `ruff check`, `ruff format --check`, `mypy --strict src`, `pytest -q` pass;
 `uv build` produces a wheel; `uv run ctxproxy --version` prints `0.1.0`.
 **Note:** coverage is reported but not enforced while most modules are stubs.
