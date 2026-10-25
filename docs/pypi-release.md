@@ -69,3 +69,22 @@ gh release download v0.4.1 --pattern SHA256SUMS
 
 Do not add a PyPI API token unless Trusted Publishing is temporarily
 unavailable; prefer OIDC.
+
+## `invalid-publisher` troubleshooting
+
+The publish job failed once with `invalid-publisher`. PyPI reported these
+claims:
+
+- repository: `ahmed-dev25/ctxoptimizer`
+- workflow: `.github/workflows/release.yml`
+- environment: `pypi`
+
+The trusted/pending publisher must match **all** of these fields. Common causes:
+
+- the publisher still points at the old repository name `ctxproxy`;
+- no GitHub environment is configured on PyPI;
+- the workflow filename is different;
+- the publisher belongs to a different PyPI project.
+
+After fixing the publisher, rerun the failed GitHub Actions release run.
+
