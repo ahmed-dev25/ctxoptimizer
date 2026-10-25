@@ -19,19 +19,28 @@ class OpenAIHints:
         self, ctx: RequestContext, payload: dict[str, Any], adapter: ProviderAdapter
     ) -> bool:
         settings = ctx.config.transforms.openai_hints
-        if not settings.enabled or not settings.send_prompt_cache_key:
+        if not settings.enabled:
             return False
         if ctx.provider is not Provider.OPENAI:
             return False
         if ctx.endpoint not in {Endpoint.CHAT, Endpoint.RESPONSES}:
             return False
-        if "prompt_cache_key" in payload:
-            return False
         entry = ctx.config.upstreams.get(ctx.upstream_name)
         if entry is None:
             return False
         url = entry if isinstance(entry, str) else entry.url
-        return (urlsplit(url).hostname or "").lower() == "api.openai.com"
+        if (urlsplit(url).hostname or "").lower() != "api.openai.com":
+            return False
+        if settings.send_prompt_cache_key and "prompt_cache_key" not in payload:
+            return True
+        if (
+            settings.inject_stream_usage
+            and ctx.endpoint is Endpoint.CHAT
+            and payload.get("stream") is True
+        ):
+            options = payload.get("stream_options")
+            return not isinstance(options, dict) or options.get("include_usage") is not True
+        return False
 
     def apply(
         self,
@@ -41,15 +50,34 @@ class OpenAIHints:
         config: Config,
     ) -> TransformReport:
         started = time.perf_counter()
-        key = "ctxp-" + sha256(ctx.session_id.encode("utf-8")).hexdigest()[:24]
-        payload["prompt_cache_key"] = key
+        settings = config.transforms.openai_hints
+        changed = False
+        notes: dict[str, object] = {}
+        if settings.send_prompt_cache_key and "prompt_cache_key" not in payload:
+            key = "ctxp-" + sha256(ctx.session_id.encode("utf-8")).hexdigest()[:24]
+            payload["prompt_cache_key"] = key
+            notes["key"] = key
+            changed = True
+        if (
+            settings.inject_stream_usage
+            and ctx.endpoint is Endpoint.CHAT
+            and payload.get("stream") is True
+        ):
+            options = payload.get("stream_options")
+            if not isinstance(options, dict):
+                options = {}
+                payload["stream_options"] = options
+            if options.get("include_usage") is not True:
+                options["include_usage"] = True
+                notes["inject_stream_usage"] = True
+                changed = True
         return TransformReport(
             transform_id=self.id,
             ran=True,
-            changed=True,
-            items_touched=1,
+            changed=changed,
+            items_touched=len(notes),
             duration_ms=(time.perf_counter() - started) * 1000,
-            notes={"key": key},
+            notes=notes,
         )
 
 

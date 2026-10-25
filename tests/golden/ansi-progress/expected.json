@@ -1,0 +1,138 @@
+{
+  "final_tokens": 89,
+  "original_tokens": 92,
+  "payload": {
+    "messages": [
+      {
+        "content": "run tests",
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "id": "call_1",
+            "input": {
+              "command": "pytest -q"
+            },
+            "name": "Bash",
+            "type": "tool_use"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "cache_control": {
+              "type": "ephemeral"
+            },
+            "content": "\u001b[31mFAILED\u001b[0m test_one\nDownloading 10%\nDownloading 20%\nDownloading 30%\nDownloading 40%\nline\nline\nline\nline\n",
+            "tool_use_id": "call_1",
+            "type": "tool_result"
+          }
+        ],
+        "role": "user"
+      }
+    ],
+    "model": "claude-sonnet-4-5",
+    "system": [
+      {
+        "cache_control": {
+          "type": "ephemeral"
+        },
+        "text": "You are an agent.\nToday's date: 2026-10-25",
+        "type": "text"
+      }
+    ],
+    "tools": [
+      {
+        "input_schema": {
+          "type": "object"
+        },
+        "name": "Bash"
+      }
+    ]
+  },
+  "payload_json": "{\"messages\": [{\"content\": \"run tests\", \"role\": \"user\"}, {\"content\": [{\"id\": \"call_1\", \"input\": {\"command\": \"pytest -q\"}, \"name\": \"Bash\", \"type\": \"tool_use\"}], \"role\": \"assistant\"}, {\"content\": [{\"cache_control\": {\"type\": \"ephemeral\"}, \"content\": \"\\u001b[31mFAILED\\u001b[0m test_one\\nDownloading 10%\\nDownloading 20%\\nDownloading 30%\\nDownloading 40%\\nline\\nline\\nline\\nline\\n\", \"tool_use_id\": \"call_1\", \"type\": \"tool_result\"}], \"role\": \"user\"}], \"model\": \"claude-sonnet-4-5\", \"system\": [{\"cache_control\": {\"type\": \"ephemeral\"}, \"text\": \"You are an agent.\\nToday's date: 2026-10-25\", \"type\": \"text\"}], \"tools\": [{\"input_schema\": {\"type\": \"object\"}, \"name\": \"Bash\"}]}",
+  "reports": [
+    {
+      "changed": false,
+      "discarded_reason": "no_regress",
+      "items_touched": 1,
+      "notes": {},
+      "tokens_after": 32,
+      "tokens_before": 32,
+      "transform_id": "ansi_strip"
+    },
+    {
+      "changed": false,
+      "discarded_reason": "no_regress",
+      "items_touched": 1,
+      "notes": {},
+      "tokens_after": 32,
+      "tokens_before": 32,
+      "transform_id": "progress_collapse"
+    },
+    {
+      "changed": false,
+      "discarded_reason": "no_regress",
+      "items_touched": 1,
+      "notes": {},
+      "tokens_after": 32,
+      "tokens_before": 32,
+      "transform_id": "line_dedupe"
+    },
+    {
+      "changed": false,
+      "discarded_reason": null,
+      "items_touched": 0,
+      "notes": {},
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "whitespace_trim"
+    },
+    {
+      "changed": false,
+      "discarded_reason": null,
+      "items_touched": 0,
+      "notes": {},
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "smart_truncate"
+    },
+    {
+      "changed": false,
+      "discarded_reason": null,
+      "items_touched": 0,
+      "notes": {},
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "duplicate_backref"
+    },
+    {
+      "changed": false,
+      "discarded_reason": "no_regress",
+      "items_touched": 1,
+      "notes": {},
+      "tokens_after": 15,
+      "tokens_before": 15,
+      "transform_id": "volatile_normalizer"
+    },
+    {
+      "changed": true,
+      "discarded_reason": null,
+      "items_touched": 3,
+      "notes": {
+        "added": [
+          "text",
+          "text",
+          "tool_result"
+        ],
+        "existing": 0
+      },
+      "tokens_after": 0,
+      "tokens_before": 0,
+      "transform_id": "anthropic_cache"
+    }
+  ]
+}

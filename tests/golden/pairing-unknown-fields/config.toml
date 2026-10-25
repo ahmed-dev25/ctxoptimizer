@@ -1,0 +1,4 @@
+[transforms.line_dedupe]
+enabled = true
+[transforms.whitespace_trim]
+enabled = true

@@ -26,6 +26,7 @@ from ctxproxy.dashboard.service import (
     write_pricing,
 )
 from ctxproxy.models import WasteFinding
+from ctxproxy.telemetry.expand import expand_stats as expand_stats_query
 from ctxproxy.telemetry.pricing import load_pricing
 
 API_VERSION = 1
@@ -469,6 +470,12 @@ async def stale_estimate(request: Request) -> Response:
     )
 
 
+async def expand_usage(request: Request) -> Response:
+    return JSONResponse(
+        {"api_version": API_VERSION, "label": "measured", "expand": expand_stats_query()}
+    )
+
+
 def _finding_dict(finding: WasteFinding) -> dict[str, Any]:
     data = asdict(finding)
     data["key_hash"] = finding.key_hash.hex()
@@ -480,6 +487,7 @@ __all__ = [
     "admin_config",
     "apply_recommendation",
     "drift",
+    "expand_usage",
     "export",
     "guard_action",
     "guard_status",

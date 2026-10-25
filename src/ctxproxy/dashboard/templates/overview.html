@@ -84,6 +84,19 @@
   </table>
   {% endif %}
 
+  {% if waste_points %}
+  <h2>Waste over time <span class="est">est.</span></h2>
+  <table>
+    <thead><tr><th>Bucket</th><th>Findings</th><th>Est. tokens</th><th>Est. USD</th></tr></thead>
+    <tbody>
+      {% for point in waste_points %}
+      <tr><td>{{ point["bucket"] }}</td><td>{{ point["findings"] }}</td>
+          <td>{{ point["tokens"] }}</td><td>${{ "%.6f"|format(point["cost_usd"] or 0) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
   <h2>Recent requests</h2>
   <table>
     <thead>

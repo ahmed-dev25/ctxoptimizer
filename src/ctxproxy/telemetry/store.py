@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import queue
+import shutil
 import sqlite3
 import threading
 import time
@@ -21,7 +22,7 @@ from ctxproxy.config import data_dir
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _SCHEMA = """
 PRAGMA journal_mode=WAL;
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS requests(
   config_hash TEXT, status_code INTEGER, outcome TEXT,
   ttfb_ms REAL, total_ms REAL, proxy_overhead_ms REAL,
   orig_bytes INTEGER, final_bytes INTEGER, orig_est_tokens INTEGER, final_est_tokens INTEGER,
+  request_headers_json TEXT,
   usage_source TEXT, fresh_input INTEGER, cache_read INTEGER,
   cache_write_5m INTEGER, cache_write_1h INTEGER, cache_write_30m INTEGER, cache_write_12h INTEGER,
   output_tokens INTEGER, reasoning_tokens INTEGER,
@@ -57,7 +59,7 @@ CREATE TABLE IF NOT EXISTS transform_reports(
   request_id TEXT NOT NULL REFERENCES requests(request_id) ON DELETE CASCADE,
   transform_id TEXT NOT NULL, changed INTEGER NOT NULL, items_touched INTEGER,
   bytes_before INTEGER, bytes_after INTEGER, est_tokens_saved INTEGER, duration_ms REAL,
-  discarded_reason TEXT, error TEXT, notes_json TEXT,
+  discarded_reason TEXT, error TEXT, notes_json TEXT, fallback INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY(request_id, transform_id));
 
 CREATE TABLE IF NOT EXISTS drift_events(
@@ -113,6 +115,7 @@ _REQUEST_COLUMNS = (
     "final_bytes",
     "orig_est_tokens",
     "final_est_tokens",
+    "request_headers_json",
     "usage_source",
     "fresh_input",
     "cache_read",
@@ -383,6 +386,7 @@ class Store:
                 "AS errors, "
                 "COALESCE(SUM(CASE WHEN discarded_reason = 'no_regress' THEN 1 ELSE 0 END), 0) "
                 "AS no_regress, "
+                "COALESCE(SUM(fallback), 0) AS fallbacks, "
                 "MAX(ts) AS last_ts "
                 "FROM transform_reports "
                 "JOIN requests USING(request_id) "
@@ -420,6 +424,26 @@ class Store:
             "tokens": int(row[1]),
             "cost_usd": float(row[2]),
         }
+
+    def waste_timeseries(
+        self, bucket: str = "day", since_ts: float | None = None
+    ) -> list[dict[str, Any]]:
+        fmt = "%Y-%m-%dT%H:00:00" if bucket == "hour" else "%Y-%m-%d"
+        query = (
+            f"SELECT strftime('{fmt}', ts, 'unixepoch') AS bucket, "  # noqa: S608
+            "COUNT(*) AS findings, COALESCE(SUM(est_tokens_wasted), 0) AS tokens, "
+            "COALESCE(SUM(est_cost_usd), 0) AS cost_usd FROM waste_findings "
+            "WHERE status IN ('new', 'ack')"
+        )
+        params: list[Any] = []
+        if since_ts is not None:
+            query += " AND first_seen_ts >= ?"
+            params.append(since_ts)
+        query += " GROUP BY bucket ORDER BY bucket"
+        with sqlite3.connect(self.path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(query, params).fetchall()
+        return [dict(row) for row in rows]
 
     def unpriced(self, limit: int = 100) -> list[dict[str, Any]]:
         with sqlite3.connect(self.path) as conn:
@@ -500,11 +524,28 @@ class Store:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")
             conn.execute("PRAGMA foreign_keys=ON")
+            version = 0
+            if self.path.exists() and self.path.stat().st_size > 0:
+                try:
+                    row = conn.execute(
+                        "SELECT value FROM meta WHERE key = 'schema_version'"
+                    ).fetchone()
+                except sqlite3.OperationalError:
+                    row = None
+                version = int(row[0]) if row else 0
+                if version < SCHEMA_VERSION:
+                    backup = self.path.with_name(f"{self.path.name}.bak-{version}")
+                    try:
+                        shutil.copy2(self.path, backup)
+                    except OSError as exc:
+                        logger.warning("database backup failed: %s", exc)
             conn.executescript(_SCHEMA)
+            _ensure_column(conn, "requests", "request_headers_json", "TEXT")
+            _ensure_column(conn, "transform_reports", "fallback", "INTEGER NOT NULL DEFAULT 0")
             row = conn.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
-            version = int(row[0]) if row else 0
-            if version > SCHEMA_VERSION:
-                raise RuntimeError(f"database schema {version} is newer than {SCHEMA_VERSION}")
+            current = int(row[0]) if row else 0
+            if current > SCHEMA_VERSION:
+                raise RuntimeError(f"database schema {current} is newer than {SCHEMA_VERSION}")
             conn.execute(
                 "INSERT OR REPLACE INTO meta(key, value) VALUES('schema_version', ?)",
                 (str(SCHEMA_VERSION),),
@@ -576,10 +617,23 @@ class Store:
             if not request_id:
                 continue
             _insert_reports(conn, request_id, record.get("_transform_reports") or [])
+            fallback_ids = record.get("_fallback_transform_ids") or []
+            if fallback_ids:
+                conn.executemany(
+                    "UPDATE transform_reports SET fallback = 1 "
+                    "WHERE request_id = ? AND transform_id = ?",
+                    [(request_id, transform_id) for transform_id in fallback_ids],
+                )
             _insert_drift(conn, request_id, record)
             _insert_findings(conn, record.get("_findings") or [])
             _insert_captures(conn, request_id, record.get("_captures") or [])
         conn.commit()
+
+
+def _ensure_column(conn: sqlite3.Connection, table: str, column: str, declaration: str) -> None:
+    names = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in names:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {declaration}")
 
 
 def _get(value: object, name: str, default: Any = None) -> Any:

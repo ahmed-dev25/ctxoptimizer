@@ -1,0 +1,24 @@
+{
+  "model": "claude-sonnet-4-5",
+  "messages": [
+    {"role": "user", "content": "read it"},
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "tool_use", "id": "call_1", "name": "Read", "input": {"path": "a.txt"}, "extra": {"keep": true}}
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "call_1",
+          "content": "same output\nsame output\nsame output\nsame output\nsame output\nunknown field stays",
+          "is_error": false,
+          "extra": {"keep": "me"}
+        }
+      ]
+    }
+  ]
+}

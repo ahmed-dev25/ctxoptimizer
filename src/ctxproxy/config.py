@@ -11,6 +11,7 @@ hot reload builds a new :class:`Config` instead of mutating the old one.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tomllib
 from collections.abc import Mapping
@@ -48,6 +49,7 @@ ShellKind = Literal["bash", "zsh", "fish", "powershell"]
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
 ENV_PREFIX = "CTXPROXY_"
 CONFIG_RESOURCE = "default_config.toml"
+logger = logging.getLogger(__name__)
 
 _ENV_FIELDS = {
     "CTXPROXY_HOST": "server.host",
@@ -442,6 +444,9 @@ def load_config(
     if overrides:
         for dotted, value in overrides.items():
             _set_dotted(raw, dotted, value)
+    unknown = unknown_keys(raw)
+    if unknown:
+        logger.warning("unknown config keys ignored: %s", ", ".join(unknown))
     return Config.model_validate(raw)
 
 

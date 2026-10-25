@@ -157,6 +157,7 @@ def test_capture_exports_redacted_blocks(tmp_path: Path, monkeypatch) -> None:
     blobs = BlobStore(tmp_path / "blobs")
     before = blobs.put(b"OPENAI_API_KEY=sk-secret-value-1234567890")
     after = blobs.put(b"OPENAI_API_KEY=[REDACTED]")
+    response = blobs.put(b'{"ok": true}')
     store = Store(db_path)
     store.record_request(
         {
@@ -164,10 +165,22 @@ def test_capture_exports_redacted_blocks(tmp_path: Path, monkeypatch) -> None:
             "_captures": [
                 {
                     "transform_id": "test",
+                    "location": "request",
+                    "before_hash": before,
+                    "after_hash": None,
+                },
+                {
+                    "transform_id": "test",
                     "location": "block-0",
                     "before_hash": before,
                     "after_hash": after,
-                }
+                },
+                {
+                    "transform_id": None,
+                    "location": "response",
+                    "before_hash": response,
+                    "after_hash": None,
+                },
             ],
         }
     )
@@ -180,6 +193,8 @@ def test_capture_exports_redacted_blocks(tmp_path: Path, monkeypatch) -> None:
     blocks = json.loads((out / "req-1" / "blocks.json").read_text(encoding="utf-8"))
     assert "[REDACTED]" in blocks[0]["before"]
     assert "sk-secret" not in blocks[0]["before"]
+    assert (out / "req-1" / "request.json").exists()
+    assert json.loads((out / "req-1" / "response.json").read_text(encoding="utf-8")) == {"ok": True}
 
 
 def test_export_json(tmp_path: Path) -> None:
@@ -190,6 +205,7 @@ def test_export_json(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert "req-1" in result.stdout
     assert "deepseek-flash" in result.stdout
+    assert "transform_reports" in result.stdout
 
 
 def test_export_csv(tmp_path: Path) -> None:

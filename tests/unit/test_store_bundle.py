@@ -35,6 +35,8 @@ def test_store_persists_request_bundle(tmp_path: Path) -> None:
             "provider": "openai",
             "endpoint": "chat",
             "mode": "shadow",
+            "request_headers_json": '{"user-agent": "test"}',
+            "_fallback_transform_ids": ["ansi_strip"],
             "_transform_reports": [
                 TransformReport(
                     transform_id="ansi_strip",
@@ -63,6 +65,26 @@ def test_store_persists_request_bundle(tmp_path: Path) -> None:
     assert store.fetch_waste()[0]["finding_id"] == "f1"
     assert store.fetch_captures("r1")[0]["location"] == "block-0"
     assert store.transform_stats()[0]["tokens_saved"] == 10
+    assert store.transform_stats()[0]["fallbacks"] == 1
+    assert store.fetch_request("r1")["request_headers_json"] == '{"user-agent": "test"}'
     assert store.set_waste_status("f1", "ack") is True
     assert store.fetch_waste(status="ack")[0]["finding_id"] == "f1"
     store.close()
+
+
+def test_migration_backs_up_and_adds_columns(tmp_path: Path) -> None:
+    import sqlite3
+
+    path = tmp_path / "ctxproxy.db"
+    with sqlite3.connect(path) as conn:
+        conn.execute("CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        conn.execute("INSERT INTO meta VALUES('schema_version', '1')")
+        conn.commit()
+    store = Store(path)
+    store.close()
+    assert (tmp_path / "ctxproxy.db.bak-1").exists()
+    with sqlite3.connect(path) as conn:
+        request_columns = {row[1] for row in conn.execute("PRAGMA table_info(requests)")}
+        report_columns = {row[1] for row in conn.execute("PRAGMA table_info(transform_reports)")}
+    assert "request_headers_json" in request_columns
+    assert "fallback" in report_columns

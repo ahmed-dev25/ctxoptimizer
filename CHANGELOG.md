@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — P8 hardening
+
+- `volatile_normalizer` implemented and registered (opt-in).
+- `openai_hints.inject_stream_usage` implemented (opt-in, api.openai.com only).
+- MCP expand logging/counters and dashboard expand usage.
+- Guard fallback counts use the configured moving window.
+- Export JSON now includes transform reports.
+- Full capture mode writes request/final-request/response fixtures.
+- DB schema v2 with automatic pre-migration backup; redacted request headers;
+  per-transform fallback incidents; waste-over-time data.
+- Golden corpus and transform invariant property tests added.
+
 ## 0.1.0 — 2026-10-25
 
 Initial alpha.

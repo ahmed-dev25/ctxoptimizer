@@ -329,7 +329,8 @@ def export_command(
     config = _load(config_path)
     rows = _read_rows(_db_path(config), _parse_since(since), limit)
     if format == "json":
-        text = json.dumps(rows, indent=2, default=str)
+        reports = _read_reports(_db_path(config), _parse_since(since), limit)
+        text = json.dumps({"requests": rows, "transform_reports": reports}, indent=2, default=str)
     elif format == "csv":
         text = _to_csv(rows)
     else:
@@ -601,6 +602,16 @@ def capture(
         (target / "meta.json").write_text(json.dumps(meta, indent=2, default=str), encoding="utf-8")
         blocks = _capture_blocks(db_path, str(row["request_id"]), blobs, sanitize)
         (target / "blocks.json").write_text(json.dumps(blocks, indent=2), encoding="utf-8")
+        for block in blocks:
+            location = block.get("location")
+            text = block.get("before") or ""
+            if location == "request":
+                (target / "request.json").write_text(text, encoding="utf-8")
+            elif location == "final_request":
+                (target / "request.final.json").write_text(text, encoding="utf-8")
+            elif location == "response":
+                suffix = "sse" if _looks_sse(text) else "json"
+                (target / f"response.{suffix}").write_text(text, encoding="utf-8")
         written += 1
     typer.echo(f"wrote {written} fixture(s) to {out}")
 
@@ -724,6 +735,28 @@ def _read_rows(db_path: Path, since_ts: float | None, limit: int) -> list[_Reque
             query += " WHERE ts >= ?"
             params.append(since_ts)
         query += " ORDER BY ts DESC LIMIT ?"
+        params.append(limit)
+        return [dict(row) for row in conn.execute(query, params).fetchall()]
+
+
+def _looks_sse(text: str) -> bool:
+    return "data:" in text and "\n\n" in text
+
+
+def _read_reports(db_path: Path, since_ts: float | None, limit: int) -> list[_Request]:
+    if not db_path.exists():
+        return []
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        query = (
+            "SELECT transform_reports.*, requests.ts FROM transform_reports "
+            "JOIN requests USING(request_id)"
+        )
+        params: list[Any] = []
+        if since_ts is not None:
+            query += " WHERE requests.ts >= ?"
+            params.append(since_ts)
+        query += " ORDER BY requests.ts DESC LIMIT ?"
         params.append(limit)
         return [dict(row) for row in conn.execute(query, params).fetchall()]
 

@@ -25,6 +25,7 @@ from ctxproxy.dashboard.api import (
     admin_config,
     apply_recommendation,
     drift,
+    expand_usage,
     export,
     guard_action,
     guard_status,
@@ -198,6 +199,7 @@ def create_app(
                 methods=["GET"],
             ),
             StarletteRoute("/_ctxproxy/api/drift", drift, methods=["GET"]),
+            StarletteRoute("/_ctxproxy/api/expand/stats", expand_usage, methods=["GET"]),
             StarletteRoute("/_ctxproxy/api/transforms/stats", transform_stats, methods=["GET"]),
             StarletteRoute(
                 "/_ctxproxy/api/requests/{request_id}/diff",

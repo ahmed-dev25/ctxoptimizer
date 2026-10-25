@@ -3,7 +3,7 @@
 Command: `uv run pytest -q`
 
 ```text
-252 passed, 1 warning in 17.52s
+266 passed, 1 warning in 27.05s
 ```
 
 Warnings: Starlette `TestClient` deprecation for `httpx` (upstream package;
@@ -27,6 +27,11 @@ Other gates:
 - Integration: real fake upstream + uvicorn proxy, streaming byte equality,
   usage extraction, disconnect, retries, non-stream usage, persistence.
 - Property: usage fuzz tests (`hypothesis`) never raise.
+- Golden: committed pipeline cases (`ansi-progress`, `dedupe`,
+  `pairing-unknown-fields`).
+- Property invariants: pure-transform idempotence, pipeline determinism/
+  idempotence, pairing/unknown fields/reasoning preservation.
+- Coverage measured at ~79% overall (not enforced).
 - Live contract tests (`-m live`) are opt-in and require real keys; they are not
   part of the default run.
 
@@ -35,6 +40,7 @@ Other gates:
 - No live Gemini/Ollama captures yet; documented shapes are exercised
   (see `docs/provider-notes.md` §11).
 - Full dashboard charting is intentionally lightweight (server-rendered tables
-  + a simple spend bar); no external chart/CDN assets.
+  + simple bars); no external chart/CDN assets.
+- CI coverage is not enforced (currently ~79% overall).
 - PyInstaller binaries are built in CI but are not signed/notarized here.
 - Coverage is reported but not enforced by a threshold.

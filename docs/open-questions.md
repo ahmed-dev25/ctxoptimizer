@@ -63,8 +63,8 @@ the code takes the conservative path and this file records what needs confirmati
     `old_str`/`new_str`, `old_content`/`new_content`, `search`/`replace`, and
     `old`/`new`, plus common path keys. Confirm each agent's actual edit schema
     (Claude Code, Cursor, OpenCode, Codex) so W7 is not silently blind.
-17. **`stale_result_elision` break-even UX.** The transform is implemented and
-    off by default. SPEC P6-4 asks for a dashboard break-even estimate before
-    enabling it; that estimator/UI is still pending, so do not enable it on a
-    paid workload without a manual calculation.
+17. **`stale_result_elision` break-even UX. — RESOLVED 2026-10-25.** The
+    Transforms page now includes a conservative `sim.` break-even calculator
+    backed by `/api/stale-elision/estimate`; the transform remains off by
+    default.
 

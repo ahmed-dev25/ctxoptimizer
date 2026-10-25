@@ -162,3 +162,10 @@ def test_ensure_config_file_creates_and_is_idempotent(tmp_path: Path) -> None:
 
 def test_data_dir_env_override(tmp_path: Path) -> None:
     assert data_dir({"CTXPROXY_DATA_DIR": str(tmp_path)}) == tmp_path
+
+
+def test_unknown_config_keys_are_logged(tmp_path: Path, caplog) -> None:
+    path = tmp_path / "config.toml"
+    path.write_text("[server]\nport = 8787\n[nope]\nx = 1\n", encoding="utf-8")
+    load_config(path=path)
+    assert "unknown config keys" in caplog.text

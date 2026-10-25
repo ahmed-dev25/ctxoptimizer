@@ -37,7 +37,8 @@
 
   <table>
     <thead><tr><th>Transform</th><th>Enabled</th><th>Quarantined</th><th>Runs</th>
-               <th>Tokens saved</th><th>Avg ms</th><th>Errors</th><th>No-regress</th></tr></thead>
+               <th>Tokens saved</th><th>Avg ms</th><th>Errors</th><th>No-regress</th>
+               <th>Fallbacks</th></tr></thead>
     <tbody>
       {% for row in rows %}
       <tr>
@@ -47,6 +48,7 @@
         <td>{{ "yes" if row["quarantined"] else "no" }}</td>
         <td>{{ row["runs"] }}</td><td>{{ row["tokens_saved"] }}</td>
         <td>{{ row["avg_ms"] }}</td><td>{{ row["errors"] }}</td><td>{{ row["no_regress"] }}</td>
+        <td>{{ row["fallbacks"] }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -66,6 +68,8 @@
   <div id="result"></div>
 
   <h2>Quarantine history</h2>
+  <p class="muted">MCP expand usage: {{ expand["total"] }} retrieval(s),
+     {{ expand["errors"] }} error(s).</p>
   <table>
     <thead><tr><th>Time</th><th>Session</th><th>Transform</th><th>Reason</th></tr></thead>
     <tbody>
