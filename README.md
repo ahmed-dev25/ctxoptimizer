@@ -56,6 +56,43 @@ Point a client at the printed base URL. See
 [`docs/client-setup.md`](docs/client-setup.md) for Claude Code, OpenCode,
 DeepSeek, OpenRouter, Gemini, Ollama, Codex and the other supported clients.
 
+### Use in another repo
+
+Start the proxy once (or install it at login):
+
+```powershell
+ctxoptimizer run
+# or
+ctxoptimizer service install
+```
+
+Then set the base URL in that repo's shell, `.env`, or client config. The
+`/p/<project>` segment is optional and keeps stats separated per repository.
+
+```dotenv
+# .env — only works if your client actually loads .env files
+ANTHROPIC_BASE_URL=http://127.0.0.1:8787/p/my-project
+OPENAI_BASE_URL=http://127.0.0.1:8787/p/my-project/v1
+```
+
+PowerShell equivalent:
+
+```powershell
+$env:ANTHROPIC_BASE_URL = "http://127.0.0.1:8787/p/my-project"
+$env:OPENAI_BASE_URL = "http://127.0.0.1:8787/p/my-project/v1"
+```
+
+For OpenCode, add the provider to that repo's `opencode.json` with
+`options.baseURL` set to
+`http://127.0.0.1:8787/p/my-project/u/deepseek`. Do not commit `.env` files or
+provider API keys.
+
+Check the repo's usage with:
+
+```powershell
+ctxoptimizer stats --project my-project
+```
+
 Default mode is `shadow`: everything is measured and simulated, while the
 client's bytes are forwarded unchanged. Switch to `active` from the dashboard
 (Settings), with `ctxoptimizer run --mode active`, or with
