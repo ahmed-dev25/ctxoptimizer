@@ -162,6 +162,7 @@ repository; downloaded wheels must be replaced manually. See
 
 - [`SPEC.md`](SPEC.md) — authoritative specification
 - [`docs/client-setup.md`](docs/client-setup.md) — per-client recipes
+- [`ctxoptimizer_use.md`](ctxoptimizer_use.md) — portable setup checklist for a new repository
 - [`docs/how-to-use.md`](docs/how-to-use.md) — complete install/run/update guide
 - [`docs/provider-notes.md`](docs/provider-notes.md) — dated provider behavior
 - [`docs/architecture.md`](docs/architecture.md) — component overview
